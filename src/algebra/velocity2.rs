@@ -1,5 +1,5 @@
 use na::storage::Storage;
-use na::{self, Isometry2, RealField, Rotation2, U3, Vector, Vector1, Vector2, Vector3};
+use na::{self, Isometry2, RealField, Rotation2, Vector, Vector1, Vector2, Vector3, U3};
 use std::mem;
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
@@ -57,7 +57,6 @@ impl<N: RealField> Velocity2<N> {
     pub fn angular_vector(&self) -> Vector1<N> {
         Vector1::new(self.angular)
     }
-
 
     /// Compute the displacement due to this velocity integrated during the time `dt`.
     pub fn integrate(&self, dt: N) -> Isometry2<N> {

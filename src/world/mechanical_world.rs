@@ -2,20 +2,20 @@ use std::collections::{HashMap, HashSet};
 
 use na::{self, RealField};
 use ncollide;
-use ncollide::query::{self, TOIStatus, Proximity};
-use ncollide::narrow_phase::{Interaction};
 use ncollide::interpolation::{RigidMotion, RigidMotionComposition};
+use ncollide::narrow_phase::Interaction;
+use ncollide::query::{self, Proximity, TOIStatus};
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
 use crate::force_generator::{ForceGenerator, ForceGeneratorSet};
 use crate::joint::{JointConstraint, JointConstraintSet};
-use crate::math::{Vector};
-use crate::object::{
-    Body, DefaultBodySet, BodyStatus, BodyPartMotion, Collider, ColliderHandle,
-    DefaultColliderHandle, BodySet, BodyHandle, ColliderSet,
-};
 use crate::material::MaterialsCoefficientsTable;
+use crate::math::Vector;
+use crate::object::{
+    Body, BodyHandle, BodyPartMotion, BodySet, BodyStatus, Collider, ColliderHandle, ColliderSet,
+    DefaultBodySet, DefaultColliderHandle,
+};
 use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::GeometricalWorld;
 
@@ -28,16 +28,17 @@ enum PredictedImpacts<N: RealField, Handle: BodyHandle, CollHandle: ColliderHand
     NoImpacts,
 }
 
-impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> PredictedImpacts<N, Handle, CollHandle> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    PredictedImpacts<N, Handle, CollHandle>
+{
     fn unwrap_impacts(self) -> (Vec<TOIEntry<N, Handle, CollHandle>>, HashMap<Handle, N>) {
         match self {
             PredictedImpacts::Impacts(entries, frozen) => (entries, frozen),
             PredictedImpacts::ImpactsAfterEndTime(_) => panic!("Impacts have not been computed."),
-            PredictedImpacts::NoImpacts => (Vec::new(), HashMap::new())
+            PredictedImpacts::NoImpacts => (Vec::new(), HashMap::new()),
         }
     }
 }
-
 
 struct SubstepState<N: RealField, Handle: BodyHandle> {
     active: bool,
@@ -65,7 +66,9 @@ pub struct MechanicalWorld<N: RealField, Bodies: BodySet<N>, CollHandle: Collide
     substep: SubstepState<N, Bodies::Handle>,
 }
 
-impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWorld<N, Bodies, CollHandle> {
+impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
+    MechanicalWorld<N, Bodies, CollHandle>
+{
     /// Creates a new physics world with default parameters.
     ///
     /// The ground body is automatically created and added to the world without any colliders attached.
@@ -107,13 +110,16 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
     /// Maintain the internal structures of the mechanical world by handling insersion and removal
     /// events from every sets this mechanical world interacts with.
-    pub fn maintain<Colliders, Constraints>(&mut self,
-                                            gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
-                                            bodies: &mut Bodies,
-                                            colliders: &mut Colliders,
-                                            constraints: &mut Constraints)
-        where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
-              Constraints: JointConstraintSet<N, Bodies> {
+    pub fn maintain<Colliders, Constraints>(
+        &mut self,
+        gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
+        bodies: &mut Bodies,
+        colliders: &mut Colliders,
+        constraints: &mut Constraints,
+    ) where
+        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Bodies>,
+    {
         // NOTE: the order of handling events matters.
         // In particular, handling body removal events must be done first because it
         // can itself cause constraints or colliders to be automatically removed too.
@@ -172,15 +178,18 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
     }
 
     /// Execute one time step of the physics simulation.
-    pub fn step<Colliders, Constraints, Forces>(&mut self,
-                                                gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
-                                                bodies: &mut Bodies,
-                                                colliders: &mut Colliders,
-                                                constraints: &mut Constraints,
-                                                forces: &mut Forces)
-    where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
-          Constraints: JointConstraintSet<N, Bodies>,
-          Forces: ForceGeneratorSet<N, Bodies> {
+    pub fn step<Colliders, Constraints, Forces>(
+        &mut self,
+        gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
+        bodies: &mut Bodies,
+        colliders: &mut Colliders,
+        constraints: &mut Constraints,
+        forces: &mut Forces,
+    ) where
+        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Bodies>,
+        Forces: ForceGeneratorSet<N, Bodies>,
+    {
         if !self.substep.active {
             self.counters.step_started();
 
@@ -205,9 +214,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
             // FIXME: how to make force generators work
             // with the external body set?
             let parameters = &self.integration_parameters;
-            forces.foreach_mut(|_, f| {
-                f.apply(parameters, bodies)
-            });
+            forces.foreach_mut(|_, f| f.apply(parameters, bodies));
 
             bodies.foreach_mut(|_, b| {
                 b.update_acceleration(&self.gravity, parameters);
@@ -223,9 +230,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
             gworld.perform_broad_phase(colliders);
             gworld.perform_narrow_phase(colliders);
 
-            colliders.foreach_mut(|_, c| {
-                c.clear_update_flags()
-            });
+            colliders.foreach_mut(|_, c| c.clear_update_flags());
 
             /*
              *
@@ -263,9 +268,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                 let b2 = try_continue!(bodies.get(c2.body()));
 
                 if manifold.len() > 0
-                    && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
+                    && b1.status() != BodyStatus::Disabled
+                    && b2.status() != BodyStatus::Disabled
                     && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
-                    || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
+                        || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
                 {
                     contact_manifolds.push(ColliderContactManifold::new(h1, c1, h2, c2, manifold));
                 }
@@ -338,7 +344,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                 b.validate_advancement();
             });
 
-
             /*
              *
              * Update colliders and perform CD with the new
@@ -364,22 +369,22 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                 b.clear_update_flags();
             });
 
-            colliders.foreach_mut(|_, c| {
-                c.clear_update_flags()
-            })
+            colliders.foreach_mut(|_, c| c.clear_update_flags())
         }
     }
 
     // Outputs a sorted list of TOI event (in ascending order) for the given time interval,
     // assuming body motions clamped at their first TOI.
-    fn predict_next_impacts<Colliders>(&self,
-                                       gworld: &GeometricalWorld<N, Bodies::Handle, CollHandle>,
-                                       bodies: &Bodies,
-                                       colliders: &Colliders,
-                                       end_time: N)
-                                       -> PredictedImpacts<N, Bodies::Handle, CollHandle>
-        where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle> {
-
+    fn predict_next_impacts<Colliders>(
+        &self,
+        gworld: &GeometricalWorld<N, Bodies::Handle, CollHandle>,
+        bodies: &Bodies,
+        colliders: &Colliders,
+        end_time: N,
+    ) -> PredictedImpacts<N, Bodies::Handle, CollHandle>
+    where
+        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+    {
         let mut impacts = Vec::new();
         let mut frozen = HashMap::<_, N>::new();
         let mut timestamps = HashMap::new();
@@ -389,9 +394,11 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
         ColliderSet::foreach(colliders, |coll_handle, coll| {
             if coll.is_ccd_enabled() {
-                for (ch1, c1, ch2, c2, inter) in gworld.interactions_with(colliders, coll_handle, false).unwrap() {
+                for (ch1, c1, ch2, c2, inter) in gworld
+                    .interactions_with(colliders, coll_handle, false)
+                    .unwrap()
+                {
                     if pairs_seen.insert((ch1, ch2)) {
-                        
                         let handle1 = c1.body();
                         let handle2 = c2.body();
 
@@ -399,8 +406,19 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                         let (b1, b2) = (b1.unwrap(), b2.unwrap());
 
                         if let Some(toi) = TOIEntry::try_from_colliders(
-                            ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), None, None, &self.integration_parameters, min_overstep, &self.substep.body_times) {
-
+                            ch1,
+                            ch2,
+                            c1,
+                            c2,
+                            b1,
+                            b2,
+                            inter.is_proximity(),
+                            None,
+                            None,
+                            &self.integration_parameters,
+                            min_overstep,
+                            &self.substep.body_times,
+                        ) {
                             if toi.toi > end_time {
                                 min_overstep = min_overstep.min(toi.toi);
                             } else {
@@ -480,8 +498,9 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                     let frozen1 = frozen.get(&c1.body()).cloned();
                     let frozen2 = frozen.get(&c2.body()).cloned();
 
-                    if (frozen1.is_some() || c1.body_status_dependent_ndofs() == 0) &&
-                        (frozen2.is_some() || c2.body_status_dependent_ndofs() == 0) {
+                    if (frozen1.is_some() || c1.body_status_dependent_ndofs() == 0)
+                        && (frozen2.is_some() || c2.body_status_dependent_ndofs() == 0)
+                    {
                         continue;
                     }
 
@@ -491,9 +510,20 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                     let timestamp = timestamps.entry((ch1, ch2)).or_insert(0);
                     *timestamp += 1;
 
-
                     if let Some(mut toi) = TOIEntry::try_from_colliders(
-                        ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), frozen1, frozen2, &self.integration_parameters, end_time, &self.substep.body_times) {
+                        ch1,
+                        ch2,
+                        c1,
+                        c2,
+                        b1,
+                        b2,
+                        inter.is_proximity(),
+                        frozen1,
+                        frozen2,
+                        &self.integration_parameters,
+                        end_time,
+                        &self.substep.body_times,
+                    ) {
                         toi.timestamp = *timestamp;
                         all_toi.push(toi)
                     }
@@ -506,17 +536,18 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
         PredictedImpacts::Impacts(impacts, frozen)
     }
 
-
-
-    fn solve_ccd<Colliders, Constraints, Forces>(&mut self,
-                                                gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
-                                                bodies: &mut Bodies,
-                                                colliders: &mut Colliders,
-                                                constraints: &mut Constraints,
-                                                _forces: &mut Forces)
-        where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
-              Constraints: JointConstraintSet<N, Bodies>,
-              Forces: ForceGeneratorSet<N, Bodies> {
+    fn solve_ccd<Colliders, Constraints, Forces>(
+        &mut self,
+        gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
+        bodies: &mut Bodies,
+        colliders: &mut Colliders,
+        constraints: &mut Constraints,
+        _forces: &mut Forces,
+    ) where
+        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Bodies>,
+        Forces: ForceGeneratorSet<N, Bodies>,
+    {
         let dt0 = self.integration_parameters.dt();
         let _inv_dt0 = self.integration_parameters.inv_dt();
 
@@ -524,7 +555,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
             return;
         }
 
-        let substep_length = self.integration_parameters.dt() / na::convert(self.integration_parameters.max_ccd_substeps as f64);
+        let substep_length = self.integration_parameters.dt()
+            / na::convert(self.integration_parameters.max_ccd_substeps as f64);
 
         let mut parameters = self.integration_parameters.clone();
 
@@ -551,20 +583,18 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
             // Compute the next TOI.
             self.counters.ccd.toi_computation_time.resume();
 
-            let (toi_entries, frozen) = match self.predict_next_impacts(gworld, bodies, colliders, self.substep.end_time) {
-                PredictedImpacts::Impacts(toi_entries, frozen) => {
-                    (toi_entries, frozen)
-                },
-                PredictedImpacts::ImpactsAfterEndTime(min_toi) => {
-                    self.substep.end_time = (min_toi / substep_length).floor() * substep_length;
-                    self.substep.end_time = (self.substep.end_time + substep_length).min(dt0);
+            let (toi_entries, frozen) =
+                match self.predict_next_impacts(gworld, bodies, colliders, self.substep.end_time) {
+                    PredictedImpacts::Impacts(toi_entries, frozen) => (toi_entries, frozen),
+                    PredictedImpacts::ImpactsAfterEndTime(min_toi) => {
+                        self.substep.end_time = (min_toi / substep_length).floor() * substep_length;
+                        self.substep.end_time = (self.substep.end_time + substep_length).min(dt0);
 
-                    self.predict_next_impacts(gworld, bodies, colliders, self.substep.end_time).unwrap_impacts()
-                },
-                PredictedImpacts::NoImpacts => {
-                    (Vec::new(), HashMap::new())
-                }
-            };
+                        self.predict_next_impacts(gworld, bodies, colliders, self.substep.end_time)
+                            .unwrap_impacts()
+                    }
+                    PredictedImpacts::NoImpacts => (Vec::new(), HashMap::new()),
+                };
 
             self.counters.ccd.toi_computation_time.pause();
 
@@ -605,7 +635,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
                 self.counters.ccd.narrow_phase_time.resume();
 
-
                 // Advance colliders and update contact manifolds.
                 while let Some(c) = colliders_to_traverse.pop() {
                     if visited.contains(&c) {
@@ -617,8 +646,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
                     let graph_id = colliders.get(c).unwrap().graph_index().unwrap();
 
-                    for (ch1, ch2, eid, inter) in gworld.interactions.interactions_with_mut(graph_id) {
-                        if (ch1 == c && visited.contains(&ch2)) || (ch2 == c && visited.contains(&ch1)) {
+                    for (ch1, ch2, eid, inter) in
+                        gworld.interactions.interactions_with_mut(graph_id)
+                    {
+                        if (ch1 == c && visited.contains(&ch2))
+                            || (ch2 == c && visited.contains(&ch1))
+                        {
                             continue;
                         }
 
@@ -652,7 +685,11 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                                         let needs_prep = b1.companion_id() == 0 && b1.is_dynamic();
 
                                         if needs_prep {
-                                            prepare_body(handle1, b1, colliders.get_mut(ch1).unwrap())
+                                            prepare_body(
+                                                handle1,
+                                                b1,
+                                                colliders.get_mut(ch1).unwrap(),
+                                            )
                                         }
                                         needs_prep
                                     };
@@ -662,7 +699,11 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                                         let needs_prep = b2.companion_id() == 0 && b2.is_dynamic();
 
                                         if needs_prep {
-                                            prepare_body(handle2, b2, colliders.get_mut(ch2).unwrap())
+                                            prepare_body(
+                                                handle2,
+                                                b2,
+                                                colliders.get_mut(ch2).unwrap(),
+                                            )
                                         }
                                         needs_prep
                                     };
@@ -670,19 +711,25 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                                     let (c1, c2) = colliders.get_pair(ch1, ch2);
                                     let (c1, c2) = (c1.unwrap(), c2.unwrap());
 
-                                    gworld.narrow_phase.update_contact(c1, c2, ch1, ch2, &mut **alg, manifold);
+                                    gworld
+                                        .narrow_phase
+                                        .update_contact(c1, c2, ch1, ch2, &mut **alg, manifold);
 
                                     if manifold.len() > 0 {
                                         interaction_ids.push(eid);
 
                                         if ch1 != c && b1_needs_preparation {
-                                            let all_colliders1 = gworld.body_colliders.get(&handle1).unwrap();
-                                            colliders_to_traverse.extend_from_slice(&all_colliders1[..]);
+                                            let all_colliders1 =
+                                                gworld.body_colliders.get(&handle1).unwrap();
+                                            colliders_to_traverse
+                                                .extend_from_slice(&all_colliders1[..]);
                                         }
 
                                         if ch2 != c && b2_needs_preparation {
-                                            let all_colliders2 = gworld.body_colliders.get(&handle2).unwrap();
-                                            colliders_to_traverse.extend_from_slice(&all_colliders2[..]);
+                                            let all_colliders2 =
+                                                gworld.body_colliders.get(&handle2).unwrap();
+                                            colliders_to_traverse
+                                                .extend_from_slice(&all_colliders2[..]);
                                         }
                                     }
                                 }
@@ -702,7 +749,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                     if toi.is_proximity {
                         let mut c1 = colliders.get(toi.c1).unwrap();
                         let mut c2 = colliders.get(toi.c2).unwrap();
-                        let (ch1, ch2, detector, prox) = gworld.interactions.proximity_pair_mut(c1.graph_index().unwrap(), c2.graph_index().unwrap()).unwrap();
+                        let (ch1, ch2, detector, prox) = gworld
+                            .interactions
+                            .proximity_pair_mut(
+                                c1.graph_index().unwrap(),
+                                c2.graph_index().unwrap(),
+                            )
+                            .unwrap();
 
                         if ch1 != toi.c1 {
                             // The order of the colliders may not be the same in the interaction.
@@ -710,7 +763,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                         }
 
                         // Emit an event (the case where we already have *prox == Intersecting will be filtered out automatically).
-                        gworld.narrow_phase.emit_proximity_event(ch1, ch2, *prox, Proximity::Intersecting);
+                        gworld.narrow_phase.emit_proximity_event(
+                            ch1,
+                            ch2,
+                            *prox,
+                            Proximity::Intersecting,
+                        );
 
                         // Set the proximity as intersecting.
                         *prox = Proximity::Intersecting;
@@ -719,7 +777,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                         // final proximity event will only depend on the final position of the
                         // colliders (and thus will be handled by the final narrow-phase update of
                         // the non-ccd step).
-                        if self.integration_parameters.multiple_ccd_substep_sensor_events_enabled {
+                        if self
+                            .integration_parameters
+                            .multiple_ccd_substep_sensor_events_enabled
+                        {
                             // If the bodies of the colliders have been
                             // teleported at a time of impact, then we have to update the proximity now
                             // to account for multiple on/off proximity events during consecutive substeps.
@@ -736,14 +797,9 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                             let b2 = bodies.get(c2.body()).unwrap();
 
                             if b1.companion_id() == 1 || b2.companion_id() == 1 {
-                                gworld.narrow_phase.update_proximity(
-                                    c1,
-                                    c2,
-                                    ch1,
-                                    ch2,
-                                    detector,
-                                    prox
-                                )
+                                gworld
+                                    .narrow_phase
+                                    .update_proximity(c1, c2, ch1, ch2, detector, prox)
                             }
                         }
                     }
@@ -756,7 +812,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                         Interaction::Contact(_, manifold) => {
                             let c1 = colliders.get(ch1).unwrap();
                             let c2 = colliders.get(ch2).unwrap();
-                            contact_manifolds.push(ColliderContactManifold::new(ch1, c1, ch2, c2, manifold));
+                            contact_manifolds
+                                .push(ColliderContactManifold::new(ch1, c1, ch2, c2, manifold));
                         }
                         Interaction::Proximity(..) => {}
                     }
@@ -816,7 +873,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
     }
 }
 
-
 struct TOIEntry<N: RealField, Handle, CollHandle> {
     toi: N,
     c1: CollHandle,
@@ -824,36 +880,46 @@ struct TOIEntry<N: RealField, Handle, CollHandle> {
     c2: CollHandle,
     b2: Handle,
     is_proximity: bool,
-    timestamp: usize
+    timestamp: usize,
 }
 
 impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, Handle, CollHandle> {
-    fn new(toi: N,
-           c1: CollHandle,
-           b1: Handle,
-           c2: CollHandle,
-           b2: Handle,
-           is_proximity: bool,
-           timestamp: usize)
-    -> Self {
+    fn new(
+        toi: N,
+        c1: CollHandle,
+        b1: Handle,
+        c2: CollHandle,
+        b2: Handle,
+        is_proximity: bool,
+        timestamp: usize,
+    ) -> Self
+    {
         Self {
-            toi, c1, b1, c2, b2, is_proximity, timestamp
+            toi,
+            c1,
+            b1,
+            c2,
+            b2,
+            is_proximity,
+            timestamp,
         }
     }
 
-    fn try_from_colliders(ch1: CollHandle,
-                          ch2: CollHandle,
-                          c1: &Collider<N, Handle>,
-                          c2: &Collider<N, Handle>,
-                          b1: &(impl Body<N> + ?Sized),
-                          b2: &(impl Body<N> + ?Sized),
-                          is_proximity: bool,
-                          frozen1: Option<N>,
-                          frozen2: Option<N>,
-                          params: &IntegrationParameters<N>,
-                          end_time: N,
-                          body_times: &HashMap<Handle, N>)
-                        -> Option<Self> {
+    fn try_from_colliders(
+        ch1: CollHandle,
+        ch2: CollHandle,
+        c1: &Collider<N, Handle>,
+        c2: &Collider<N, Handle>,
+        b1: &(impl Body<N> + ?Sized),
+        b2: &(impl Body<N> + ?Sized),
+        is_proximity: bool,
+        frozen1: Option<N>,
+        frozen2: Option<N>,
+        params: &IntegrationParameters<N>,
+        end_time: N,
+        body_times: &HashMap<Handle, N>,
+    ) -> Option<Self>
+    {
         let _margins = c1.margin() + c2.margin();
         let target = params.allowed_linear_error; // self.integration_parameters.allowed_linear_error.max(margins - self.integration_parameters.allowed_linear_error * na::convert(3.0));
 
@@ -886,16 +952,40 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         if motion1.is_static_or_linear() && motion2.is_static_or_linear() {
             let pos1 = motion1.position_at_time(N::zero()) * c1.position_wrt_body();
             let pos2 = motion2.position_at_time(N::zero()) * c2.position_wrt_body();
-            toi = query::time_of_impact(&pos1, &motion1.linvel(), c1.shape(), &pos2, &motion2.linvel(), c2.shape(), remaining_time, target)?
+            toi = query::time_of_impact(
+                &pos1,
+                &motion1.linvel(),
+                c1.shape(),
+                &pos2,
+                &motion2.linvel(),
+                c2.shape(),
+                remaining_time,
+                target,
+            )?
         } else {
             let motion1 = motion1.prepend_transformation(c1.position_wrt_body());
             let motion2 = motion2.prepend_transformation(c2.position_wrt_body());
-            toi = query::nonlinear_time_of_impact(&motion1, c1.shape(), &motion2, c2.shape(), remaining_time, target)?
+            toi = query::nonlinear_time_of_impact(
+                &motion1,
+                c1.shape(),
+                &motion2,
+                c2.shape(),
+                remaining_time,
+                target,
+            )?
         }
 
         if params.ccd_on_penetration_enabled || toi.status != TOIStatus::Penetrating {
             let toi = start_time + toi.toi;
-            Some(Self::new(toi, ch1, c1.body(), ch2, c2.body(), is_proximity, 0))
+            Some(Self::new(
+                toi,
+                ch1,
+                c1.body(),
+                ch2,
+                c2.body(),
+                is_proximity,
+                0,
+            ))
         } else {
             None
         }
@@ -920,5 +1010,4 @@ impl<N: RealField, CollHandle, BodyHandle> PartialEq for TOIEntry<N, CollHandle,
     }
 }
 
-impl<N: RealField, CollHandle, BodyHandle> Eq for TOIEntry<N, CollHandle, BodyHandle> {
-}
+impl<N: RealField, CollHandle, BodyHandle> Eq for TOIEntry<N, CollHandle, BodyHandle> {}

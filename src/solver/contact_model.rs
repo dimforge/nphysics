@@ -5,14 +5,19 @@ use na::{DVector, RealField};
 use ncollide::query::ContactId;
 
 use crate::detection::ColliderContactManifold;
-use crate::object::{BodySet, ColliderHandle};
 use crate::material::MaterialsCoefficientsTable;
+use crate::object::{BodySet, ColliderHandle};
 use crate::solver::{ConstraintSet, IntegrationParameters};
 
 /// The modeling of a contact.
-pub trait ContactModel<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>: Downcast + Send + Sync {
+pub trait ContactModel<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>:
+    Downcast + Send + Sync
+{
     /// Maximum number of velocity constraint to be generated for each contact.
-    fn num_velocity_constraints(&self, manifold: &ColliderContactManifold<N, Bodies::Handle, CollHandle>) -> usize;
+    fn num_velocity_constraints(
+        &self,
+        manifold: &ColliderContactManifold<N, Bodies::Handle, CollHandle>,
+    ) -> usize;
     /// Generate all constraints for the given contact manifolds.
     fn constraints(
         &mut self,
@@ -28,7 +33,10 @@ pub trait ContactModel<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHan
     );
 
     /// Stores all the impulses found by the solver into a cache for warmstarting.
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>);
+    fn cache_impulses(
+        &mut self,
+        constraints: &ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
+    );
 }
 
 impl_downcast!(ContactModel<N, Bodies, CollHandle> where N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle);

@@ -2,11 +2,12 @@ use na::RealField;
 use ncollide::query::{ContactManifold, TrackedContact};
 use ncollide::shape::FeatureId;
 
-use crate::object::{BodyPartHandle, Collider, ColliderAnchor, ColliderHandle, BodyHandle};
+use crate::object::{BodyHandle, BodyPartHandle, Collider, ColliderAnchor, ColliderHandle};
 
 /// A contact manifold between two bodies.
 #[derive(Clone)]
-pub struct ColliderContactManifold<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
+pub struct ColliderContactManifold<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+{
     /// The handle of the first collider involved in the contact.
     pub handle1: CollHandle,
     /// The first collider involved in the contact.
@@ -19,7 +20,9 @@ pub struct ColliderContactManifold<'a, N: RealField, Handle: BodyHandle, CollHan
     pub manifold: &'a ContactManifold<N>,
 }
 
-impl<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderContactManifold<'a, N, Handle, CollHandle> {
+impl<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    ColliderContactManifold<'a, N, Handle, CollHandle>
+{
     /// Initialize a new contact manifold.
     pub fn new(
         handle1: CollHandle,
@@ -27,7 +30,8 @@ impl<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderC
         handle2: CollHandle,
         collider2: &'a Collider<N, Handle>,
         manifold: &'a ContactManifold<N>,
-    ) -> Self {
+    ) -> Self
+    {
         ColliderContactManifold {
             handle1,
             collider1,
@@ -68,7 +72,9 @@ impl<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderC
     pub fn body_part1(&self, feature1: FeatureId) -> BodyPartHandle<Handle> {
         match self.collider1.anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
-            ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
+            ColliderAnchor::OnDeformableBody {
+                body, body_parts, ..
+            } => {
                 let subshape_id = self.collider1.shape().subshape_containing_feature(feature1);
                 if let Some(body_parts) = body_parts {
                     BodyPartHandle(*body, body_parts[subshape_id])
@@ -85,7 +91,9 @@ impl<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderC
     pub fn body_part2(&self, feature2: FeatureId) -> BodyPartHandle<Handle> {
         match self.collider2.anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
-            ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
+            ColliderAnchor::OnDeformableBody {
+                body, body_parts, ..
+            } => {
                 let subshape_id = self.collider2.shape().subshape_containing_feature(feature2);
                 if let Some(body_parts) = body_parts {
                     BodyPartHandle(*body, body_parts[subshape_id])

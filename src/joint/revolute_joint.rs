@@ -3,8 +3,10 @@
 use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
-use crate::math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use crate::object::{MultibodyLink, Multibody, BodyPartHandle};
+use crate::math::{
+    AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity,
+};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 use crate::utils::GeneralizedCross;
 
@@ -198,7 +200,8 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         let shift = self.rot * -body_shift;
         let shift_dot_veldiff = self.axis.gcross(&shift);
 
-        self.jacobian = Velocity::new_with_vectors(self.axis.gcross(&shift), self.axis.into_inner());
+        self.jacobian =
+            Velocity::new_with_vectors(self.axis.gcross(&shift), self.axis.into_inner());
         self.jacobian_dot_veldiff.linear = self.axis.gcross(&shift_dot_veldiff);
         self.jacobian_dot.linear = self.jacobian_dot_veldiff.linear * vels[0];
     }
@@ -216,7 +219,8 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         transform: &Isometry<N>,
         acc: &[N],
         out: &mut JacobianSliceMut<N>,
-    ) {
+    )
+    {
         out.copy_from((self.jacobian_dot_veldiff.transformed(transform) * acc[0]).as_vector())
     }
 
@@ -262,7 +266,8 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    ) {
+    )
+    {
         joint::unit_joint_velocity_constraints(
             self,
             parameters,
@@ -293,8 +298,11 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>> {
-        joint::unit_joint_position_constraint(self, multibody, link, handle, dof_id, true, jacobians)
+    ) -> Option<GenericNonlinearConstraint<N, ()>>
+    {
+        joint::unit_joint_position_constraint(
+            self, multibody, link, handle, dof_id, true, jacobians,
+        )
     }
 }
 

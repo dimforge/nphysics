@@ -22,7 +22,7 @@ pub enum ForceType {
     /// A direct acceleration change (mass is ignored).
     AccelerationChange,
     /// A direct velocity change (mass and delta time are ignored).
-    VelocityChange
+    VelocityChange,
 }
 
 mod velocity2;

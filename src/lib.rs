@@ -72,7 +72,6 @@ The libraries needed to compile the examples are:
 #![allow(missing_copy_implementations)]
 #![doc(html_root_url = "http://nphysics.org/rustdoc/")]
 
-
 #[macro_use]
 extern crate approx;
 #[macro_use]
@@ -94,16 +93,13 @@ extern crate num_traits as num;
 #[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
 extern crate time;
 
-#[cfg(all(
-  any(target_arch = "wasm32", target_arch = "asmjs"),
-  feature = "stdweb",
-))]
+#[cfg(all(any(target_arch = "wasm32", target_arch = "asmjs"), feature = "stdweb",))]
 #[macro_use]
 extern crate stdweb;
 
 #[cfg(all(
-  any(target_arch = "wasm32", target_arch = "asmjs"),
-  feature = "use-wasm-bindgen",
+    any(target_arch = "wasm32", target_arch = "asmjs"),
+    feature = "use-wasm-bindgen",
 ))]
 extern crate wasm_bindgen;
 
@@ -120,7 +116,7 @@ macro_rules! try_ret {
         } else {
             return $ret;
         }
-    }
+    };
 }
 
 macro_rules! try_continue {
@@ -130,7 +126,7 @@ macro_rules! try_continue {
         } else {
             continue;
         }
-    }
+    };
 }
 
 macro_rules! desc_setters(
@@ -236,7 +232,6 @@ macro_rules! user_data_accessors(
     }
 );
 
-
 macro_rules! user_data_desc_accessors(
     () => {
         /// Sets a user-data to be attached to the object being built.
@@ -258,19 +253,20 @@ macro_rules! user_data_desc_accessors(
     }
 );
 
-const NOT_REGISTERED_ERROR: &'static str = "This collider has not been registered into a world (proxy indexes are None).";
+const NOT_REGISTERED_ERROR: &'static str =
+    "This collider has not been registered into a world (proxy indexes are None).";
 
 pub mod algebra;
 pub mod counters;
 pub mod detection;
 pub mod force_generator;
 pub mod joint;
+pub mod material;
 pub mod object;
 pub mod solver;
 pub mod utils;
 pub mod volumetric;
 pub mod world;
-pub mod material;
 // mod tests;
 
 /// Compilation flags dependent aliases for mathematical types.
@@ -279,7 +275,7 @@ pub mod math {
     use crate::algebra::{Force3, Inertia3, Velocity3};
     use na::{
         Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX, Point3,
-        Translation3, U3, U6, UnitQuaternion, Vector3, Vector6, Rotation3
+        Rotation3, Translation3, UnitQuaternion, Vector3, Vector6, U3, U6,
     };
 
     pub use crate::algebra::ForceType;
@@ -363,8 +359,8 @@ pub mod math {
 pub mod math {
     use crate::algebra::{Force2, Inertia2, Velocity2};
     use na::{
-        Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX, Point2,
-        Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3, Rotation2, Matrix2
+        Dynamic, Isometry2, Matrix1, Matrix2, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX,
+        Point2, Rotation2, Translation2, UnitComplex, Vector1, Vector2, Vector3, U1, U2, U3,
     };
 
     pub use crate::algebra::ForceType;

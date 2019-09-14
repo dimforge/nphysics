@@ -5,10 +5,12 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
-use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
+use crate::object::{Body, BodyHandle, BodyPartHandle, BodySet};
 use crate::solver::helper;
-use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
-             NonlinearConstraintGenerator};
+use crate::solver::{
+    GenericNonlinearConstraint, IntegrationParameters, LinearConstraints,
+    NonlinearConstraintGenerator,
+};
 
 /// A constraint that removes all relative motions except the rotation between two body parts.
 #[cfg(feature = "dim2")]
@@ -61,7 +63,8 @@ impl<N: RealField, Handle: BodyHandle> RevoluteConstraint<N, Handle> {
         axis1: Unit<AngularVector<N>>,
         anchor2: Point<N>,
         axis2: Unit<AngularVector<N>>,
-    ) -> Self {
+    ) -> Self
+    {
         // let min_angle = None;
         // let max_angle = None;
         RevoluteConstraint {
@@ -87,7 +90,13 @@ impl<N: RealField, Handle: BodyHandle> RevoluteConstraint<N, Handle> {
     ///
     /// Both achors are expressed in the local coordinate system of the corresponding body parts.
     #[cfg(feature = "dim2")]
-    pub fn new(b1: BodyPartHandle<Handle>, b2: BodyPartHandle<Handle>, anchor1: Point<N>, anchor2: Point<N>) -> Self {
+    pub fn new(
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
+        anchor1: Point<N>,
+        anchor2: Point<N>,
+    ) -> Self
+    {
         // let min_angle = None;
         // let max_angle = None;
 
@@ -153,7 +162,9 @@ impl<N: RealField, Handle: BodyHandle> RevoluteConstraint<N, Handle> {
     // }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for RevoluteConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
+    JointConstraint<N, Bodies> for RevoluteConstraint<N, Handle>
+{
     fn is_broken(&self) -> bool {
         self.broken
     }
@@ -175,7 +186,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut LinearConstraints<N, usize>,
-    ) {
+    )
+    {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
@@ -219,30 +231,30 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         );
 
         #[cfg(feature = "dim3")]
-            {
-                let axis1 = pos1 * self.axis1;
+        {
+            let axis1 = pos1 * self.axis1;
 
-                helper::restrict_relative_angular_velocity_to_axis(
-                    body1,
-                    part1,
-                    self.b1,
-                    body2,
-                    part2,
-                    self.b2,
-                    assembly_id1,
-                    assembly_id2,
-                    &axis1,
-                    &anchor1,
-                    &anchor2,
-                    ext_vels,
-                    self.ang_impulses.as_slice(),
-                    DIM,
-                    ground_j_id,
-                    j_id,
-                    jacobians,
-                    constraints,
-                );
-            }
+            helper::restrict_relative_angular_velocity_to_axis(
+                body1,
+                part1,
+                self.b1,
+                body2,
+                part2,
+                self.b2,
+                assembly_id1,
+                assembly_id2,
+                &axis1,
+                &anchor1,
+                &anchor2,
+                ext_vels,
+                self.ang_impulses.as_slice(),
+                DIM,
+                ground_j_id,
+                j_id,
+                jacobians,
+                constraints,
+            );
+        }
 
         /*
          *
@@ -250,8 +262,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
          *
          */
 
-        self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_ground_rng = first_bilateral_ground..constraints.bilateral_ground.len();
         self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
@@ -274,14 +285,17 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
 
         let inv_dt2 = inv_dt * inv_dt;
 
-        if self.lin_impulses.norm_squared() * inv_dt2 > self.break_force_squared ||
-            self.ang_impulses.norm_squared() * inv_dt2 > self.break_torque_squared {
+        if self.lin_impulses.norm_squared() * inv_dt2 > self.break_force_squared
+            || self.ang_impulses.norm_squared() * inv_dt2 > self.break_torque_squared
+        {
             self.broken = true;
         }
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for RevoluteConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
+    NonlinearConstraintGenerator<N, Bodies> for RevoluteConstraint<N, Handle>
+{
     fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
@@ -301,7 +315,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>>
+    {
         let body1 = bodies.get(self.b1.0)?;
         let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
@@ -315,41 +330,23 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
         if i == 0 {
             return helper::cancel_relative_translation(
-                parameters,
-                body1,
-                part1,
-                self.b1,
-                body2,
-                part2,
-                self.b2,
-                &anchor1,
-                &anchor2,
+                parameters, body1, part1, self.b1, body2, part2, self.b2, &anchor1, &anchor2,
                 jacobians,
             );
         }
 
         #[cfg(feature = "dim3")]
-            {
-                if i == 1 {
-                    let axis1 = pos1 * self.axis1;
-                    let axis2 = pos2 * self.axis2;
+        {
+            if i == 1 {
+                let axis1 = pos1 * self.axis1;
+                let axis2 = pos2 * self.axis2;
 
-                    return helper::align_axis(
-                        parameters,
-                        body1,
-                        part1,
-                        self.b1,
-                        body2,
-                        part2,
-                        self.b2,
-                        &anchor1,
-                        &anchor2,
-                        &axis1,
-                        &axis2,
-                        jacobians,
-                    );
-                }
+                return helper::align_axis(
+                    parameters, body1, part1, self.b1, body2, part2, self.b2, &anchor1, &anchor2,
+                    &axis1, &axis2, jacobians,
+                );
             }
+        }
 
         return None;
     }

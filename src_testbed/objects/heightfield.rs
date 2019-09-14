@@ -1,16 +1,16 @@
+#[cfg(feature = "dim3")]
+use crate::objects::node::{self, GraphicsNode};
 use kiss3d::window::Window;
 use na::{self, Point3};
-#[cfg(feature = "dim2")]
-use nphysics::math::Point;
-use nphysics::math::Isometry;
-#[cfg(feature = "dim3")]
-use nphysics::math::Vector;
-use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 use ncollide::shape;
 #[cfg(feature = "dim3")]
 use ncollide::transformation::ToTriMesh;
+use nphysics::math::Isometry;
+#[cfg(feature = "dim2")]
+use nphysics::math::Point;
 #[cfg(feature = "dim3")]
-use crate::objects::node::{self, GraphicsNode};
+use nphysics::math::Vector;
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 
 pub struct HeightField {
     color: Point3<f32>,
@@ -33,7 +33,8 @@ impl HeightField {
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         _: &mut Window,
-    ) -> HeightField {
+    ) -> HeightField
+    {
         let mut vertices = Vec::new();
 
         for seg in heightfield.segments() {
@@ -60,7 +61,8 @@ impl HeightField {
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> HeightField {
+    ) -> HeightField
+    {
         let mesh = heightfield.to_trimesh(());
 
         let mut res = HeightField {
@@ -76,10 +78,10 @@ impl HeightField {
             .unwrap()
             .query_type()
             .is_proximity_query()
-            {
-                res.gfx.set_surface_rendering_activation(false);
-                res.gfx.set_lines_width(1.0);
-            }
+        {
+            res.gfx.set_surface_rendering_activation(false);
+            res.gfx.set_lines_width(1.0);
+        }
 
         res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
@@ -107,13 +109,13 @@ impl HeightField {
 
     pub fn update(&mut self, _colliders: &DefaultColliderSet<f32>) {
         #[cfg(feature = "dim3")]
-            node::update_scene_node(
-                &mut self.gfx,
-                _colliders,
-                self.collider,
-                &self.color,
-                &self.delta,
-            );
+        node::update_scene_node(
+            &mut self.gfx,
+            _colliders,
+            self.collider,
+            &self.color,
+            &self.delta,
+        );
     }
 
     #[cfg(feature = "dim3")]

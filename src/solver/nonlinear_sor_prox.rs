@@ -1,29 +1,40 @@
-use na::{self, Dim, Dynamic, RealField, U1, VectorSliceMutN};
+use na::{self, Dim, Dynamic, RealField, VectorSliceMutN, U1};
 use std::ops::MulAssign;
 
-
-use crate::joint::{JointConstraintSet};
-use crate::object::{ColliderAnchor, BodySet, Body, ColliderSet};
-use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator,
-                    NonlinearUnilateralConstraint, GenericNonlinearConstraint};
+use crate::joint::JointConstraintSet;
 use crate::math::Isometry;
+use crate::object::{Body, BodySet, ColliderAnchor, ColliderSet};
+use crate::solver::{
+    ForceDirection, GenericNonlinearConstraint, IntegrationParameters,
+    NonlinearConstraintGenerator, NonlinearUnilateralConstraint,
+};
 
 /// Non-linear position-based constraint solver using the SOR-Prox approach.
 pub(crate) struct NonlinearSORProx;
 
 impl NonlinearSORProx {
     /// Solve a set of nonlinear position-based constraints.
-    pub fn solve<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>, Constraints: JointConstraintSet<N, Bodies>>(
+    pub fn solve<
+        N: RealField,
+        Bodies: BodySet<N>,
+        Colliders: ColliderSet<N, Bodies::Handle>,
+        Constraints: JointConstraintSet<N, Bodies>,
+    >(
         parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         colliders: &Colliders,
-        contact_constraints: &mut [NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>],
+        contact_constraints: &mut [NonlinearUnilateralConstraint<
+            N,
+            Bodies::Handle,
+            Colliders::Handle,
+        >],
         joints_constraints: &Constraints,
         island_joints: &[Constraints::Handle],
         internal_constraints: &[Bodies::Handle],
         jacobians: &mut [N],
         max_iter: usize,
-    ) {
+    )
+    {
         for _ in 0..max_iter {
             for handle in island_joints {
                 if let Some(joint) = joints_constraints.get(*handle) {
@@ -41,21 +52,30 @@ impl NonlinearSORProx {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
-                Self::solve_unilateral(parameters, bodies, colliders, constraint, jacobians, dim1, dim2);
+                Self::solve_unilateral(
+                    parameters, bodies, colliders, constraint, jacobians, dim1, dim2,
+                );
             }
         }
     }
 
-    fn solve_generator<N: RealField, Bodies: BodySet<N>, Gen: ?Sized + NonlinearConstraintGenerator<N, Bodies>>(
+    fn solve_generator<
+        N: RealField,
+        Bodies: BodySet<N>,
+        Gen: ?Sized + NonlinearConstraintGenerator<N, Bodies>,
+    >(
         parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         generator: &Gen,
         jacobians: &mut [N],
-    ) {
+    )
+    {
         let nconstraints = generator.num_position_constraints(bodies);
 
         for i in 0..nconstraints {
-            if let Some(mut constraint) = generator.position_constraint(parameters, i, bodies, jacobians) {
+            if let Some(mut constraint) =
+                generator.position_constraint(parameters, i, bodies, jacobians)
+            {
                 Self::solve_generic(parameters, bodies, &mut constraint, jacobians)
             }
         }
@@ -66,7 +86,8 @@ impl NonlinearSORProx {
         bodies: &mut Bodies,
         constraint: &mut GenericNonlinearConstraint<N, Bodies::Handle>,
         jacobians: &mut [N],
-    ) {
+    )
+    {
         let dim1 = Dynamic::new(constraint.dim1);
         let dim2 = Dynamic::new(constraint.dim2);
 
@@ -75,17 +96,11 @@ impl NonlinearSORProx {
         if rhs < N::zero() {
             let impulse = -rhs * constraint.r;
 
-            VectorSliceMutN::from_slice_generic(
-                &mut jacobians[constraint.wj_id1..],
-                dim1,
-                U1,
-            ).mul_assign(impulse);
+            VectorSliceMutN::from_slice_generic(&mut jacobians[constraint.wj_id1..], dim1, U1)
+                .mul_assign(impulse);
 
-            VectorSliceMutN::from_slice_generic(
-                &mut jacobians[constraint.wj_id2..],
-                dim2,
-                U1,
-            ).mul_assign(impulse);
+            VectorSliceMutN::from_slice_generic(&mut jacobians[constraint.wj_id2..], dim2, U1)
+                .mul_assign(impulse);
 
             // FIXME: the body update should be performed lazily, especially because
             // we dont actually need to update the kinematic of a multibody until
@@ -110,7 +125,13 @@ impl NonlinearSORProx {
         }
     }
 
-    fn solve_unilateral<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>, D1: Dim, D2: Dim>(
+    fn solve_unilateral<
+        N: RealField,
+        Bodies: BodySet<N>,
+        Colliders: ColliderSet<N, Bodies::Handle>,
+        D1: Dim,
+        D2: Dim,
+    >(
         parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         colliders: &Colliders,
@@ -118,7 +139,8 @@ impl NonlinearSORProx {
         jacobians: &mut [N],
         dim1: D1,
         dim2: D2,
-    ) {
+    )
+    {
         if Self::update_contact_constraint(parameters, bodies, colliders, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
@@ -139,13 +161,18 @@ impl NonlinearSORProx {
         }
     }
 
-    fn update_contact_constraint<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>>(
+    fn update_contact_constraint<
+        N: RealField,
+        Bodies: BodySet<N>,
+        Colliders: ColliderSet<N, Bodies::Handle>,
+    >(
         parameters: &IntegrationParameters<N>,
         bodies: &Bodies,
         colliders: &Colliders,
         constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>,
         jacobians: &mut [N],
-    ) -> bool {
+    ) -> bool
+    {
         let body1 = try_ret!(bodies.get(constraint.body1.0), false);
         let body2 = try_ret!(bodies.get(constraint.body2.0), false);
         let part1 = try_ret!(body1.part(constraint.body1.1), false);
@@ -161,14 +188,19 @@ impl NonlinearSORProx {
         match collider1.anchor() {
             ColliderAnchor::OnDeformableBody { .. } => {
                 let coords = body1.deformed_positions().unwrap().1;
-                collider1.shape().as_deformable_shape().unwrap().update_local_approximation(
-                    coords,
-                    constraint.kinematic.approx1_mut());
+                collider1
+                    .shape()
+                    .as_deformable_shape()
+                    .unwrap()
+                    .update_local_approximation(coords, constraint.kinematic.approx1_mut());
                 // FIXME: is this really the identity?
                 pos1 = Isometry::identity();
                 coords1 = Some(coords);
             }
-            ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => {
+            ColliderAnchor::OnBodyPart {
+                position_wrt_body_part,
+                ..
+            } => {
                 pos1 = part1.position() * position_wrt_body_part;
                 coords1 = None;
             }
@@ -177,22 +209,33 @@ impl NonlinearSORProx {
         match collider2.anchor() {
             ColliderAnchor::OnDeformableBody { .. } => {
                 let coords = body2.deformed_positions().unwrap().1;
-                collider2.shape().as_deformable_shape().unwrap().update_local_approximation(
-                    coords,
-                    constraint.kinematic.approx2_mut());
+                collider2
+                    .shape()
+                    .as_deformable_shape()
+                    .unwrap()
+                    .update_local_approximation(coords, constraint.kinematic.approx2_mut());
                 // FIXME: is this really the identity?
                 pos2 = Isometry::identity();
                 coords2 = Some(coords);
             }
-            ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => {
+            ColliderAnchor::OnBodyPart {
+                position_wrt_body_part,
+                ..
+            } => {
                 pos2 = part2.position() * position_wrt_body_part;
                 coords2 = None;
             }
         }
 
-        if let Some(contact) = constraint
-            .kinematic
-            .contact(&pos1, collider1.shape(), coords1, &pos2, collider2.shape(), coords2, &constraint.normal1) {
+        if let Some(contact) = constraint.kinematic.contact(
+            &pos1,
+            collider1.shape(),
+            coords1,
+            &pos2,
+            collider2.shape(),
+            coords2,
+            &constraint.normal1,
+        ) {
             constraint.rhs = Self::clamp_rhs(-contact.depth, false, parameters);
 
             if constraint.rhs >= N::zero() {
@@ -215,7 +258,7 @@ impl NonlinearSORProx {
                     jacobians,
                     &mut inv_r,
                     None,
-                    None
+                    None,
                 );
             }
 
@@ -230,7 +273,7 @@ impl NonlinearSORProx {
                     jacobians,
                     &mut inv_r,
                     None,
-                    None
+                    None,
                 );
             }
 
@@ -260,7 +303,12 @@ impl NonlinearSORProx {
     }
 
     #[inline]
-    pub fn clamp_rhs<N: RealField>(rhs: N, is_angular: bool, parameters: &IntegrationParameters<N>) -> N {
+    pub fn clamp_rhs<N: RealField>(
+        rhs: N,
+        is_angular: bool,
+        parameters: &IntegrationParameters<N>,
+    ) -> N
+    {
         if is_angular {
             na::sup(
                 &((rhs + parameters.allowed_angular_error) * parameters.erp),

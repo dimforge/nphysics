@@ -1,18 +1,19 @@
 extern crate nalgebra as na;
 
-
-use std::f32;
-use std::path::Path;
-use na::{Isometry3, Point3, Vector3};
 use kiss3d::loader::obj;
-use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
+use na::{Isometry3, Point3, Vector3};
 use ncollide3d::procedural;
-use nphysics3d::object::{MassConstraintSystemDesc, ColliderDesc, DeformableColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, DeformableColliderDesc,
+    Ground, MassConstraintSystemDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
-
+use std::f32;
+use std::path::Path;
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -29,8 +30,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let ground_thickness = 0.2;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(50.0, ground_thickness, 50.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(50.0, ground_thickness, 50.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -82,13 +82,18 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(10.0, 4.0, 10.0), Point3::new(0.0, 4.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Mass-constraint system", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Mass-constraint system", init_world)]);
     testbed.run()
 }

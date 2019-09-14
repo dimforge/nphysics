@@ -1,25 +1,28 @@
-use std::ops::{AddAssign, SubAssign};
-use std::iter;
-use std::collections::{HashMap, HashSet};
-use std::marker::PhantomData;
-use std::any::Any;
 use either::Either;
+use std::any::Any;
+use std::collections::{HashMap, HashSet};
+use std::iter;
+use std::marker::PhantomData;
+use std::ops::{AddAssign, SubAssign};
 
-use na::{self, RealField, DVector, DVectorSlice, DVectorSliceMut, Unit};
 #[cfg(feature = "dim3")]
 use na::Vector2;
-use ncollide::utils::DeterministicState;
+use na::{self, DVector, DVectorSlice, DVectorSliceMut, RealField, Unit};
 #[cfg(feature = "dim3")]
 use ncollide::procedural;
-use ncollide::shape::{DeformationsType, Polyline};
 #[cfg(feature = "dim3")]
 use ncollide::shape::TriMesh;
+use ncollide::shape::{DeformationsType, Polyline};
+use ncollide::utils::DeterministicState;
 
-use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
-                    ActivationStatus, FiniteElementIndices};
-use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
+use crate::math::{
+    Dim, Force, ForceType, Inertia, Isometry, Point, Translation, Vector, Velocity, DIM,
+};
 use crate::object::fem_helper;
+use crate::object::{
+    ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus, FiniteElementIndices,
+};
+use crate::solver::{ForceDirection, IntegrationParameters};
 
 use crate::utils::{UserData, UserDataBox};
 
@@ -40,7 +43,7 @@ struct LengthConstraint<N: RealField> {
     stiffness: Option<N>,
     target_vel: N,
     max_force: N,
-    plastic_strain: N
+    plastic_strain: N,
 }
 
 impl<N: RealField> LengthConstraint<N> {
@@ -57,7 +60,7 @@ impl<N: RealField> LengthConstraint<N> {
             stiffness,
             max_force: N::zero(),
             target_vel: N::zero(),
-            plastic_strain: N::zero()
+            plastic_strain: N::zero(),
         }
     }
 }
@@ -98,7 +101,6 @@ pub struct MassConstraintSystem<N: RealField> {
     user_data: Option<Box<dyn Any + Send + Sync>>,
 }
 
-
 impl<N: RealField> MassConstraintSystem<N> {
     /// Creates a new deformable surface following the mass-LengthConstraint model.
     ///
@@ -118,7 +120,7 @@ impl<N: RealField> MassConstraintSystem<N> {
             let idx = face.indices * DIM;
             let elt = MassConstraintElement {
                 indices: FiniteElementIndices::Triangle(idx),
-                phantom: PhantomData
+                phantom: PhantomData,
             };
 
             elements.push(elt);
@@ -157,7 +159,7 @@ impl<N: RealField> MassConstraintSystem<N> {
             plasticity_threshold: N::zero(),
             plasticity_creep: N::zero(),
             plasticity_max_force: N::zero(),
-            user_data: None
+            user_data: None,
         }
     }
 
@@ -176,7 +178,7 @@ impl<N: RealField> MassConstraintSystem<N> {
             let idx = edge.indices * DIM;
             let elt = MassConstraintElement {
                 indices: FiniteElementIndices::Segment(idx),
-                phantom: PhantomData
+                phantom: PhantomData,
             };
 
             elements.push(elt);
@@ -187,7 +189,7 @@ impl<N: RealField> MassConstraintSystem<N> {
         }
 
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
-//        println!("Number of nodes: {}, of constraints: {}", positions.len() / DIM, constraints.len());
+        //        println!("Number of nodes: {}, of constraints: {}", positions.len() / DIM, constraints.len());
 
         MassConstraintSystem {
             constraints: constraints.values().cloned().collect(),
@@ -210,7 +212,7 @@ impl<N: RealField> MassConstraintSystem<N> {
             plasticity_threshold: N::zero(),
             plasticity_creep: N::zero(),
             plasticity_max_force: N::zero(),
-            user_data: None
+            user_data: None,
         }
     }
 
@@ -218,21 +220,41 @@ impl<N: RealField> MassConstraintSystem<N> {
 
     /// Creates a rectangular-shaped quad.
     #[cfg(feature = "dim3")]
-    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
+    pub fn quad(
+        transform: &Isometry<N>,
+        extents: &Vector2<N>,
+        nx: usize,
+        ny: usize,
+        mass: N,
+        stiffness: Option<N>,
+    ) -> Self
+    {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
-        let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
+        let indices = mesh
+            .indices
+            .unwrap_unified()
+            .into_iter()
+            .map(|tri| na::convert(tri))
+            .collect();
         let trimesh = TriMesh::new(vertices, indices, None);
         Self::from_trimesh(&trimesh, mass, stiffness)
     }
 
     /// Add one constraint to this mass-constraint system.
     pub fn add_constraint(&mut self, node1: usize, node2: usize, stiffness: Option<N>) {
-        assert!(node1 < self.positions.len() / DIM, "Node index out of bounds.");
-        assert!(node2 < self.positions.len() / DIM, "Node index out of bounds.");
+        assert!(
+            node1 < self.positions.len() / DIM,
+            "Node index out of bounds."
+        );
+        assert!(
+            node2 < self.positions.len() / DIM,
+            "Node index out of bounds."
+        );
         self.update_status.set_local_inertia_changed(true);
         let key = key(node1 * DIM, node2 * DIM);
-        let constraint = LengthConstraint::from_positions(key, self.positions.as_slice(), stiffness);
+        let constraint =
+            LengthConstraint::from_positions(key, self.positions.as_slice(), stiffness);
         self.constraints.push(constraint);
     }
 
@@ -244,7 +266,9 @@ impl<N: RealField> MassConstraintSystem<N> {
         self.update_status.set_local_inertia_changed(true);
 
         // XXX: duplicate code with MassSpringSurface::generate_neighbor_springs.
-        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / DIM).collect();
+        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new())
+            .take(self.positions.len() / DIM)
+            .collect();
         let mut existing_constraints = HashSet::with_hasher(DeterministicState::new());
 
         // Build neighborhood list.
@@ -261,8 +285,11 @@ impl<N: RealField> MassConstraintSystem<N> {
                     let key = key(i * DIM, *transitive_nbh * DIM);
 
                     if existing_constraints.insert(key) {
-                        let constraint =
-                            LengthConstraint::from_positions(key, self.positions.as_slice(), stiffness);
+                        let constraint = LengthConstraint::from_positions(
+                            key,
+                            self.positions.as_slice(),
+                            stiffness,
+                        );
                         self.constraints.push(constraint);
                     }
                 }
@@ -346,7 +373,10 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
     }
 
     fn update_dynamics(&mut self, _: N) {
-        if self.update_status.inertia_needs_update() && self.status == BodyStatus::Dynamic && !self.is_active() {
+        if self.update_status.inertia_needs_update()
+            && self.status == BodyStatus::Dynamic
+            && !self.is_active()
+        {
             self.activate();
         }
     }
@@ -381,14 +411,16 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 }
 
                 if constraint.plastic_strain.abs() > self.plasticity_max_force {
-                    constraint.plastic_strain = constraint.plastic_strain.signum() * self.plasticity_max_force;
+                    constraint.plastic_strain =
+                        constraint.plastic_strain.signum() * self.plasticity_max_force;
                 }
 
                 let err_with_plasticity = err - constraint.plastic_strain / stiffness;
                 constraint.max_force = stiffness * err_with_plasticity.abs();
 
                 if err_with_plasticity.abs() > parameters.allowed_linear_error {
-                    constraint.target_vel = parameters.erp * err_with_plasticity * parameters.inv_dt();
+                    constraint.target_vel =
+                        parameters.erp * err_with_plasticity * parameters.inv_dt();
                 } else {
                     constraint.target_vel = N::zero();
                 }
@@ -459,7 +491,8 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
 
     fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(parameters.dt(), &self.velocities, N::one())
+        self.positions
+            .axpy(parameters.dt(), &self.velocities, N::one())
     }
 
     fn activate_with_energy(&mut self, energy: N) {
@@ -486,18 +519,24 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
     }
 
     fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
-        let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
+        let elt = part
+            .downcast_ref::<MassConstraintElement<N>>()
+            .expect("The provided body part must be a mass-constraint element");
         fem_helper::world_point_at_material_point(elt.indices, &self.positions, point)
     }
 
     fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
-        let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
+        let elt = part
+            .downcast_ref::<MassConstraintElement<N>>()
+            .expect("The provided body part must be a mass-constraint element");
         let pt = fem_helper::world_point_at_material_point(elt.indices, &self.positions, point);
         Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
     fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
-        let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
+        let elt = part
+            .downcast_ref::<MassConstraintElement<N>>()
+            .expect("The provided body part must be a mass-constraint element");
         fem_helper::material_point_at_world_point(elt.indices, &self.positions, point)
     }
 
@@ -512,9 +551,12 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         jacobians: &mut [N],
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
-        out_vel: Option<&mut N>
-    ) {
-        let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+        out_vel: Option<&mut N>,
+    )
+    {
+        let elt = part
+            .downcast_ref::<MassConstraintElement<N>>()
+            .expect("The provided body part must be a triangular mass-spring element");
         fem_helper::fill_contact_geometry_fem(
             self.ndofs(),
             self.status,
@@ -530,7 +572,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
             jacobians,
             inv_r,
             ext_vels,
-            out_vel
+            out_vel,
         );
     }
 
@@ -540,7 +582,13 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &DVectorSlice<N>, _: &IntegrationParameters<N>) {}
+    fn setup_internal_velocity_constraints(
+        &mut self,
+        _: &DVectorSlice<N>,
+        _: &IntegrationParameters<N>,
+    )
+    {
+    }
 
     #[inline]
     fn warmstart_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
@@ -558,10 +606,14 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 let vel_correction = *constraint.dir * (impulse * self.inv_node_mass);
 
                 if !self.kinematic_nodes[constraint.nodes.0 / DIM] {
-                    dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
+                    dvels
+                        .fixed_rows_mut::<Dim>(constraint.nodes.0)
+                        .add_assign(&vel_correction);
                 }
                 if !self.kinematic_nodes[constraint.nodes.1 / DIM] {
-                    dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
+                    dvels
+                        .fixed_rows_mut::<Dim>(constraint.nodes.1)
+                        .sub_assign(&vel_correction);
                 }
             }
         }
@@ -581,8 +633,10 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 continue;
             }
 
-            let v0 = self.velocities.fixed_rows::<Dim>(constraint.nodes.0) + dvels.fixed_rows::<Dim>(constraint.nodes.0);
-            let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1) + dvels.fixed_rows::<Dim>(constraint.nodes.1);
+            let v0 = self.velocities.fixed_rows::<Dim>(constraint.nodes.0)
+                + dvels.fixed_rows::<Dim>(constraint.nodes.0);
+            let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1)
+                + dvels.fixed_rows::<Dim>(constraint.nodes.1);
 
             let dvel = (v1 - v0).dot(&constraint.dir);
             let dlambda;
@@ -595,7 +649,11 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
             if constraint.stiffness.is_some() {
                 let curr_impulse = self.impulses[i];
                 let dimpulse = (dvel + constraint.target_vel) / denom;
-                let new_impulse = na::clamp(curr_impulse + dimpulse, -constraint.max_force, constraint.max_force);
+                let new_impulse = na::clamp(
+                    curr_impulse + dimpulse,
+                    -constraint.max_force,
+                    constraint.max_force,
+                );
                 dlambda = new_impulse - curr_impulse;
                 self.impulses[i] = new_impulse;
             } else {
@@ -606,10 +664,14 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
             let vel_correction = *constraint.dir * (dlambda * self.inv_node_mass);
 
             if !kinematic1 {
-                dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
+                dvels
+                    .fixed_rows_mut::<Dim>(constraint.nodes.0)
+                    .add_assign(&vel_correction);
             }
             if !kinematic2 {
-                dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
+                dvels
+                    .fixed_rows_mut::<Dim>(constraint.nodes.1)
+                    .sub_assign(&vel_correction);
             }
         }
     }
@@ -657,18 +719,29 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                     let shift = *constraint.dir * (clamped_error * coeff);
 
                     if !kinematic1 {
-                        self.positions.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&shift);
+                        self.positions
+                            .fixed_rows_mut::<Dim>(constraint.nodes.0)
+                            .add_assign(&shift);
                     }
                     if !kinematic2 {
-                        self.positions.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&shift);
+                        self.positions
+                            .fixed_rows_mut::<Dim>(constraint.nodes.1)
+                            .sub_assign(&shift);
                     }
                 }
             }
         }
     }
 
-
-    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -698,64 +771,114 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
             ForceType::Force => {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        self.forces.fixed_rows_mut::<Dim>(indices[i]).add_assign(&forces[i]);
+                        self.forces
+                            .fixed_rows_mut::<Dim>(indices[i])
+                            .add_assign(&forces[i]);
                     }
                 }
             }
             ForceType::Impulse => {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        self.velocities.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i] * self.inv_node_mass);
+                        self.velocities
+                            .fixed_rows_mut::<Dim>(indices[i])
+                            .add_assign(forces[i] * self.inv_node_mass);
                     }
                 }
             }
             ForceType::AccelerationChange => {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        self.forces.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i] * self.node_mass);
+                        self.forces
+                            .fixed_rows_mut::<Dim>(indices[i])
+                            .add_assign(forces[i] * self.node_mass);
                     }
                 }
             }
             ForceType::VelocityChange => {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        self.velocities.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i]);
+                        self.velocities
+                            .fixed_rows_mut::<Dim>(indices[i])
+                            .add_assign(forces[i]);
                     }
                 }
             }
         }
     }
 
-    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let dim = self.elements[part_id].indices.as_slice().len();
         let inv_dim: N = na::convert(1.0 / dim as f64);
         let barycenter = Point::from(Vector::repeat(inv_dim));
-        self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
+        self.apply_force_at_local_point(
+            part_id,
+            &force.linear,
+            &barycenter,
+            force_type,
+            auto_wake_up,
+        )
     }
 
-    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force(part_id, &force, force_type, auto_wake_up);
     }
 
-    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
     }
 
-    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up);
     }
 
-
-    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force_at_local_point(part_id, &force, &point, force_type, auto_wake_up);
     }
 }
-
 
 impl<N: RealField> BodyPart<N> for MassConstraintElement<N> {
     fn center_of_mass(&self) -> Point<N> {
@@ -782,9 +905,6 @@ impl<N: RealField> BodyPart<N> for MassConstraintElement<N> {
     }
 }
 
-
-
-
 enum MassConstraintSystemDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
     Polyline(&'a Polyline<N>),
@@ -798,14 +918,13 @@ pub struct MassConstraintSystemDesc<'a, N: RealField> {
     geom: MassConstraintSystemDescGeometry<'a, N>,
     stiffness: Option<N>,
     sleep_threshold: Option<N>,
-//    damping_ratio: N,
+    //    damping_ratio: N,
     mass: N,
     plasticity: (N, N, N),
     kinematic_nodes: Vec<usize>,
     status: BodyStatus,
     gravity_enabled: bool,
 }
-
 
 impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
@@ -815,7 +934,7 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
             geom,
             stiffness: Some(na::convert(1.0e3)),
             sleep_threshold: Some(ActivationStatus::default_threshold()),
-//            damping_ratio: na::convert(0.2),
+            //            damping_ratio: na::convert(0.2),
             mass: N::one(),
             plasticity: (N::zero(), N::zero(), N::zero()),
             kinematic_nodes: Vec::new(),

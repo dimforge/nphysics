@@ -2,17 +2,17 @@
 
 use std::fmt::{Display, Formatter, Result};
 
+pub use self::ccd_counters::CCDCounters;
 pub use self::collision_detection_counters::CollisionDetectionCounters;
 pub use self::solver_counters::SolverCounters;
 pub use self::stages_counters::StagesCounters;
-pub use self::ccd_counters::CCDCounters;
 pub use self::timer::Timer;
 
+mod ccd_counters;
 mod collision_detection_counters;
 mod solver_counters;
 mod stages_counters;
 mod timer;
-mod ccd_counters;
 
 /// Aggregation of all the performances counters tracked by nphysics.
 #[derive(Clone, Copy)]
@@ -169,12 +169,7 @@ measure_method!(
     solver_time,
     stages.solver_time
 );
-measure_method!(
-    ccd_started,
-    ccd_completed,
-    ccd_time,
-    stages.ccd_time
-);
+measure_method!(ccd_started, ccd_completed, ccd_time, stages.ccd_time);
 
 measure_method!(
     assembly_started,

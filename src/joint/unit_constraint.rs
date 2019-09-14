@@ -1,9 +1,11 @@
 use na::{DVector, RealField, Unit};
 
 use crate::math::{Point, Vector};
-use crate::object::{Body, BodyPart, BodyPartHandle, BodyHandle};
-use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, LinearConstraints,
-             ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
+use crate::object::{Body, BodyHandle, BodyPart, BodyPartHandle};
+use crate::solver::{
+    helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection,
+    GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters, LinearConstraints,
+};
 
 pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     body1: &B,
@@ -26,7 +28,8 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
     j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, usize>,
-) {
+)
+{
     let offset = axis.dot(&(anchor2 - anchor1));
 
     let (unilateral, dir) = match (min, max) {
@@ -62,7 +65,8 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
         }
     };
 
-    let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
+    let (ext_vels1, ext_vels2) =
+        helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
     let force = ForceDirection::Linear(dir);
     let mut rhs = N::zero();
     let geom = helper::constraint_pair_geometry(
@@ -80,7 +84,7 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
         jacobians,
         Some(&ext_vels1),
         Some(&ext_vels2),
-        Some(&mut rhs)
+        Some(&mut rhs),
     );
 
     // FIXME: generate unilateral constraints for unilateral limits.
@@ -109,17 +113,15 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
                 impulse_id,
             ));
     } else {
-        constraints
-            .bilateral
-            .push(BilateralConstraint::new(
-                geom,
-                assembly_id1,
-                assembly_id2,
-                limits,
-                rhs,
-                impulse,
-                impulse_id,
-            ));
+        constraints.bilateral.push(BilateralConstraint::new(
+            geom,
+            assembly_id1,
+            assembly_id2,
+            limits,
+            rhs,
+            impulse,
+            impulse_id,
+        ));
     }
 }
 
@@ -137,7 +139,8 @@ pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>
     min: Option<N>,
     max: Option<N>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, H>> {
+) -> Option<GenericNonlinearConstraint<N, H>>
+{
     let offset = axis.dot(&(anchor2 - anchor1));
     let mut error = N::zero();
     let mut dir = *axis;
@@ -173,7 +176,7 @@ pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>
             jacobians,
             None,
             None,
-            None
+            None,
         );
 
         let rhs = -error;

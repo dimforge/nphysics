@@ -1,5 +1,5 @@
-use std::ops::IndexMut;
 use num::Zero;
+use std::ops::IndexMut;
 
 use na::{self, RealField};
 use ncollide::math::Point;

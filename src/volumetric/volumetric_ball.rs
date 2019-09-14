@@ -1,8 +1,8 @@
-use na::RealField;
-use na;
-use ncollide::shape::Ball;
-use crate::volumetric::Volumetric;
 use crate::math::{AngularInertia, Point, DIM};
+use crate::volumetric::Volumetric;
+use na;
+use na::RealField;
+use ncollide::shape::Ball;
 
 /// The volume of a ball.
 #[inline]

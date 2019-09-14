@@ -1,5 +1,3 @@
-
-
 use slotmap::SecondaryMap;
 
 use ncollide::query::ContactId;

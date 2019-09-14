@@ -56,7 +56,8 @@ impl<N: RealField> MultibodyLink<N> {
         local_to_parent: Isometry<N>,
         local_inertia: Inertia<N>,
         local_com: Point<N>,
-    ) -> Self {
+    ) -> Self
+    {
         let is_leaf = true;
         let velocity = Velocity::zero();
         let velocity_dot_wrt_joint = Velocity::zero();
@@ -83,7 +84,7 @@ impl<N: RealField> MultibodyLink<N> {
             local_inertia,
             local_com,
             inertia,
-            com
+            com,
         }
     }
 
@@ -136,7 +137,6 @@ impl<N: RealField> MultibodyLink<N> {
     }
 }
 
-
 impl<N: RealField> BodyPart<N> for MultibodyLink<N> {
     #[inline]
     fn is_ground(&self) -> bool {
@@ -173,7 +173,6 @@ impl<N: RealField> BodyPart<N> for MultibodyLink<N> {
         self.inertia
     }
 }
-
 
 // FIXME: keep this even if we already have the Index2 traits?
 pub(crate) struct MultibodyLinkVec<N: RealField>(pub Vec<MultibodyLink<N>>);

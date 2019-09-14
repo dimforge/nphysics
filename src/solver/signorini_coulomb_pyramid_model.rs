@@ -1,13 +1,13 @@
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, DVector, RealField, Unit};
-use std::ops::Range;
-use slotmap::Key;
 use ncollide::query::ContactId;
+use slotmap::Key;
+use std::ops::Range;
 
 use crate::detection::ColliderContactManifold;
-use crate::math::{Vector, DIM};
-use crate::object::{BodySet, Body, ColliderHandle};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable};
+use crate::math::{Vector, DIM};
+use crate::object::{Body, BodySet, ColliderHandle};
 use crate::solver::helper;
 use crate::solver::{
     BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel, ForceDirection,
@@ -44,8 +44,14 @@ impl<N: RealField> Default for SignoriniCoulombPyramidModel<N> {
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<N, Bodies, CollHandle> for SignoriniCoulombPyramidModel<N> {
-    fn num_velocity_constraints(&self, c: &ColliderContactManifold<N, Bodies::Handle, CollHandle>) -> usize {
+impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
+    ContactModel<N, Bodies, CollHandle> for SignoriniCoulombPyramidModel<N>
+{
+    fn num_velocity_constraints(
+        &self,
+        c: &ColliderContactManifold<N, Bodies::Handle, CollHandle>,
+    ) -> usize
+    {
         DIM * c.len()
     }
 
@@ -60,7 +66,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
         j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
-    ) {
+    )
+    {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
         let id_friction_ground = constraints.velocity.bilateral_ground.len();
@@ -78,9 +85,20 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
-                let context1 = MaterialContext::new(manifold.collider1.shape(), manifold.collider1.position(), c, true);
-                let context2 = MaterialContext::new(manifold.collider2.shape(), manifold.collider2.position(), c, false);
-                let props = Material::combine(coefficients, material1, context1, material2, context2);
+                let context1 = MaterialContext::new(
+                    manifold.collider1.shape(),
+                    manifold.collider1.position(),
+                    c,
+                    true,
+                );
+                let context2 = MaterialContext::new(
+                    manifold.collider2.shape(),
+                    manifold.collider2.position(),
+                    c,
+                    false,
+                );
+                let props =
+                    Material::combine(coefficients, material1, context1, material2, context2);
 
                 // if !SignoriniModel::is_constraint_active(c, manifold) {
                 //     continue;
@@ -132,65 +150,69 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
 
                 // FIXME: this compute the contact point locations (with margins) several times,
                 // it was already computed for the signorini law.
-                let center1 = c.contact.world1
-                    + c.contact.normal.into_inner() * manifold.collider1.margin();
-                let center2 = c.contact.world2
-                    - c.contact.normal.into_inner() * manifold.collider2.margin();
-                let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
+                let center1 =
+                    c.contact.world1 + c.contact.normal.into_inner() * manifold.collider1.margin();
+                let center2 =
+                    c.contact.world2 - c.contact.normal.into_inner() * manifold.collider2.margin();
+                let (ext_vels1, ext_vels2) =
+                    helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
-                Vector::orthonormal_subspace_basis(&[c.contact.normal.into_inner()], |friction_dir| {
-                    let dir = ForceDirection::Linear(Unit::new_unchecked(*friction_dir));
-                    let mut rhs = friction_dir.dot(&props.surface_velocity);
+                Vector::orthonormal_subspace_basis(
+                    &[c.contact.normal.into_inner()],
+                    |friction_dir| {
+                        let dir = ForceDirection::Linear(Unit::new_unchecked(*friction_dir));
+                        let mut rhs = friction_dir.dot(&props.surface_velocity);
 
-                    // FIXME: will this compute the momentum twice ?
-                    let geom = helper::constraint_pair_geometry(
-                        body1,
-                        part1,
-                        handle1,
-                        body2,
-                        part2,
-                        handle2,
-                        &center1,
-                        &center2,
-                        &dir,
-                        ground_j_id,
-                        j_id,
-                        jacobians,
-                        Some(&ext_vels1),
-                        Some(&ext_vels2),
-                        Some(&mut rhs)
-                    );
-
-                    let warmstart = impulse[i] * parameters.warmstart_coeff;
-
-                    if geom.is_ground_constraint() {
-                        let constraint = BilateralGroundConstraint::new(
-                            geom,
-                            assembly_id1,
-                            assembly_id2,
-                            limits,
-                            rhs,
-                            warmstart,
-                            c.id,
+                        // FIXME: will this compute the momentum twice ?
+                        let geom = helper::constraint_pair_geometry(
+                            body1,
+                            part1,
+                            handle1,
+                            body2,
+                            part2,
+                            handle2,
+                            &center1,
+                            &center2,
+                            &dir,
+                            ground_j_id,
+                            j_id,
+                            jacobians,
+                            Some(&ext_vels1),
+                            Some(&ext_vels2),
+                            Some(&mut rhs),
                         );
-                        constraints.velocity.bilateral_ground.push(constraint);
-                    } else {
-                        let constraint = BilateralConstraint::new(
-                            geom,
-                            assembly_id1,
-                            assembly_id2,
-                            limits,
-                            rhs,
-                            warmstart,
-                            c.id,
-                        );
-                        constraints.velocity.bilateral.push(constraint);
-                    }
 
-                    i += 1;
+                        let warmstart = impulse[i] * parameters.warmstart_coeff;
 
-                    true
-                });
+                        if geom.is_ground_constraint() {
+                            let constraint = BilateralGroundConstraint::new(
+                                geom,
+                                assembly_id1,
+                                assembly_id2,
+                                limits,
+                                rhs,
+                                warmstart,
+                                c.id,
+                            );
+                            constraints.velocity.bilateral_ground.push(constraint);
+                        } else {
+                            let constraint = BilateralConstraint::new(
+                                geom,
+                                assembly_id1,
+                                assembly_id2,
+                                limits,
+                                rhs,
+                                warmstart,
+                                c.id,
+                            );
+                            constraints.velocity.bilateral.push(constraint);
+                        }
+
+                        i += 1;
+
+                        true
+                    },
+                );
             }
         }
 
@@ -200,7 +222,11 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
         self.friction_rng = id_friction..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>) {
+    fn cache_impulses(
+        &mut self,
+        constraints: &ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
+    )
+    {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
         let ground_friction =

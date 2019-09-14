@@ -1,17 +1,17 @@
 extern crate nalgebra as na;
 
 use na::{Point3, Vector3};
-use ncollide3d::shape::{Cuboid, TriMesh, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-use rand::distributions::{Normal, Distribution};
+use rand::distributions::{Distribution, Normal};
 use rand::thread_rng;
-
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -23,7 +23,6 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut colliders = DefaultColliderSet::new();
     let joint_constraints = DefaultJointConstraintSet::new();
     let force_generators = DefaultForceGeneratorSet::new();
-
 
     /*
      * Use a fourier series to model ground height. This isn't an ideal terrain
@@ -42,9 +41,13 @@ pub fn init_world(testbed: &mut Testbed) {
         let b3 = distribution.sample(&mut rng) as f32;
         let tau: f32 = 6.283185307179586 / 50f32;
         move |t: f32| {
-            0.5*a0 + a1 * (tau * t).cos() + b1 * (tau * t).sin()
-                + a2 * (2.0 * tau * t).cos() + b2 * (2.0 * tau * t).sin()
-                + a3 * (3.0 * tau * t).cos() + b3 * (3.0 * tau * t).sin()
+            0.5 * a0
+                + a1 * (tau * t).cos()
+                + b1 * (tau * t).sin()
+                + a2 * (2.0 * tau * t).cos()
+                + b2 * (2.0 * tau * t).sin()
+                + a3 * (3.0 * tau * t).cos()
+                + b3 * (3.0 * tau * t).sin()
         }
     };
     let fourier_x = make_fourier();
@@ -71,8 +74,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let trimesh: TriMesh<f32> = TriMesh::new(vertices, indices, None);
     let ground_handle = bodies.insert(Ground::new());
-    let co = ColliderDesc::new(ShapeHandle::new(trimesh))
-        .build(BodyPartHandle(ground_handle, 0));
+    let co = ColliderDesc::new(ShapeHandle::new(trimesh)).build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     /*
@@ -114,14 +116,19 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(-20.0, 20.0, -20.0), Point3::new(0.0, 1.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Triangle mesh", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Triangle mesh", init_world)]);
 
     testbed.run()
 }

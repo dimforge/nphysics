@@ -1,9 +1,9 @@
 use na::{DVectorSliceMut, Isometry3, RealField, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
-use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use crate::object::{Multibody, MultibodyLink, BodyPartHandle};
 use crate::math::{JacobianSliceMut, Velocity};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows one translational and one rotational degrees of freedom along a single axis.
 #[derive(Copy, Clone, Debug)]
@@ -14,7 +14,7 @@ pub struct CylindricalJoint<N: RealField> {
 
 impl<N: RealField> CylindricalJoint<N> {
     /// Create a cylindrical joint with the given axis and initial position of angle.
-    /// 
+    ///
     /// The axis is expressed in the local space of the multibody links attached to this joint.
     pub fn new(axis: Unit<Vector3<N>>, position: N, angle: N) -> Self {
         let prism = PrismaticJoint::new(axis, position);
@@ -25,7 +25,6 @@ impl<N: RealField> CylindricalJoint<N> {
 }
 
 impl<N: RealField> Joint<N> for CylindricalJoint<N> {
-
     #[inline]
     fn ndofs(&self) -> usize {
         2
@@ -57,7 +56,8 @@ impl<N: RealField> Joint<N> for CylindricalJoint<N> {
         transform: &Isometry3<N>,
         vels: &[N],
         out: &mut JacobianSliceMut<N>,
-    ) {
+    )
+    {
         self.prism.jacobian_dot_veldiff_mul_coordinates(
             transform,
             vels,
@@ -101,8 +101,7 @@ impl<N: RealField> Joint<N> for CylindricalJoint<N> {
     }
 
     fn num_velocity_constraints(&self) -> usize {
-        self.prism.num_velocity_constraints() +
-            self.revo.num_velocity_constraints()
+        self.prism.num_velocity_constraints() + self.revo.num_velocity_constraints()
     }
 
     fn velocity_constraints(
@@ -116,7 +115,8 @@ impl<N: RealField> Joint<N> for CylindricalJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    ) {
+    )
+    {
         self.prism.velocity_constraints(
             parameters,
             multibody,
@@ -154,9 +154,11 @@ impl<N: RealField> Joint<N> for CylindricalJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>> {
+    ) -> Option<GenericNonlinearConstraint<N, ()>>
+    {
         if i == 0 {
-            self.prism.position_constraint(0, multibody, link, handle, dof_id, jacobians)
+            self.prism
+                .position_constraint(0, multibody, link, handle, dof_id, jacobians)
         } else {
             self.revo
                 .position_constraint(0, multibody, link, handle, dof_id + 1, jacobians)

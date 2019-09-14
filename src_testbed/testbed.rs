@@ -6,10 +6,11 @@ use std::mem;
 use std::path::Path;
 use std::rc::Rc;
 
-use crate::engine::{GraphicsWindow, GraphicsManager};
-use kiss3d::event::Event;
+use crate::engine::{GraphicsManager, GraphicsWindow};
+use crate::ui::TestbedUi;
 use kiss3d::camera::Camera;
-use kiss3d::event::{Action, Key, Modifiers, WindowEvent, MouseButton};
+use kiss3d::event::Event;
+use kiss3d::event::{Action, Key, Modifiers, MouseButton, WindowEvent};
 use kiss3d::light::Light;
 use kiss3d::loader::obj;
 use kiss3d::planar_camera::PlanarCamera;
@@ -17,23 +18,24 @@ use kiss3d::post_processing::PostProcessingEffect;
 use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
 use na::{self, Point2, Point3, Vector3};
+use ncollide::pipeline::CollisionGroups;
 #[cfg(feature = "dim3")]
 use ncollide::query;
 use ncollide::query::{ContactId, Ray};
-use ncollide::pipeline::CollisionGroups;
 use nphysics::force_generator::DefaultForceGeneratorSet;
-use nphysics::joint::{DefaultJointConstraintHandle, MouseConstraint, DefaultJointConstraintSet};
-#[cfg(feature = "dim2")]
-use nphysics::object::ColliderAnchor;
-use nphysics::object::{DefaultBodyHandle, BodyPartHandle, DefaultBodyPartHandle,  DefaultColliderHandle, ActivationStatus, DefaultBodySet, DefaultColliderSet};
-use nphysics::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics::joint::{DefaultJointConstraintHandle, DefaultJointConstraintSet, MouseConstraint};
 #[cfg(feature = "dim3")]
 use nphysics::math::ForceType;
-use crate::ui::TestbedUi;
+#[cfg(feature = "dim2")]
+use nphysics::object::ColliderAnchor;
+use nphysics::object::{
+    ActivationStatus, BodyPartHandle, DefaultBodyHandle, DefaultBodyPartHandle, DefaultBodySet,
+    DefaultColliderHandle, DefaultColliderSet,
+};
+use nphysics::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 
 #[cfg(feature = "box2d-backend")]
 use crate::box2d_world::Box2dWorld;
-
 
 const NPHYSICS_BACKEND: usize = 0;
 #[cfg(feature = "box2d-backend")]
@@ -44,7 +46,7 @@ pub enum RunMode {
     Running,
     Stop,
     Step,
-    Quit
+    Quit,
 }
 
 #[cfg(not(feature = "log"))]
@@ -134,23 +136,27 @@ pub struct Testbed {
     box2d: Option<Box2dWorld>,
 }
 
-type Callbacks = Vec<Box<dyn Fn(
-    &mut DefaultMechanicalWorld<f32>,
-    &mut DefaultGeometricalWorld<f32>,
-    &mut DefaultBodySet<f32>,
-    &mut DefaultColliderSet<f32>,
-    &mut GraphicsManager,
-    f32
-)>>;
+type Callbacks = Vec<
+    Box<
+        dyn Fn(
+            &mut DefaultMechanicalWorld<f32>,
+            &mut DefaultGeometricalWorld<f32>,
+            &mut DefaultBodySet<f32>,
+            &mut DefaultColliderSet<f32>,
+            &mut GraphicsManager,
+            f32,
+        ),
+    >,
+>;
 
 impl Testbed {
     pub fn new_empty() -> Testbed {
         let graphics = GraphicsManager::new();
 
         #[cfg(feature = "dim3")]
-            let mut window = Box::new(Window::new("nphysics: 3d demo"));
+        let mut window = Box::new(Window::new("nphysics: 3d demo"));
         #[cfg(feature = "dim2")]
-            let mut window = Box::new(Window::new("nphysics: 2d demo"));
+        let mut window = Box::new(Window::new("nphysics: 2d demo"));
         window.set_background_color(0.9, 0.9, 0.9);
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
@@ -160,24 +166,24 @@ impl Testbed {
 
         let mut backend_names = vec!["nphysics"];
         #[cfg(feature = "box2d-backend")]
-            backend_names.push("box2d");
+        backend_names.push("box2d");
 
-            let state = TestbedState {
-                running: RunMode::Running,
-                draw_colls: false,
-                grabbed_object: None,
-                grabbed_object_constraint: None,
-                grabbed_object_plane: (Point3::origin(), na::zero()),
-                can_grab_behind_ground: false,
-                drawing_ray: None,
-                prev_flags: flags,
-                flags,
-                action_flags: TestbedActionFlags::empty(),
-                backend_names,
-                example_names: Vec::new(),
-                selected_example: 0,
-                selected_backend: NPHYSICS_BACKEND,
-            };
+        let state = TestbedState {
+            running: RunMode::Running,
+            draw_colls: false,
+            grabbed_object: None,
+            grabbed_object_constraint: None,
+            grabbed_object_plane: (Point3::origin(), na::zero()),
+            can_grab_behind_ground: false,
+            drawing_ray: None,
+            prev_flags: flags,
+            flags,
+            action_flags: TestbedActionFlags::empty(),
+            backend_names,
+            example_names: Vec::new(),
+            selected_example: 0,
+            selected_backend: NPHYSICS_BACKEND,
+        };
 
         let mechanical_world = DefaultMechanicalWorld::new(na::zero());
         let geometrical_world = DefaultGeometricalWorld::new();
@@ -212,21 +218,32 @@ impl Testbed {
         }
     }
 
-    pub fn new(mechanical_world: DefaultMechanicalWorld<f32>,
-               geometrical_world: DefaultGeometricalWorld<f32>,
-               bodies: DefaultBodySet<f32>,
-               colliders: DefaultColliderSet<f32>,
-               constraints: DefaultJointConstraintSet<f32>,
-               forces: DefaultForceGeneratorSet<f32>)
-        -> Self {
+    pub fn new(
+        mechanical_world: DefaultMechanicalWorld<f32>,
+        geometrical_world: DefaultGeometricalWorld<f32>,
+        bodies: DefaultBodySet<f32>,
+        colliders: DefaultColliderSet<f32>,
+        constraints: DefaultJointConstraintSet<f32>,
+        forces: DefaultForceGeneratorSet<f32>,
+    ) -> Self
+    {
         let mut res = Self::new_empty();
-        res.set_world(mechanical_world, geometrical_world, bodies, colliders, constraints, forces);
+        res.set_world(
+            mechanical_world,
+            geometrical_world,
+            bodies,
+            colliders,
+            constraints,
+            forces,
+        );
         res
     }
 
     pub fn from_builders(default: usize, builders: Vec<(&'static str, fn(&mut Self))>) -> Self {
         let mut res = Testbed::new_empty();
-        res.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
+        res.state
+            .action_flags
+            .set(TestbedActionFlags::EXAMPLE_CHANGED, true);
         res.state.selected_example = default;
         res.set_builders(builders);
         res
@@ -253,14 +270,18 @@ impl Testbed {
         self.hide_counters = false;
     }
 
-    pub fn set_world(&mut self,
-                     mut mechanical_world: DefaultMechanicalWorld<f32>,
-                     geometrical_world: DefaultGeometricalWorld<f32>,
-                     bodies: DefaultBodySet<f32>,
-                     colliders: DefaultColliderSet<f32>,
-                     joint_constraints: DefaultJointConstraintSet<f32>,
-                     force_generators: DefaultForceGeneratorSet<f32>) {
-        mechanical_world.integration_parameters = self.mechanical_world.integration_parameters.clone();
+    pub fn set_world(
+        &mut self,
+        mut mechanical_world: DefaultMechanicalWorld<f32>,
+        geometrical_world: DefaultGeometricalWorld<f32>,
+        bodies: DefaultBodySet<f32>,
+        colliders: DefaultColliderSet<f32>,
+        joint_constraints: DefaultJointConstraintSet<f32>,
+        force_generators: DefaultForceGeneratorSet<f32>,
+    )
+    {
+        mechanical_world.integration_parameters =
+            self.mechanical_world.integration_parameters.clone();
 
         self.mechanical_world = mechanical_world;
         self.geometrical_world = geometrical_world;
@@ -268,16 +289,25 @@ impl Testbed {
         self.colliders = colliders;
         self.constraints = joint_constraints;
         self.forces = force_generators;
-        self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
+        self.state
+            .action_flags
+            .set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
         self.mechanical_world.counters.enable();
-        self.geometrical_world.maintain(&mut self.bodies, &mut self.colliders);
+        self.geometrical_world
+            .maintain(&mut self.bodies, &mut self.colliders);
 
         #[cfg(feature = "box2d-backend")]
-            {
-                if self.state.selected_backend == BOX2D_BACKEND {
-                    self.box2d = Some(Box2dWorld::from_nphysics(&self.mechanical_world, &self.bodies, &self.colliders, &self.constraints, &self.forces));
-                }
+        {
+            if self.state.selected_backend == BOX2D_BACKEND {
+                self.box2d = Some(Box2dWorld::from_nphysics(
+                    &self.mechanical_world,
+                    &self.bodies,
+                    &self.colliders,
+                    &self.constraints,
+                    &self.forces,
+                ));
             }
+        }
     }
 
     pub fn set_builders(&mut self, builders: Vec<(&'static str, fn(&mut Self))>) {
@@ -311,9 +341,9 @@ impl Testbed {
         self.graphics.set_collider_color(collider, color);
     }
 
-//    pub fn world(&self) -> &Box<WorldOwner> {
-//        &self.world
-//    }
+    //    pub fn world(&self) -> &Box<WorldOwner> {
+    //        &self.world
+    //    }
 
     pub fn graphics_mut(&mut self) -> &mut GraphicsManager {
         &mut self.graphics
@@ -356,15 +386,20 @@ impl Testbed {
         self.graphics.clear(window);
     }
 
-    pub fn add_callback<F: Fn(&mut DefaultMechanicalWorld<f32>,
-                              &mut DefaultGeometricalWorld<f32>,
-                              &mut DefaultBodySet<f32>,
-                              &mut DefaultColliderSet<f32>,
-                              &mut GraphicsManager,
-                              f32) + 'static>(
+    pub fn add_callback<
+        F: Fn(
+                &mut DefaultMechanicalWorld<f32>,
+                &mut DefaultGeometricalWorld<f32>,
+                &mut DefaultBodySet<f32>,
+                &mut DefaultColliderSet<f32>,
+                &mut GraphicsManager,
+                f32,
+            ) + 'static,
+    >(
         &mut self,
         callback: F,
-    ) {
+    )
+    {
         self.callbacks.push(Box::new(callback));
     }
 
@@ -397,9 +432,10 @@ impl Testbed {
                 }
             }
             WindowEvent::Key(Key::S, Action::Release, _) => self.state.running = RunMode::Step,
-            WindowEvent::Key(Key::R, Action::Release, _) => {
-                self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
-            },
+            WindowEvent::Key(Key::R, Action::Release, _) => self
+                .state
+                .action_flags
+                .set(TestbedActionFlags::EXAMPLE_CHANGED, true),
             _ => {}
         }
 
@@ -415,19 +451,21 @@ impl Testbed {
         match event.value {
             WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
                 let all_groups = &CollisionGroups::new();
-                for b in self
-                    .geometrical_world
-                    .interferences_with_point(&self.colliders, &self.cursor_pos, all_groups)
+                for b in self.geometrical_world.interferences_with_point(
+                    &self.colliders,
+                    &self.cursor_pos,
+                    all_groups,
+                ) {
+                    if !b.1.query_type().is_proximity_query()
+                        && Some(b.1.body()) != self.ground_handle
                     {
-                        if !b.1.query_type().is_proximity_query() && Some(b.1.body()) != self.ground_handle {
-
-                            if
-                            let ColliderAnchor::OnBodyPart { body_part, .. } = b.1.anchor()
-                            {
-                                self.state.grabbed_object = Some(*body_part);
-                            } else { continue; }
+                        if let ColliderAnchor::OnBodyPart { body_part, .. } = b.1.anchor() {
+                            self.state.grabbed_object = Some(*body_part);
+                        } else {
+                            continue;
                         }
                     }
+                }
 
                 if modifier.contains(Modifiers::Shift) {
                     if let Some(body_part) = self.state.grabbed_object {
@@ -446,7 +484,13 @@ impl Testbed {
                             let _ = self.constraints.remove(joint);
                         }
 
-                        let body_pos = self.bodies.get(body.0).unwrap().part(body.1).unwrap().position();
+                        let body_pos = self
+                            .bodies
+                            .get(body.0)
+                            .unwrap()
+                            .part(body.1)
+                            .unwrap()
+                            .position();
                         let attach1 = self.cursor_pos;
                         let attach2 = body_pos.inverse() * attach1;
 
@@ -462,15 +506,9 @@ impl Testbed {
                                 Some(self.constraints.insert(joint));
                         }
 
-
-                        for node in self
-                            .graphics
-                            .body_nodes_mut(body.0)
-                            .unwrap()
-                            .iter_mut()
-                            {
-                                node.select()
-                            }
+                        for node in self.graphics.body_nodes_mut(body.0).unwrap().iter_mut() {
+                            node.select()
+                        }
                     }
 
                     event.inhibited = true;
@@ -480,23 +518,18 @@ impl Testbed {
             }
             WindowEvent::MouseButton(MouseButton::Button1, Action::Release, _) => {
                 if let Some(body) = self.state.grabbed_object {
-                    for n in self
-                        .graphics
-                        .body_nodes_mut(body.0)
-                        .unwrap()
-                        .iter_mut()
-                        {
-                            n.unselect()
-                        }
+                    for n in self.graphics.body_nodes_mut(body.0).unwrap().iter_mut() {
+                        n.unselect()
+                    }
                 }
 
                 if let Some(joint) = self.state.grabbed_object_constraint {
                     let _ = self.constraints.remove(joint);
                 }
 
-
                 if let Some(start) = self.state.drawing_ray {
-                    self.graphics.add_ray(Ray::new(start, self.cursor_pos - start));
+                    self.graphics
+                        .add_ray(Ray::new(start, self.cursor_pos - start));
                 }
 
                 self.state.drawing_ray = None;
@@ -524,8 +557,8 @@ impl Testbed {
                     joint.set_anchor_1(attach2);
                 }
 
-                event.inhibited = modifiers.contains(Modifiers::Control)
-                    || modifiers.contains(Modifiers::Shift);
+                event.inhibited =
+                    modifiers.contains(Modifiers::Control) || modifiers.contains(Modifiers::Shift);
             }
             _ => {}
         }
@@ -563,16 +596,18 @@ impl Testbed {
                     let mut minb = None;
 
                     let all_groups = CollisionGroups::new();
-                    for (_, b, inter) in self.geometrical_world
-                        .interferences_with_ray(&self.colliders, &ray, &all_groups)
-                        {
-                            if !b.query_type().is_proximity_query() && inter.toi < mintoi {
-                                mintoi = inter.toi;
+                    for (_, b, inter) in self.geometrical_world.interferences_with_ray(
+                        &self.colliders,
+                        &ray,
+                        &all_groups,
+                    ) {
+                        if !b.query_type().is_proximity_query() && inter.toi < mintoi {
+                            mintoi = inter.toi;
 
-                                let subshape = b.shape().subshape_containing_feature(inter.feature);
-                                minb = Some(b.body_part(subshape));
-                            }
+                            let subshape = b.shape().subshape_containing_feature(inter.feature);
+                            minb = Some(b.body_part(subshape));
                         }
+                    }
 
                     if let Some(body_part) = minb {
                         if modifier.contains(Modifiers::Control) {
@@ -581,27 +616,27 @@ impl Testbed {
                                 self.bodies.remove(body_part.0);
                             }
                         } else {
-                            self.bodies.get_mut(body_part.0)
+                            self.bodies
+                                .get_mut(body_part.0)
                                 .unwrap()
-                                .apply_force_at_point(body_part.1,
-                                                      &(ray.dir.normalize() * 0.01),
-                                                      &ray.point_at(mintoi),
-                                                      ForceType::Impulse,
-                                                      true);
+                                .apply_force_at_point(
+                                    body_part.1,
+                                    &(ray.dir.normalize() * 0.01),
+                                    &ray.point_at(mintoi),
+                                    ForceType::Impulse,
+                                    true,
+                                );
                         }
                     }
 
                     event.inhibited = true;
                 } else if !modifier.contains(Modifiers::Control) {
                     match self.state.grabbed_object {
-                        Some(body) => for n in self
-                            .graphics
-                            .body_nodes_mut(body.0)
-                            .unwrap()
-                            .iter_mut()
-                            {
+                        Some(body) => {
+                            for n in self.graphics.body_nodes_mut(body.0).unwrap().iter_mut() {
                                 n.unselect()
-                            },
+                            }
+                        }
                         None => {}
                     }
 
@@ -618,57 +653,68 @@ impl Testbed {
                     let mut minb = None;
 
                     let all_groups = CollisionGroups::new();
-                    for (_, b, inter) in self
-                        .geometrical_world
-                        .interferences_with_ray(&self.colliders, &ray, &all_groups)
+                    for (_, b, inter) in self.geometrical_world.interferences_with_ray(
+                        &self.colliders,
+                        &ray,
+                        &all_groups,
+                    ) {
+                        if ((Some(b.body()) != self.ground_handle)
+                            || self.state.can_grab_behind_ground)
+                            && !b.query_type().is_proximity_query()
+                            && inter.toi < mintoi
                         {
-                            if ((Some(b.body()) != self.ground_handle) || self.state.can_grab_behind_ground) &&
-                                !b.query_type().is_proximity_query() && inter.toi < mintoi {
-                                mintoi = inter.toi;
+                            mintoi = inter.toi;
 
-                                let subshape = b.shape().subshape_containing_feature(inter.feature);
-                                minb = Some(b.body_part(subshape));
-                            }
+                            let subshape = b.shape().subshape_containing_feature(inter.feature);
+                            minb = Some(b.body_part(subshape));
                         }
+                    }
 
                     if let Some(body_part_handle) = minb {
-                        if self.bodies.get(body_part_handle.0).unwrap().status_dependent_ndofs() != 0 {
+                        if self
+                            .bodies
+                            .get(body_part_handle.0)
+                            .unwrap()
+                            .status_dependent_ndofs()
+                            != 0
+                        {
                             self.state.grabbed_object = minb;
                             for n in self
                                 .graphics
                                 .body_nodes_mut(body_part_handle.0)
                                 .unwrap()
                                 .iter_mut()
-                                {
-                                    if let Some(joint) = self.state.grabbed_object_constraint {
-                                        let constraint = self.constraints.remove(joint).unwrap();
-                                        let (b1, b2) = constraint.anchors();
-                                        self.bodies.get_mut(b1.0).unwrap().activate();
-                                        self.bodies.get_mut(b2.0).unwrap().activate();
-                                    }
-
-                                    let attach1 = ray.origin + ray.dir * mintoi;
-                                    let attach2 = {
-                                        let body = self.bodies.get_mut(body_part_handle.0).unwrap();
-                                        body.activate();
-                                        let part = body.part(body_part_handle.1).unwrap();
-                                        body.material_point_at_world_point(part, &attach1)
-                                    };
-
-                                    if let Some(ground_handle) = self.ground_handle {
-                                        let constraint = MouseConstraint::new(
-                                            BodyPartHandle(ground_handle, 0),
-                                            body_part_handle,
-                                            attach1,
-                                            attach2,
-                                            1.0,
-                                        );
-                                        self.state.grabbed_object_plane = (attach1, -ray.dir);
-                                        self.state.grabbed_object_constraint = Some(self.constraints.insert(constraint));
-                                    }
-
-                                    n.select()
+                            {
+                                if let Some(joint) = self.state.grabbed_object_constraint {
+                                    let constraint = self.constraints.remove(joint).unwrap();
+                                    let (b1, b2) = constraint.anchors();
+                                    self.bodies.get_mut(b1.0).unwrap().activate();
+                                    self.bodies.get_mut(b2.0).unwrap().activate();
                                 }
+
+                                let attach1 = ray.origin + ray.dir * mintoi;
+                                let attach2 = {
+                                    let body = self.bodies.get_mut(body_part_handle.0).unwrap();
+                                    body.activate();
+                                    let part = body.part(body_part_handle.1).unwrap();
+                                    body.material_point_at_world_point(part, &attach1)
+                                };
+
+                                if let Some(ground_handle) = self.ground_handle {
+                                    let constraint = MouseConstraint::new(
+                                        BodyPartHandle(ground_handle, 0),
+                                        body_part_handle,
+                                        attach1,
+                                        attach2,
+                                        1.0,
+                                    );
+                                    self.state.grabbed_object_plane = (attach1, -ray.dir);
+                                    self.state.grabbed_object_constraint =
+                                        Some(self.constraints.insert(constraint));
+                                }
+
+                                n.select()
+                            }
                         }
                     }
 
@@ -682,9 +728,9 @@ impl Testbed {
                         .body_nodes_mut(body_part.0)
                         .unwrap()
                         .iter_mut()
-                        {
-                            n.unselect()
-                        }
+                    {
+                        n.unselect()
+                    }
                 }
 
                 if let Some(joint) = self.state.grabbed_object_constraint {
@@ -710,10 +756,10 @@ impl Testbed {
                         .unproject(&self.cursor_pos, &na::convert(size));
                     let (ref ppos, ref pdir) = self.state.grabbed_object_plane;
 
-                    if let Some(inter) =
-                    query::ray_toi_with_plane(ppos, pdir, &Ray::new(pos, dir))
+                    if let Some(inter) = query::ray_toi_with_plane(ppos, pdir, &Ray::new(pos, dir))
                     {
-                        let joint = self.constraints
+                        let joint = self
+                            .constraints
                             .get_mut(joint)
                             .unwrap()
                             .downcast_mut::<MouseConstraint<f32, DefaultBodyHandle>>()
@@ -737,56 +783,96 @@ type CameraEffects<'a> = (
 
 impl State for Testbed {
     fn cameras_and_effect(&mut self) -> CameraEffects<'_> {
-         #[cfg(feature = "dim2")]
-            let result = (None, Some(self.graphics.camera_mut() as &mut dyn PlanarCamera), None);
+        #[cfg(feature = "dim2")]
+        let result = (
+            None,
+            Some(self.graphics.camera_mut() as &mut dyn PlanarCamera),
+            None,
+        );
         #[cfg(feature = "dim3")]
-            let result = (Some(self.graphics.camera_mut() as &mut dyn Camera), None, None);
+        let result = (
+            Some(self.graphics.camera_mut() as &mut dyn Camera),
+            None,
+            None,
+        );
         result
     }
 
     fn step(&mut self, window: &mut Window) {
-        self.ui.update(window, &mut self.mechanical_world, &mut self.state);
+        self.ui
+            .update(window, &mut self.mechanical_world, &mut self.state);
 
         // Handle UI actions.
         {
-            let backend_changed = self.state.action_flags.contains(TestbedActionFlags::BACKEND_CHANGED);
+            let backend_changed = self
+                .state
+                .action_flags
+                .contains(TestbedActionFlags::BACKEND_CHANGED);
             if backend_changed {
                 // Marking the example as changed will make the simulation
                 // restart with the selected backend.
-                self.state.action_flags.set(TestbedActionFlags::BACKEND_CHANGED, false);
-                self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
+                self.state
+                    .action_flags
+                    .set(TestbedActionFlags::BACKEND_CHANGED, false);
+                self.state
+                    .action_flags
+                    .set(TestbedActionFlags::EXAMPLE_CHANGED, true);
                 self.camera_locked = true;
             }
 
-            let restarted = self.state.action_flags.contains(TestbedActionFlags::RESTART);
+            let restarted = self
+                .state
+                .action_flags
+                .contains(TestbedActionFlags::RESTART);
             if restarted {
-                self.state.action_flags.set(TestbedActionFlags::RESTART, false);
+                self.state
+                    .action_flags
+                    .set(TestbedActionFlags::RESTART, false);
                 self.camera_locked = true;
-                self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
+                self.state
+                    .action_flags
+                    .set(TestbedActionFlags::EXAMPLE_CHANGED, true);
             }
 
-            let example_changed = self.state.action_flags.contains(TestbedActionFlags::EXAMPLE_CHANGED);
+            let example_changed = self
+                .state
+                .action_flags
+                .contains(TestbedActionFlags::EXAMPLE_CHANGED);
             if example_changed {
-                self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, false);
+                self.state
+                    .action_flags
+                    .set(TestbedActionFlags::EXAMPLE_CHANGED, false);
                 self.clear(window);
                 self.builders[self.state.selected_example].1(self);
                 self.camera_locked = false;
             }
 
-            if self.state.action_flags.contains(TestbedActionFlags::RESET_WORLD_GRAPHICS) {
-                self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, false);
+            if self
+                .state
+                .action_flags
+                .contains(TestbedActionFlags::RESET_WORLD_GRAPHICS)
+            {
+                self.state
+                    .action_flags
+                    .set(TestbedActionFlags::RESET_WORLD_GRAPHICS, false);
                 for (handle, _) in self.colliders.iter() {
                     self.graphics.add(window, handle, &self.colliders);
                 }
             }
 
-            if example_changed || self.state.prev_flags.contains(TestbedStateFlags::WIREFRAME) !=
-                self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
-                self.graphics.toggle_wireframe_mode(&self.colliders, self.state.flags.contains(TestbedStateFlags::WIREFRAME))
+            if example_changed
+                || self.state.prev_flags.contains(TestbedStateFlags::WIREFRAME)
+                    != self.state.flags.contains(TestbedStateFlags::WIREFRAME)
+            {
+                self.graphics.toggle_wireframe_mode(
+                    &self.colliders,
+                    self.state.flags.contains(TestbedStateFlags::WIREFRAME),
+                )
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::SLEEP) !=
-                self.state.flags.contains(TestbedStateFlags::SLEEP) {
+            if self.state.prev_flags.contains(TestbedStateFlags::SLEEP)
+                != self.state.flags.contains(TestbedStateFlags::SLEEP)
+            {
                 if self.state.flags.contains(TestbedStateFlags::SLEEP) {
                     for (_, body) in self.bodies.iter_mut() {
                         body.set_deactivation_threshold(Some(ActivationStatus::default_threshold()))
@@ -799,32 +885,51 @@ impl State for Testbed {
                 }
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::SUB_STEPPING) !=
-                self.state.flags.contains(TestbedStateFlags::SUB_STEPPING) {
-                self.mechanical_world.integration_parameters.return_after_ccd_substep = self.state.flags.contains(TestbedStateFlags::SUB_STEPPING);
+            if self
+                .state
+                .prev_flags
+                .contains(TestbedStateFlags::SUB_STEPPING)
+                != self.state.flags.contains(TestbedStateFlags::SUB_STEPPING)
+            {
+                self.mechanical_world
+                    .integration_parameters
+                    .return_after_ccd_substep =
+                    self.state.flags.contains(TestbedStateFlags::SUB_STEPPING);
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::SHAPES) !=
-                self.state.flags.contains(TestbedStateFlags::SHAPES) {
+            if self.state.prev_flags.contains(TestbedStateFlags::SHAPES)
+                != self.state.flags.contains(TestbedStateFlags::SHAPES)
+            {
                 unimplemented!()
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::JOINTS) !=
-                self.state.flags.contains(TestbedStateFlags::JOINTS) {
+            if self.state.prev_flags.contains(TestbedStateFlags::JOINTS)
+                != self.state.flags.contains(TestbedStateFlags::JOINTS)
+            {
                 unimplemented!()
             }
 
-            if example_changed || self.state.prev_flags.contains(TestbedStateFlags::AABBS) !=
-                self.state.flags.contains(TestbedStateFlags::AABBS) {
+            if example_changed
+                || self.state.prev_flags.contains(TestbedStateFlags::AABBS)
+                    != self.state.flags.contains(TestbedStateFlags::AABBS)
+            {
                 if self.state.flags.contains(TestbedStateFlags::AABBS) {
-                    self.graphics.show_aabbs(&self.geometrical_world, &self.colliders, window)
+                    self.graphics
+                        .show_aabbs(&self.geometrical_world, &self.colliders, window)
                 } else {
                     self.graphics.hide_aabbs(window)
                 }
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::CENTER_OF_MASSES) !=
-                self.state.flags.contains(TestbedStateFlags::CENTER_OF_MASSES) {
+            if self
+                .state
+                .prev_flags
+                .contains(TestbedStateFlags::CENTER_OF_MASSES)
+                != self
+                    .state
+                    .flags
+                    .contains(TestbedStateFlags::CENTER_OF_MASSES)
+            {
                 unimplemented!()
             }
         }
@@ -845,20 +950,33 @@ impl State for Testbed {
                         &mut self.bodies,
                         &mut self.colliders,
                         &mut self.constraints,
-                        &mut self.forces
+                        &mut self.forces,
                     );
                 }
 
                 #[cfg(feature = "box2d-backend")]
-                    {
-                        if self.state.selected_backend == BOX2D_BACKEND {
-                            self.box2d.as_mut().unwrap().step(&mut self.mechanical_world);
-                            self.box2d.as_mut().unwrap().sync(&mut self.bodies, &mut self.colliders);
-                        }
+                {
+                    if self.state.selected_backend == BOX2D_BACKEND {
+                        self.box2d
+                            .as_mut()
+                            .unwrap()
+                            .step(&mut self.mechanical_world);
+                        self.box2d
+                            .as_mut()
+                            .unwrap()
+                            .sync(&mut self.bodies, &mut self.colliders);
                     }
+                }
 
                 for f in &self.callbacks {
-                    f(&mut self.mechanical_world, &mut self.geometrical_world, &mut self.bodies, &mut self.colliders, &mut self.graphics, self.time)
+                    f(
+                        &mut self.mechanical_world,
+                        &mut self.geometrical_world,
+                        &mut self.bodies,
+                        &mut self.colliders,
+                        &mut self.graphics,
+                        self.time,
+                    )
                 }
 
                 if !self.hide_counters {
@@ -871,7 +989,8 @@ impl State for Testbed {
             }
         }
 
-        self.graphics.draw(&self.geometrical_world, &self.colliders, window);
+        self.graphics
+            .draw(&self.geometrical_world, &self.colliders, window);
 
         if self.state.flags.contains(TestbedStateFlags::CONTACT_POINTS) {
             draw_collisions(
@@ -897,7 +1016,7 @@ impl State for Testbed {
             let counters = self.mechanical_world.counters;
 
             let profile = format!(
-            r#"Total: {:.2}ms
+                r#"Total: {:.2}ms
 Collision detection: {:.2}ms
 |_ Broad-phase: {:.2}ms
    Narrow-phase: {:.2}ms
@@ -912,55 +1031,50 @@ CCD: {:.2}ms
    Broad-phase: {:.2}ms
    Narrow-phase: {:.2}ms
    Solver: {:.2}ms"#,
-            counters.step_time() * 1000.0,
-            counters.collision_detection_time() * 1000.0,
-            counters.broad_phase_time() * 1000.0,
-            counters.narrow_phase_time() * 1000.0,
-            counters.island_construction_time() * 1000.0,
-            counters.solver_time() * 1000.0,
-            counters.assembly_time() * 1000.0,
-            counters.velocity_resolution_time() * 1000.0,
-            counters.position_resolution_time() * 1000.0,
-            counters.ccd_time() * 1000.0,
-            counters.ccd.num_substeps,
-            counters.ccd.toi_computation_time.time() * 1000.0,
-            counters.ccd.broad_phase_time.time() * 1000.0,
-            counters.ccd.narrow_phase_time.time() * 1000.0,
-            counters.ccd.solver_time.time() * 1000.0);
+                counters.step_time() * 1000.0,
+                counters.collision_detection_time() * 1000.0,
+                counters.broad_phase_time() * 1000.0,
+                counters.narrow_phase_time() * 1000.0,
+                counters.island_construction_time() * 1000.0,
+                counters.solver_time() * 1000.0,
+                counters.assembly_time() * 1000.0,
+                counters.velocity_resolution_time() * 1000.0,
+                counters.position_resolution_time() * 1000.0,
+                counters.ccd_time() * 1000.0,
+                counters.ccd.num_substeps,
+                counters.ccd.toi_computation_time.time() * 1000.0,
+                counters.ccd.broad_phase_time.time() * 1000.0,
+                counters.ccd.narrow_phase_time.time() * 1000.0,
+                counters.ccd.solver_time.time() * 1000.0
+            );
 
-//            let stats = format!(
-//                r#"Total: {:.2}ms
-//Collision detection: {:.2}ms
-//|_ Broad-phase: {:.2}ms
-//   Narrow-phase: {:.2}ms
-//Island computation: {:.2}ms
-//Solver: {:.2}ms
-//|_ Assembly: {:.2}ms
-//   Velocity resolution: {:.2}ms
-//   Position resolution: {:.2}ms"#,
-//                counters.step_time() * 1000.0,
-//                counters.collision_detection_time() * 1000.0,
-//                counters.broad_phase_time() * 1000.0,
-//                counters.narrow_phase_time() * 1000.0,
-//                counters.island_construction_time() * 1000.0,
-//                counters.solver_time() * 1000.0,
-//                counters.assembly_time() * 1000.0,
-//                counters.velocity_resolution_time() * 1000.0,
-//                counters.position_resolution_time() * 1000.0);
+            //            let stats = format!(
+            //                r#"Total: {:.2}ms
+            //Collision detection: {:.2}ms
+            //|_ Broad-phase: {:.2}ms
+            //   Narrow-phase: {:.2}ms
+            //Island computation: {:.2}ms
+            //Solver: {:.2}ms
+            //|_ Assembly: {:.2}ms
+            //   Velocity resolution: {:.2}ms
+            //   Position resolution: {:.2}ms"#,
+            //                counters.step_time() * 1000.0,
+            //                counters.collision_detection_time() * 1000.0,
+            //                counters.broad_phase_time() * 1000.0,
+            //                counters.narrow_phase_time() * 1000.0,
+            //                counters.island_construction_time() * 1000.0,
+            //                counters.solver_time() * 1000.0,
+            //                counters.assembly_time() * 1000.0,
+            //                counters.velocity_resolution_time() * 1000.0,
+            //                counters.position_resolution_time() * 1000.0);
 
             if self.state.flags.contains(TestbedStateFlags::PROFILE) {
-                window.draw_text(
-                    &profile,
-                    &Point2::origin(),
-                    45.0,
-                    &self.font,
-                    &color,
-                );
+                window.draw_text(&profile, &Point2::origin(), 45.0, &self.font, &color);
             }
         } else {
             window.draw_text("Paused", &Point2::origin(), 60.0, &self.font, &color);
         }
-//        window.draw_text(CONTROLS, &Point2::new(0.0, 75.0), 40.0, &self.font, &color);
+        //        window.draw_text(CONTROLS, &Point2::new(0.0, 75.0), 40.0, &self.font, &color);
     }
 }
 
@@ -970,7 +1084,8 @@ fn draw_collisions(
     colliders: &DefaultColliderSet<f32>,
     existing: &mut HashMap<ContactId, bool>,
     running: bool,
-) {
+)
+{
     for (_, _, _, _, _, manifold) in geometrical_world.contact_pairs(colliders, false) {
         for c in manifold.contacts() {
             existing
@@ -982,7 +1097,8 @@ fn draw_collisions(
                 })
                 .or_insert(false);
 
-            let color = if c.contact.depth < 0.0 { // existing[&c.id] {
+            let color = if c.contact.depth < 0.0 {
+                // existing[&c.id] {
                 Point3::new(0.0, 0.0, 1.0)
             } else {
                 Point3::new(1.0, 0.0, 0.0)

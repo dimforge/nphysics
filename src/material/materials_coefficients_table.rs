@@ -1,9 +1,8 @@
-use std::collections::HashMap;
 use na::RealField;
 use ncollide::utils::SortedPair;
+use std::collections::HashMap;
 
 use crate::material::MaterialId;
-
 
 /// A lookup table for friction and restitution coefficient associated to certain pairs of materials.
 #[derive(Clone)]

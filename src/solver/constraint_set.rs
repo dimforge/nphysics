@@ -1,7 +1,9 @@
-use na::RealField;
 use crate::object::{BodyHandle, ColliderHandle};
-use crate::solver::{BilateralConstraint, BilateralGroundConstraint, NonlinearUnilateralConstraint,
-             UnilateralConstraint, UnilateralGroundConstraint};
+use crate::solver::{
+    BilateralConstraint, BilateralGroundConstraint, NonlinearUnilateralConstraint,
+    UnilateralConstraint, UnilateralGroundConstraint,
+};
+use na::RealField;
 
 /// Set of velocity-based constraints.
 pub struct LinearConstraints<N: RealField, Id> {
@@ -28,7 +30,9 @@ impl<N: RealField, Id> LinearConstraints<N, Id> {
 
     /// The total number of constraints on this set.
     pub fn len(&self) -> usize {
-        self.unilateral_ground.len() + self.unilateral.len() + self.bilateral_ground.len()
+        self.unilateral_ground.len()
+            + self.unilateral.len()
+            + self.bilateral_ground.len()
             + self.bilateral.len()
     }
 
@@ -47,7 +51,9 @@ pub struct NonlinearConstraints<N: RealField, Handle: BodyHandle, CollHandle: Co
     pub unilateral: Vec<NonlinearUnilateralConstraint<N, Handle, CollHandle>>,
 }
 
-impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> NonlinearConstraints<N, Handle, CollHandle> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    NonlinearConstraints<N, Handle, CollHandle>
+{
     /// Create an empty set of nonlinear position-based constraints.
     pub fn new() -> Self {
         NonlinearConstraints {
@@ -74,7 +80,9 @@ pub struct ConstraintSet<N: RealField, Handle: BodyHandle, CollHandle: ColliderH
     pub position: NonlinearConstraints<N, Handle, CollHandle>,
 }
 
-impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle, Id> ConstraintSet<N, Handle, CollHandle, Id> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle, Id>
+    ConstraintSet<N, Handle, CollHandle, Id>
+{
     /// Create a new empty set of constraints.
     pub fn new() -> Self {
         ConstraintSet {

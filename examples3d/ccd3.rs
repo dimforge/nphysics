@@ -1,14 +1,15 @@
 extern crate nalgebra as na;
 
-use std::f32;
-use na::{Point3, Vector3, Isometry3};
+use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
-
+use std::f32;
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -26,18 +27,33 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_thickness = 0.2;
     let ground_half_width = 3.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(ground_half_width, ground_thickness, ground_half_width)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        ground_half_width,
+        ground_thickness,
+        ground_half_width,
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
 
     let wall_poses = [
         Isometry3::translation(0.0, -ground_half_width, 0.0),
         Isometry3::translation(0.0, ground_half_width, 0.0),
-        Isometry3::new(Vector3::x() * ground_half_width, Vector3::z() * (f32::consts::PI / 2.0)),
-        Isometry3::new(Vector3::x() * -ground_half_width, Vector3::z() * (f32::consts::PI / 2.0)),
-        Isometry3::new(Vector3::z() * ground_half_width, Vector3::x() * (f32::consts::PI / 2.0)),
-        Isometry3::new(Vector3::z() * -ground_half_width, Vector3::x() * (f32::consts::PI / 2.0)),
+        Isometry3::new(
+            Vector3::x() * ground_half_width,
+            Vector3::z() * (f32::consts::PI / 2.0),
+        ),
+        Isometry3::new(
+            Vector3::x() * -ground_half_width,
+            Vector3::z() * (f32::consts::PI / 2.0),
+        ),
+        Isometry3::new(
+            Vector3::z() * ground_half_width,
+            Vector3::x() * (f32::consts::PI / 2.0),
+        ),
+        Isometry3::new(
+            Vector3::z() * -ground_half_width,
+            Vector3::x() * (f32::consts::PI / 2.0),
+        ),
     ];
 
     for pose in wall_poses.into_iter() {
@@ -91,13 +107,18 @@ pub fn init_world(testbed: &mut Testbed) {
     testbed.set_body_wireframe(ground_handle, true);
     testbed.set_ground_handle(Some(ground_handle));
     testbed.allow_grabbing_behind_ground(true);
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(-11.0, 0.2, -9.0), Point3::new(-1.0, -0.6, 1.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("CCD", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("CCD", init_world)]);
     testbed.run()
 }

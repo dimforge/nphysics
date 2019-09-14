@@ -1,11 +1,11 @@
+use crate::math::{AngularInertia, Point};
+use crate::volumetric::Volumetric;
 use na::RealField;
-use ncollide::shape::{Ball, Compound, Cuboid, Shape, Capsule};
 #[cfg(feature = "dim3")]
 use ncollide::shape::ConvexHull;
 #[cfg(feature = "dim2")]
 use ncollide::shape::ConvexPolygon;
-use crate::volumetric::Volumetric;
-use crate::math::{AngularInertia, Point};
+use ncollide::shape::{Ball, Capsule, Compound, Cuboid, Shape};
 
 macro_rules! dispatch(
     ($p: ty, $i: ty, $sself: ident.$name: ident($($argN: ident),*)) => {

@@ -1,8 +1,8 @@
+use crate::objects::node::{self, GraphicsNode};
 use kiss3d::window;
 use na::Point3;
 use nphysics::math::{Isometry, Vector};
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-use crate::objects::node::{self, GraphicsNode};
 
 pub struct Box {
     color: Point3<f32>,
@@ -20,12 +20,13 @@ impl Box {
         half_extents: Vector<f32>,
         color: Point3<f32>,
         window: &mut window::Window,
-    ) -> Box {
+    ) -> Box
+    {
         let extents = half_extents * 2.0;
         #[cfg(feature = "dim2")]
-            let node = window.add_rectangle(extents.x, extents.y);
+        let node = window.add_rectangle(extents.x, extents.y);
         #[cfg(feature = "dim3")]
-            let node = window.add_cube(extents.x, extents.y, extents.z);
+        let node = window.add_cube(extents.x, extents.y, extents.z);
 
         let mut res = Box {
             color,

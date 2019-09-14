@@ -1,12 +1,14 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2, Isometry2};
-use ncollide2d::shape::{Cuboid, Ball, ShapeHandle};
-use nphysics2d::object::{ColliderDesc, MultibodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use na::{Isometry2, Point2, Vector2};
+use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
-use nphysics2d::joint::{RevoluteJoint, FreeJoint};
+use nphysics2d::joint::{FreeJoint, RevoluteJoint};
+use nphysics2d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, MultibodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
 
 pub fn init_world(testbed: &mut Testbed) {
@@ -24,8 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground
      */
     let ground_size = 25.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -42,7 +43,14 @@ pub fn init_world(testbed: &mut Testbed) {
      * Run the simulation.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point2::new(0.0, -5.0), 25.0);
 }
 
@@ -99,11 +107,9 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<f32>, colliders: &mut DefaultColli
         .set_parent_shift(Vector2::new(body_radx, -body_rady))
         .set_body_shift(Vector2::new(0.0, leg_length + space));
 
-
     body.add_child(spherical)
         .set_parent_shift(Vector2::new(-body_radx, -body_rady))
         .set_body_shift(Vector2::new(0.0, leg_length + space));
-
 
     let n = 5;
     let shiftx = 2.0;
@@ -127,7 +133,6 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<f32>, colliders: &mut DefaultColli
         }
     }
 }
-
 
 fn main() {
     let mut testbed = Testbed::new_empty();

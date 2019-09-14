@@ -94,7 +94,8 @@ impl<N: RealField> IntegrationParameters<N> {
         return_after_ccd_substep: bool,
         multiple_ccd_substep_sensor_events_enabled: bool,
         ccd_on_penetration_enabled: bool,
-    ) -> Self {
+    ) -> Self
+    {
         IntegrationParameters {
             t: N::zero(),
             dt,
@@ -140,7 +141,10 @@ impl<N: RealField> IntegrationParameters<N> {
     /// This automatically recompute `self.inv_dt`.
     #[inline]
     pub fn set_dt(&mut self, dt: N) {
-        assert!(dt >= N::zero(), "The time-stepping length cannot be negative.");
+        assert!(
+            dt >= N::zero(),
+            "The time-stepping length cannot be negative."
+        );
         self.dt = dt;
         if dt == N::zero() {
             self.inv_dt = N::zero()

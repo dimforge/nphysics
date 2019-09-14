@@ -2,12 +2,14 @@ extern crate nalgebra as na;
 
 use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{FEMSurfaceDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics2d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, FEMSurfaceDesc, Ground,
+    RigidBodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -34,12 +36,10 @@ pub fn init_world(testbed: &mut Testbed) {
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
-
     let co = obstacle_desc
         .set_translation(Vector2::x() * -4.0)
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
-
 
     /*
      * Create the deformable body and a collider for its boundary.
@@ -70,13 +70,13 @@ pub fn init_world(testbed: &mut Testbed) {
         for j in i..num {
             let fj = j as f32;
             let fi = i as f32;
-            let x = (fi * shift / 2.0) + (fj - fi) * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) - centerx;
+            let x = (fi * shift / 2.0)
+                + (fj - fi) * 2.0 * (rad + ColliderDesc::<f32>::default_margin())
+                - centerx;
             let y = fi * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) + rad + 2.0;
 
             // Build the rigid body.
-            let rb = RigidBodyDesc::new()
-                .translation(Vector2::new(x, y))
-                .build();
+            let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
             let rb_handle = bodies.insert(rb);
 
             // Build the collider.
@@ -91,14 +91,18 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point2::new(0.0, -3.0), 100.0);
 }
 
-
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("FEM surface", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("FEM surface", init_world)]);
     testbed.run()
 }

@@ -8,7 +8,8 @@ use crate::object::{BodySet, DefaultBodySet};
 use crate::solver::IntegrationParameters;
 
 /// Default force generator set based on an arena with generational indices.
-pub type DefaultForceGeneratorSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> = Arena<Box<dyn ForceGenerator<N, Bodies>>>;
+pub type DefaultForceGeneratorSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> =
+    Arena<Box<dyn ForceGenerator<N, Bodies>>>;
 
 /// Trait implemented by sets of force generators.
 ///
@@ -33,7 +34,9 @@ pub trait ForceGeneratorSet<N: RealField, Bodies: BodySet<N>> {
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::ForceGenerator));
 }
 
-impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> for DefaultForceGeneratorSet<N, Bodies> {
+impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies>
+    for DefaultForceGeneratorSet<N, Bodies>
+{
     type ForceGenerator = dyn ForceGenerator<N, Bodies>;
     type Handle = DefaultForceGeneratorHandle;
 
@@ -66,7 +69,7 @@ impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> fo
 pub type DefaultForceGeneratorHandle = generational_arena::Index;
 
 /// A persistent force generator.
-/// 
+///
 /// A force generator applies a force to one or several bodies at each step of the simulation.
 pub trait ForceGenerator<N: RealField, Bodies: BodySet<N>>: Downcast + Send + Sync {
     /// Apply forces to some bodies.

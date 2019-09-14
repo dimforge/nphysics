@@ -3,10 +3,14 @@ use na::{DVector, RealField, Unit};
 
 use crate::joint::JointConstraint;
 use crate::math::{Point, Vector, DIM};
-use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
-use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits};
-use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
-             NonlinearConstraintGenerator};
+use crate::object::{Body, BodyHandle, BodyPartHandle, BodySet};
+use crate::solver::{
+    helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits,
+};
+use crate::solver::{
+    GenericNonlinearConstraint, IntegrationParameters, LinearConstraints,
+    NonlinearConstraintGenerator,
+};
 
 /// A spring-like constraint to be used to drag a body part with the mouse.
 pub struct MouseConstraint<N: RealField, Handle: BodyHandle> {
@@ -28,7 +32,8 @@ impl<N: RealField, Handle: BodyHandle> MouseConstraint<N, Handle> {
         anchor1: Point<N>,
         anchor2: Point<N>,
         limit: N,
-    ) -> Self {
+    ) -> Self
+    {
         MouseConstraint {
             b1,
             b2,
@@ -49,7 +54,9 @@ impl<N: RealField, Handle: BodyHandle> MouseConstraint<N, Handle> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for MouseConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
+    JointConstraint<N, Bodies> for MouseConstraint<N, Handle>
+{
     fn num_velocity_constraints(&self) -> usize {
         DIM
     }
@@ -67,7 +74,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut LinearConstraints<N, usize>,
-    ) {
+    )
+    {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
@@ -90,7 +98,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         };
 
         let error = anchor2 - anchor1;
-        let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
+        let (ext_vels1, ext_vels2) =
+            helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
         let mut i = 0;
         Vector::canonical_basis(|dir| {
@@ -111,7 +120,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
                 jacobians,
                 Some(&ext_vels1),
                 Some(&ext_vels2),
-                Some(&mut rhs)
+                Some(&mut rhs),
             );
 
             if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
@@ -127,17 +136,15 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
                         0,
                     ));
             } else {
-                constraints
-                    .bilateral
-                    .push(BilateralConstraint::new(
-                        geom,
-                        assembly_id1,
-                        assembly_id2,
-                        limits,
-                        rhs,
-                        N::zero(),
-                        0,
-                    ));
+                constraints.bilateral.push(BilateralConstraint::new(
+                    geom,
+                    assembly_id1,
+                    assembly_id2,
+                    limits,
+                    rhs,
+                    N::zero(),
+                    0,
+                ));
             }
 
             i += 1;
@@ -149,7 +156,9 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
     fn cache_impulses(&mut self, _: &LinearConstraints<N, usize>, _: N) {}
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for MouseConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
+    NonlinearConstraintGenerator<N, Bodies> for MouseConstraint<N, Handle>
+{
     fn num_position_constraints(&self, _: &Bodies) -> usize {
         0
     }
@@ -160,7 +169,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
         _: usize,
         _: &mut Bodies,
         _: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>>
+    {
         None
     }
 }

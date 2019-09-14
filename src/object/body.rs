@@ -3,13 +3,14 @@
 use downcast_rs::Downcast;
 
 use na::{self, DVectorSlice, DVectorSliceMut, RealField};
+use ncollide::interpolation::{
+    ConstantLinearVelocityRigidMotion, ConstantVelocityRigidMotion, RigidMotion,
+};
 use ncollide::shape::DeformationsType;
-use ncollide::interpolation::{RigidMotion, ConstantLinearVelocityRigidMotion,
-                              ConstantVelocityRigidMotion};
 
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
 
-use crate::solver::{IntegrationParameters, ForceDirection};
+use crate::solver::{ForceDirection, IntegrationParameters};
 
 pub enum BodyPartMotion<N: RealField> {
     RigidLinear(ConstantLinearVelocityRigidMotion<N>),
@@ -137,17 +138,17 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
         }
     }
 
-    fn advance(&mut self, _time_ratio: N) { }
+    fn advance(&mut self, _time_ratio: N) {}
 
-    fn validate_advancement(&mut self) { }
+    fn validate_advancement(&mut self) {}
 
-    fn clamp_advancement(&mut self) { }
+    fn clamp_advancement(&mut self) {}
 
     fn part_motion(&self, _part_id: usize, _time_origin: N) -> Option<BodyPartMotion<N>> {
         None
     }
 
-    fn step_started(&mut self) {  }
+    fn step_started(&mut self) {}
 
     /// Updates the kinematics, e.g., positions and jacobians, of this body.
     fn update_kinematics(&mut self);
@@ -236,7 +237,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
         jacobians: &mut [N],
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
-        out_vel: Option<&mut N>
+        out_vel: Option<&mut N>,
     );
 
     /// Transform the given point expressed in material coordinates to world-space.
@@ -252,7 +253,11 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn has_active_internal_constraints(&mut self) -> bool;
 
     /// Initializes the internal velocity constraints of a body.
-    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, parameters: &IntegrationParameters<N>);
+    fn setup_internal_velocity_constraints(
+        &mut self,
+        ext_vels: &DVectorSlice<N>,
+        parameters: &IntegrationParameters<N>,
+    );
 
     /// For warmstarting the solver, modifies the delta velocity applied by the internal constraints of this body.
     fn warmstart_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
@@ -265,8 +270,14 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn step_solve_internal_position_constraints(&mut self, parameters: &IntegrationParameters<N>);
 
     /// Add the given inertia to the local inertia of this body part.
-    fn add_local_inertia_and_com(&mut self, _part_index: usize, _com: Point<N>, _inertia: Inertia<N>)
-    {} // FIXME: don't auto-impl.
+    fn add_local_inertia_and_com(
+        &mut self,
+        _part_index: usize,
+        _com: Point<N>,
+        _inertia: Inertia<N>,
+    )
+    {
+    } // FIXME: don't auto-impl.
 
     /// The number of degrees of freedom (DOF) of this body, taking its status into account.
     ///
@@ -341,22 +352,62 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
      * Application of forces/impulses.
      */
     /// Apply a force at the center of mass of a part of this body.
-    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool);
+    fn apply_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    );
 
     /// Apply a local force at the center of mass of a part of this body.
-    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool);
+    fn apply_local_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    );
 
     /// Apply a force at a given point of a part of this body.
-    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
+    fn apply_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    );
 
     /// Apply a local force at a given point of a part of this body.
-    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
+    fn apply_local_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    );
 
     /// Apply a force at a given local point of a part of this body.
-    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
+    fn apply_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    );
 
     /// Apply a local force at a given local point of a part of this body.
-    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
+    fn apply_local_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    );
 }
 
 /// Trait implemented by each part of a body supported by nphysics.
@@ -392,8 +443,6 @@ pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
 
 impl_downcast!(Body<N> where N: RealField);
 impl_downcast!(BodyPart<N> where N: RealField);
-
-
 
 bitflags! {
     #[derive(Default)]
@@ -446,12 +495,12 @@ impl BodyUpdateStatus {
     #[inline]
     pub fn inertia_needs_update(&self) -> bool {
         self.0.intersects(
-            BodyUpdateStatusFlags::POSITION_CHANGED |
-                BodyUpdateStatusFlags::VELOCITY_CHANGED |
-                BodyUpdateStatusFlags::LOCAL_INERTIA_CHANGED |
-                BodyUpdateStatusFlags::LOCAL_COM_CHANGED |
-                BodyUpdateStatusFlags::DAMPING_CHANGED |
-                BodyUpdateStatusFlags::STATUS_CHANGED
+            BodyUpdateStatusFlags::POSITION_CHANGED
+                | BodyUpdateStatusFlags::VELOCITY_CHANGED
+                | BodyUpdateStatusFlags::LOCAL_INERTIA_CHANGED
+                | BodyUpdateStatusFlags::LOCAL_COM_CHANGED
+                | BodyUpdateStatusFlags::DAMPING_CHANGED
+                | BodyUpdateStatusFlags::STATUS_CHANGED,
         )
     }
 
@@ -463,9 +512,9 @@ impl BodyUpdateStatus {
     #[inline]
     pub fn body_needs_wake_up(&self) -> bool {
         self.0.intersects(
-            BodyUpdateStatusFlags::POSITION_CHANGED |
-                BodyUpdateStatusFlags::VELOCITY_CHANGED |
-                BodyUpdateStatusFlags::STATUS_CHANGED
+            BodyUpdateStatusFlags::POSITION_CHANGED
+                | BodyUpdateStatusFlags::VELOCITY_CHANGED
+                | BodyUpdateStatusFlags::STATUS_CHANGED,
         )
     }
 

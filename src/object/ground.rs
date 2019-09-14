@@ -1,9 +1,11 @@
 use na::{DVectorSlice, DVectorSliceMut, RealField};
 
+use crate::math::{Force, ForceType, Inertia, Isometry, Point, Translation, Vector, Velocity};
+use crate::object::{
+    ActivationStatus, Body, BodyPart, BodyPartMotion, BodyStatus, BodyUpdateStatus,
+};
+use crate::solver::{ForceDirection, IntegrationParameters};
 use ncollide::shape::DeformationsType;
-use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity, Translation};
-use crate::object::{ActivationStatus, BodyStatus, BodyUpdateStatus, Body, BodyPart, BodyPartMotion};
-use crate::solver::{IntegrationParameters, ForceDirection};
 
 /// A singleton representing the ground.
 ///
@@ -175,7 +177,6 @@ impl<N: RealField> Body<N> for Ground<N> {
         *point
     }
 
-
     #[inline]
     fn fill_constraint_geometry(
         &self,
@@ -188,14 +189,16 @@ impl<N: RealField> Body<N> for Ground<N> {
         _: &mut [N],
         _: &mut N,
         _: Option<&DVectorSlice<N>>,
-        _: Option<&mut N>
-    ) {}
+        _: Option<&mut N>,
+    )
+    {
+    }
 
-    fn advance(&mut self, _: N) { }
+    fn advance(&mut self, _: N) {}
 
-    fn validate_advancement(&mut self) { }
+    fn validate_advancement(&mut self) {}
 
-    fn clamp_advancement(&mut self) { }
+    fn clamp_advancement(&mut self) {}
 
     fn part_motion(&self, _: usize, _: N) -> Option<BodyPartMotion<N>> {
         Some(BodyPartMotion::Static(Isometry::identity()))
@@ -207,7 +210,13 @@ impl<N: RealField> Body<N> for Ground<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &DVectorSlice<N>, _: &IntegrationParameters<N>) {}
+    fn setup_internal_velocity_constraints(
+        &mut self,
+        _: &DVectorSlice<N>,
+        _: &IntegrationParameters<N>,
+    )
+    {
+    }
 
     #[inline]
     fn warmstart_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
@@ -225,16 +234,52 @@ impl<N: RealField> Body<N> for Ground<N> {
     fn apply_local_force(&mut self, _: usize, _: &Force<N>, _: ForceType, _: bool) {}
 
     #[inline]
-    fn apply_force_at_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
+    fn apply_force_at_point(
+        &mut self,
+        _: usize,
+        _: &Vector<N>,
+        _: &Point<N>,
+        _: ForceType,
+        _: bool,
+    )
+    {
+    }
 
     #[inline]
-    fn apply_local_force_at_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
+    fn apply_local_force_at_point(
+        &mut self,
+        _: usize,
+        _: &Vector<N>,
+        _: &Point<N>,
+        _: ForceType,
+        _: bool,
+    )
+    {
+    }
 
     #[inline]
-    fn apply_force_at_local_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
+    fn apply_force_at_local_point(
+        &mut self,
+        _: usize,
+        _: &Vector<N>,
+        _: &Point<N>,
+        _: ForceType,
+        _: bool,
+    )
+    {
+    }
 
     #[inline]
-    fn apply_local_force_at_local_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
+    fn apply_local_force_at_local_point(
+        &mut self,
+        _: usize,
+        _: &Vector<N>,
+        _: &Point<N>,
+        _: ForceType,
+        _: bool,
+    )
+    {
+    }
 }
 
 impl<N: RealField> BodyPart<N> for Ground<N> {

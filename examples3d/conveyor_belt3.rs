@@ -4,14 +4,14 @@ use std::f32;
 
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
 use nphysics3d::material::{BasicMaterial, MaterialHandle};
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
-
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -29,14 +29,26 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let conveyor_length = 5.0;
     let conveyor_half_width = 1.0;
-    let conveyor_side_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(conveyor_length - conveyor_half_width, 0.2, conveyor_half_width)));
-    let conveyor_corner_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(conveyor_half_width, 0.2, conveyor_half_width)));
+    let conveyor_side_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        conveyor_length - conveyor_half_width,
+        0.2,
+        conveyor_half_width,
+    )));
+    let conveyor_corner_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        conveyor_half_width,
+        0.2,
+        conveyor_half_width,
+    )));
     let conveyor_shift = conveyor_length;
 
-    let conveyor_side_material = BasicMaterial { surface_velocity: Some(Vector3::new(1.0, 0.0, 0.0)), ..BasicMaterial::default() };
-    let conveyor_corner_material = BasicMaterial { surface_velocity: Some(Vector3::new(1.0, 0.0, -2.0)), ..BasicMaterial::default() };
+    let conveyor_side_material = BasicMaterial {
+        surface_velocity: Some(Vector3::new(1.0, 0.0, 0.0)),
+        ..BasicMaterial::default()
+    };
+    let conveyor_corner_material = BasicMaterial {
+        surface_velocity: Some(Vector3::new(1.0, 0.0, -2.0)),
+        ..BasicMaterial::default()
+    };
 
     // Build the sides of the conveyor belt "circle".
     //
@@ -142,14 +154,19 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(10.0, 4.0, -10.0), Point3::new(0.0, 1.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Conveyor belt", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Conveyor belt", init_world)]);
 
     testbed.run()
 }

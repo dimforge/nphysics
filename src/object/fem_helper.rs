@@ -1,28 +1,35 @@
 use either::Either;
 
-use na::{RealField, Cholesky, Dynamic, DVectorSliceMut, VectorSliceMutN, Point2, Point3, DVector, DVectorSlice};
 #[cfg(feature = "dim3")]
 use na::Point4;
-use ncollide::shape::{Segment, Triangle};
+use na::{
+    Cholesky, DVector, DVectorSlice, DVectorSliceMut, Dynamic, Point2, Point3, RealField,
+    VectorSliceMutN,
+};
 use ncollide::query::PointQueryWithLocation;
 #[cfg(feature = "dim3")]
 use ncollide::shape::Tetrahedron;
+use ncollide::shape::{Segment, Triangle};
 
+use crate::math::{Dim, Isometry, Point, DIM};
 use crate::object::BodyStatus;
 use crate::solver::ForceDirection;
-use crate::math::{Point, Isometry, Dim, DIM};
 
-
-pub(crate) fn elasticity_coefficients<N: RealField>(young_modulus: N, poisson_ratio: N) -> (N, N, N) {
+pub(crate) fn elasticity_coefficients<N: RealField>(
+    young_modulus: N,
+    poisson_ratio: N,
+) -> (N, N, N)
+{
     let _1 = N::one();
     let _2: N = na::convert(2.0);
 
-    let d0 = (young_modulus * (_1 - poisson_ratio)) / ((_1 + poisson_ratio) * (_1 - _2 * poisson_ratio));
+    let d0 =
+        (young_modulus * (_1 - poisson_ratio)) / ((_1 + poisson_ratio) * (_1 - _2 * poisson_ratio));
     let d1 = (young_modulus * poisson_ratio) / ((_1 + poisson_ratio) * (_1 - _2 * poisson_ratio));
-    let d2 = (young_modulus * (_1 - _2 * poisson_ratio)) / (_2 * (_1 + poisson_ratio) * (_1 - _2 * poisson_ratio));
+    let d2 = (young_modulus * (_1 - _2 * poisson_ratio))
+        / (_2 * (_1 + poisson_ratio) * (_1 - _2 * poisson_ratio));
     (d0, d1, d2)
 }
-
 
 /// Indices of the nodes of on element of a body decomposed in finite elements.
 #[derive(Copy, Clone, Debug)]
@@ -33,7 +40,7 @@ pub(crate) enum FiniteElementIndices {
     /// A triangular element.
     Triangle(Point3<usize>),
     /// A segment element.
-    Segment(Point2<usize>)
+    Segment(Point2<usize>),
 }
 
 impl FiniteElementIndices {
@@ -47,20 +54,24 @@ impl FiniteElementIndices {
         }
     }
 
-//    #[inline]
-//    pub fn len(&self) -> usize {
-//        match self {
-//            #[cfg(feature = "dim3")]
-//            FiniteElementIndices::Tetrahedron(_) => 4,
-//            FiniteElementIndices::Triangle(_) => 3,
-//            FiniteElementIndices::Segment(_) => 2,
-//        }
-//    }
+    //    #[inline]
+    //    pub fn len(&self) -> usize {
+    //        match self {
+    //            #[cfg(feature = "dim3")]
+    //            FiniteElementIndices::Tetrahedron(_) => 4,
+    //            FiniteElementIndices::Triangle(_) => 3,
+    //            FiniteElementIndices::Segment(_) => 2,
+    //        }
+    //    }
 }
 
-
 #[inline]
-pub(crate) fn world_point_at_material_point<N: RealField>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+pub(crate) fn world_point_at_material_point<N: RealField>(
+    indices: FiniteElementIndices,
+    positions: &DVector<N>,
+    point: &Point<N>,
+) -> Point<N>
+{
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
@@ -79,7 +90,12 @@ pub(crate) fn world_point_at_material_point<N: RealField>(indices: FiniteElement
             let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
             let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
             let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
-            Point::from(a * (N::one() - point.x - point.y - point.z) + b * point.x + c * point.y + d * point.z)
+            Point::from(
+                a * (N::one() - point.x - point.y - point.z)
+                    + b * point.x
+                    + c * point.y
+                    + d * point.z,
+            )
         }
     }
 }
@@ -88,19 +104,23 @@ pub(crate) fn world_point_at_material_point<N: RealField>(indices: FiniteElement
 // because it makes it simpler to handle the case where we don't know at compile-time the
 // dimension of `indices`.
 #[inline]
-pub(crate) fn material_point_at_world_point<N: RealField>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+pub(crate) fn material_point_at_world_point<N: RealField>(
+    indices: FiniteElementIndices,
+    positions: &DVector<N>,
+    point: &Point<N>,
+) -> Point<N>
+{
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
             let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
 
-            let seg = Segment::new(
-                Point::from(a),
-                Point::from(b),
-            );
+            let seg = Segment::new(Point::from(a), Point::from(b));
 
             // FIXME: do we really want to project here? Even in 2D?
-            let proj = seg.project_point_with_location(&Isometry::identity(), point, false).1;
+            let proj = seg
+                .project_point_with_location(&Isometry::identity(), point, false)
+                .1;
             let bcoords = proj.barycentric_coordinates();
 
             let mut res = Point::origin();
@@ -112,14 +132,12 @@ pub(crate) fn material_point_at_world_point<N: RealField>(indices: FiniteElement
             let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
             let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
 
-            let tri = Triangle::new(
-                Point::from(a),
-                Point::from(b),
-                Point::from(c),
-            );
+            let tri = Triangle::new(Point::from(a), Point::from(b), Point::from(c));
 
             // FIXME: do we really want to project here? Even in 2D?
-            let proj = tri.project_point_with_location(&Isometry::identity(), point, false).1;
+            let proj = tri
+                .project_point_with_location(&Isometry::identity(), point, false)
+                .1;
             let bcoords = proj.barycentric_coordinates().unwrap();
 
             let mut res = Point::origin();
@@ -142,7 +160,9 @@ pub(crate) fn material_point_at_world_point<N: RealField>(indices: FiniteElement
             );
 
             // FIXME: what to do if this returns `None`?
-            let bcoords = tetra.barycentric_coordinates(point).unwrap_or([N::zero(); 4]);
+            let bcoords = tetra
+                .barycentric_coordinates(point)
+                .unwrap_or([N::zero(); 4]);
             Point3::new(bcoords[1], bcoords[2], bcoords[3])
         }
     }
@@ -165,8 +185,9 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
     jacobians: &mut [N],
     inv_r: &mut N,
     ext_vels: Option<&DVectorSlice<N>>,
-    out_vel: Option<&mut N>
-) {
+    out_vel: Option<&mut N>,
+)
+{
     if status == BodyStatus::Static || status == BodyStatus::Disabled {
         return;
     }
@@ -186,13 +207,12 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
                 let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
                 let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
 
-                let seg = Segment::new(
-                    Point::from(a),
-                    Point::from(b),
-                );
+                let seg = Segment::new(Point::from(a), Point::from(b));
 
                 // FIXME: This is costly!
-                let proj = seg.project_point_with_location(&Isometry::identity(), center, false).1;
+                let proj = seg
+                    .project_point_with_location(&Isometry::identity(), center, false)
+                    .1;
                 let bcoords = proj.barycentric_coordinates();
 
                 let dir1 = **dir * bcoords[0];
@@ -200,10 +220,12 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
 
                 if status == BodyStatus::Dynamic {
                     if !kinematic1 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..]).copy_from(&dir1);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
+                            .copy_from(&dir1);
                     }
                     if !kinematic2 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..]).copy_from(&dir2);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
+                            .copy_from(&dir2);
                     }
                 }
 
@@ -234,14 +256,12 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
                 let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
                 let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
 
-                let tri = Triangle::new(
-                    Point::from(a),
-                    Point::from(b),
-                    Point::from(c),
-                );
+                let tri = Triangle::new(Point::from(a), Point::from(b), Point::from(c));
 
                 // FIXME: This is costly!
-                let proj = tri.project_point_with_location(&Isometry::identity(), center, false).1;
+                let proj = tri
+                    .project_point_with_location(&Isometry::identity(), center, false)
+                    .1;
                 let bcoords = proj.barycentric_coordinates().unwrap();
 
                 let dir1 = **dir * bcoords[0];
@@ -250,13 +270,16 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
 
                 if status == BodyStatus::Dynamic {
                     if !kinematic1 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..]).copy_from(&dir1);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
+                            .copy_from(&dir1);
                     }
                     if !kinematic2 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..]).copy_from(&dir2);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
+                            .copy_from(&dir2);
                     }
                     if !kinematic3 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.z..]).copy_from(&dir3);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.z..])
+                            .copy_from(&dir3);
                     }
                 }
 
@@ -302,7 +325,9 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
                 );
 
                 // FIXME: what to do if this returns `None`?
-                let bcoords = tetra.barycentric_coordinates(center).unwrap_or([N::zero(); 4]);
+                let bcoords = tetra
+                    .barycentric_coordinates(center)
+                    .unwrap_or([N::zero(); 4]);
 
                 let dir1 = **dir * bcoords[0];
                 let dir2 = **dir * bcoords[1];
@@ -311,16 +336,20 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
 
                 if status == BodyStatus::Dynamic {
                     if !kinematic1 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..]).copy_from(&dir1);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
+                            .copy_from(&dir1);
                     }
                     if !kinematic2 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..]).copy_from(&dir2);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
+                            .copy_from(&dir2);
                     }
                     if !kinematic3 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.z..]).copy_from(&dir3);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.z..])
+                            .copy_from(&dir3);
                     }
                     if !kinematic4 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.w..]).copy_from(&dir4);
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.w..])
+                            .copy_from(&dir4);
                     }
                 }
 
@@ -360,8 +389,11 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
                         jacobians[wj_id + i] = jacobians[j_id + i];
                     }
 
-                    inv_augmented_mass.solve_mut(&mut DVectorSliceMut::from_slice(&mut jacobians[wj_id..], ndofs));
-                },
+                    inv_augmented_mass.solve_mut(&mut DVectorSliceMut::from_slice(
+                        &mut jacobians[wj_id..],
+                        ndofs,
+                    ));
+                }
                 Either::Left(inv_augmented_mass) => {
                     for i in 0..ndofs {
                         jacobians[wj_id + i] = jacobians[j_id + i] * inv_augmented_mass;
@@ -370,7 +402,8 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
             }
 
             // FIXME: optimize this because j is sparse.
-            *inv_r += DVectorSlice::from_slice(&jacobians[j_id..], ndofs).dot(&DVectorSlice::from_slice(&jacobians[wj_id..], ndofs));
+            *inv_r += DVectorSlice::from_slice(&jacobians[j_id..], ndofs)
+                .dot(&DVectorSlice::from_slice(&jacobians[wj_id..], ndofs));
         }
     }
 }

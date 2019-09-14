@@ -1,24 +1,22 @@
 use std::collections::{hash_map, HashMap};
 
-
 use na::RealField;
 
-use ncollide::pipeline::{
-    self,
-    DefaultProximityDispatcher, DefaultContactDispatcher,
-    InteractionGraph, Interaction, ContactAlgorithm, ProximityDetector, NarrowPhase, ContactEvents, ProximityEvents,
-    DBVTBroadPhase, BroadPhase, BroadPhasePairFilter,
-    CollisionGroups
-};
-use ncollide::query::{Ray, ContactManifold, Proximity};
 use ncollide::bounding_volume::AABB;
+use ncollide::pipeline::{
+    self, BroadPhase, BroadPhasePairFilter, CollisionGroups, ContactAlgorithm, ContactEvents,
+    DBVTBroadPhase, DefaultContactDispatcher, DefaultProximityDispatcher, Interaction,
+    InteractionGraph, NarrowPhase, ProximityDetector, ProximityEvents,
+};
+use ncollide::query::{ContactManifold, Proximity, Ray};
 
+use crate::object::{
+    Body, BodyHandle, BodySet, Collider, ColliderAnchor, ColliderHandle, ColliderSet,
+    DefaultBodyHandle, DefaultColliderHandle,
+};
 use crate::volumetric::Volumetric;
-use crate::object::{Collider, ColliderHandle, DefaultColliderHandle, ColliderAnchor,
-                    ColliderSet, BodySet, DefaultBodyHandle, Body, BodyHandle};
 
 use crate::math::Point;
-
 
 /// The default geometrical world, that can be used with a `DefaultBodyHandle` and `DefaultColliderHandle`.
 pub type DefaultGeometricalWorld<N> = GeometricalWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
@@ -36,15 +34,17 @@ pub struct GeometricalWorld<N: RealField, Handle: BodyHandle, CollHandle: Collid
     pub(crate) interactions: InteractionGraph<N, CollHandle>,
     /// A user-defined broad-phase pair filter.
     // FIXME: we don't actually use this currently.
-    pub(crate) pair_filters: Option<Box<dyn BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
+    pub(crate) pair_filters:
+        Option<Box<dyn BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
     pub(crate) body_colliders: HashMap<Handle, Vec<CollHandle>>,
 }
 
-impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWorld<N, Handle, CollHandle> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    GeometricalWorld<N, Handle, CollHandle>
+{
     /// Creates a geometrical world from the provided broad-phase and narrow-phase structures.
     pub fn from_parts<BF>(broad_phase: BF, narrow_phase: NarrowPhase<N, CollHandle>) -> Self
-        where BF: BroadPhase<N, AABB<N>, CollHandle> {
-
+    where BF: BroadPhase<N, AABB<N>, CollHandle> {
         GeometricalWorld {
             broad_phase: Box::new(broad_phase),
             narrow_phase,
@@ -62,48 +62,80 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
         let broad_phase = DBVTBroadPhase::new(na::convert(0.01));
         let narrow_phase = NarrowPhase::new(coll_dispatcher, prox_dispatcher);
         Self::from_parts(broad_phase, narrow_phase)
-
     }
 
     fn register_collider(&mut self, handle: CollHandle, collider: &mut Collider<N, Handle>) {
-        assert!(collider.proxy_handle().is_none(), "Cannot register a collider that is already registered.");
-        assert!(collider.graph_index().is_none(), "Cannot register a collider that is already registered.");
+        assert!(
+            collider.proxy_handle().is_none(),
+            "Cannot register a collider that is already registered."
+        );
+        assert!(
+            collider.graph_index().is_none(),
+            "Cannot register a collider that is already registered."
+        );
 
-        let proxies = pipeline::create_proxies(handle, &mut *self.broad_phase, &mut self.interactions, collider.position(), collider.shape(), collider.query_type());
+        let proxies = pipeline::create_proxies(
+            handle,
+            &mut *self.broad_phase,
+            &mut self.interactions,
+            collider.position(),
+            collider.shape(),
+            collider.query_type(),
+        );
 
-        self.body_colliders.entry(collider.body()).or_insert(Vec::new()).push(handle);
+        self.body_colliders
+            .entry(collider.body())
+            .or_insert(Vec::new())
+            .push(handle);
         collider.set_proxy_handle(Some(proxies.0));
         collider.set_graph_index(Some(proxies.1));
     }
 
     /// Maintain the internal structures of the geometrical world by handling body removals and colliders insersion and removals.
     pub fn maintain<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
-        where Bodies: BodySet<N, Handle = Handle>,
-              Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+    where
+        Bodies: BodySet<N, Handle = Handle>,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    {
         self.handle_removals(bodies, colliders);
         self.handle_insertions(bodies, colliders);
     }
 
-    fn handle_insertions<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
-        where Bodies: BodySet<N, Handle = Handle>,
-              Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+    fn handle_insertions<Bodies, Colliders>(
+        &mut self,
+        bodies: &mut Bodies,
+        colliders: &mut Colliders,
+    ) where
+        Bodies: BodySet<N, Handle = Handle>,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    {
         while let Some(handle) = colliders.pop_insertion_event() {
             if let Some(collider) = colliders.get_mut(handle) {
                 self.register_collider(handle, collider);
 
                 match collider.anchor() {
-                    ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
-                        let body = bodies.get_mut(body_part.0).expect("Invalid parent body part handle.");
+                    ColliderAnchor::OnBodyPart {
+                        body_part,
+                        position_wrt_body_part,
+                    } => {
+                        let body = bodies
+                            .get_mut(body_part.0)
+                            .expect("Invalid parent body part handle.");
 
                         // Update the parent body's inertia.
                         if !collider.density().is_zero() {
-                            let (com, inertia) = collider.shape().transformed_mass_properties(collider.density(), position_wrt_body_part);
+                            let (com, inertia) = collider.shape().transformed_mass_properties(
+                                collider.density(),
+                                position_wrt_body_part,
+                            );
                             body.add_local_inertia_and_com(body_part.1, com, inertia);
                         }
 
                         // Set the position and ndofs (note this will be done in the `sync_collider` too.
                         let ndofs = body.status_dependent_ndofs();
-                        let part = body.part(body_part.1).expect("Invalid parent body part handle.");
+                        let part = body
+                            .part(body_part.1)
+                            .expect("Invalid parent body part handle.");
                         let pos = part.position() * position_wrt_body_part;
 
                         collider.set_body_status_dependent_ndofs(ndofs);
@@ -116,8 +148,10 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     }
 
     fn handle_removals<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
-        where Bodies: BodySet<N, Handle = Handle>,
-              Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+    where
+        Bodies: BodySet<N, Handle = Handle>,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    {
         let mut graph_id_remapping = HashMap::new();
 
         while let Some((removed_handle, mut removed)) = colliders.pop_removal_event() {
@@ -127,7 +161,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
             }
 
             // Activate the bodies in contact with the deleted collider.
-            for (coll1, coll2, _, _) in self.interactions.contacts_with(removed.graph_index, false) {
+            for (coll1, coll2, _, _) in self.interactions.contacts_with(removed.graph_index, false)
+            {
                 if coll1 == removed_handle {
                     if let Some(coll) = colliders.get(coll2) {
                         if let Some(body) = bodies.get_mut(coll.body()) {
@@ -149,8 +184,14 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
             if let Some(body) = bodies.get_mut(removed.anchor.body()) {
                 // Update the parent body's inertia.
                 if !removed.density.is_zero() {
-                    if let ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } = &removed.anchor {
-                        let (com, inertia) = removed.shape.transformed_mass_properties(removed.density, position_wrt_body_part);
+                    if let ColliderAnchor::OnBodyPart {
+                        body_part,
+                        position_wrt_body_part,
+                    } = &removed.anchor
+                    {
+                        let (com, inertia) = removed
+                            .shape
+                            .transformed_mass_properties(removed.density, position_wrt_body_part);
                         body.add_local_inertia_and_com(body_part.1, -com, -inertia)
                     }
                 }
@@ -168,13 +209,17 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
                     if e.get().is_empty() {
                         let _ = e.remove_entry();
                     }
-                },
+                }
                 hash_map::Entry::Vacant(_) => {}
             }
 
-
             // Remove proxies and handle the graph index remapping.
-            if let Some(to_change) = pipeline::remove_proxies(&mut *self.broad_phase, &mut self.interactions, removed.proxy_handle, removed.graph_index) {
+            if let Some(to_change) = pipeline::remove_proxies(
+                &mut *self.broad_phase,
+                &mut self.interactions,
+                removed.proxy_handle,
+                removed.graph_index,
+            ) {
                 if let Some(collider) = colliders.get_mut(to_change.0) {
                     // Apply the graph index remapping.
                     collider.set_graph_index(Some(to_change.1))
@@ -188,8 +233,10 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
 
     /// Synchronize all colliders with their body parent and the underlying collision world.
     pub fn sync_colliders<Bodies, Colliders>(&mut self, bodies: &Bodies, colliders: &mut Colliders)
-        where Bodies: BodySet<N, Handle = Handle>,
-              Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+    where
+        Bodies: BodySet<N, Handle = Handle>,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    {
         colliders.foreach_mut(|_collider_id, collider| {
             let body = try_ret!(bodies.get(collider.body()));
 
@@ -200,20 +247,24 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
             }
 
             let new_pos = match collider.anchor() {
-                ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
+                ColliderAnchor::OnBodyPart {
+                    body_part,
+                    position_wrt_body_part,
+                } => {
                     let part = try_ret!(body.part(body_part.1));
                     let part_pos1 = part.safe_position();
                     let part_pos2 = part.position();
-                    Some((part_pos1 * position_wrt_body_part, part_pos2 * position_wrt_body_part))
+                    Some((
+                        part_pos1 * position_wrt_body_part,
+                        part_pos2 * position_wrt_body_part,
+                    ))
                 }
-                ColliderAnchor::OnDeformableBody { .. } => {
-                    None
-                }
+                ColliderAnchor::OnDeformableBody { .. } => None,
             };
 
             match new_pos {
                 Some(pos) => collider.set_position_with_prediction(pos.0, pos.1),
-                None => collider.set_deformations(body.deformed_positions().unwrap().1)
+                None => collider.set_deformations(body.deformed_positions().unwrap().1),
             }
         });
     }
@@ -226,16 +277,16 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     }
 
     /*
-    /// Customize the selection of narrow-phase collision detection algorithms
-    pub fn set_narrow_phase(&mut self, narrow_phase: NarrowPhase<N, CollHandle>) {
-        self.gworld.set_narrow_phase(narrow_phase);
-    }
-*/
+        /// Customize the selection of narrow-phase collision detection algorithms
+        pub fn set_narrow_phase(&mut self, narrow_phase: NarrowPhase<N, CollHandle>) {
+            self.gworld.set_narrow_phase(narrow_phase);
+        }
+    */
     /// Empty the contact and proximity event pools.
     pub fn clear_events(&mut self) {
         self.narrow_phase.clear_events()
     }
-/*
+    /*
     /// Adds a filter that tells if a potential collision pair should be ignored or not.
     ///
     /// The proximity filter returns `false` for a given pair of colliders if they should
@@ -255,20 +306,20 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
 
     /// Executes the broad phase of the collision detection pipeline.
     pub fn perform_broad_phase<Colliders>(&mut self, colliders: &Colliders)
-        where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+    where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
         pipeline::perform_broad_phase(
             colliders,
             &mut *self.broad_phase,
             &mut self.narrow_phase,
             &mut self.interactions,
             Some(&DefaultCollisionFilter),
-//            self.pair_filters.as_ref().map(|f| &**f)
+            //            self.pair_filters.as_ref().map(|f| &**f)
         )
     }
 
     /// Executes the narrow phase of the collision detection pipeline.
     pub fn perform_narrow_phase<Colliders>(&mut self, colliders: &Colliders)
-        where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+    where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
         pipeline::perform_narrow_phase(colliders, &mut self.narrow_phase, &mut self.interactions)
     }
 
@@ -279,7 +330,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
 
     /// Computes the interferences between every rigid bodies on this world and a ray.
     #[inline]
-    pub fn interferences_with_ray<'a, 'b, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+    pub fn interferences_with_ray<
+        'a,
+        'b,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    >(
         &'a self,
         colliders: &'a Colliders,
         ray: &'b Ray<N>,
@@ -291,7 +346,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a point.
     #[inline]
-    pub fn interferences_with_point<'a, 'b, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+    pub fn interferences_with_point<
+        'a,
+        'b,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    >(
         &'a self,
         colliders: &'a Colliders,
         point: &'b Point<N>,
@@ -303,7 +362,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a aabb.
     #[inline]
-    pub fn interferences_with_aabb<'a, 'b, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+    pub fn interferences_with_aabb<
+        'a,
+        'b,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    >(
         &'a self,
         colliders: &'a Colliders,
         aabb: &'b AABB<N>,
@@ -328,14 +391,24 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
      * Iterators on contacts/proximity pairs.
      *
      */
-    fn is_interaction_effective(c1: &Collider<N, Handle>, c2: &Collider<N, Handle>, interaction: &Interaction<N>) -> bool {
+    fn is_interaction_effective(
+        c1: &Collider<N, Handle>,
+        c2: &Collider<N, Handle>,
+        interaction: &Interaction<N>,
+    ) -> bool
+    {
         match interaction {
             Interaction::Contact(_, manifold) => Self::is_contact_effective(c1, c2, manifold),
-            Interaction::Proximity(_, prox) => *prox == Proximity::Intersecting
+            Interaction::Proximity(_, prox) => *prox == Proximity::Intersecting,
         }
     }
 
-    fn is_contact_effective(c1: &Collider<N, Handle>, c2: &Collider<N, Handle>, manifold: &ContactManifold<N>) -> bool {
+    fn is_contact_effective(
+        c1: &Collider<N, Handle>,
+        c2: &Collider<N, Handle>,
+        manifold: &ContactManifold<N>,
+    ) -> bool
+    {
         if let Some(c) = manifold.deepest_contact() {
             c.contact.depth >= -(c1.margin() + c2.margin())
         } else {
@@ -344,8 +417,20 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     }
 
     #[inline(always)]
-    fn filter_interactions<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(colliders: &'a Colliders, iter: impl Iterator<Item = (CollHandle, CollHandle, &'a Interaction<N>)>, effective_only: bool)
-                               -> impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a Interaction<N>)> {
+    fn filter_interactions<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        colliders: &'a Colliders,
+        iter: impl Iterator<Item = (CollHandle, CollHandle, &'a Interaction<N>)>,
+        effective_only: bool,
+    ) -> impl Iterator<
+        Item = (
+            CollHandle,
+            &'a Collider<N, Handle>,
+            CollHandle,
+            &'a Collider<N, Handle>,
+            &'a Interaction<N>,
+        ),
+    >
+    {
         iter.filter_map(move |inter| {
             let c1 = colliders.get(inter.0)?;
             let c2 = colliders.get(inter.1)?;
@@ -358,8 +443,28 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     }
 
     #[inline(always)]
-    fn filter_contacts<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(colliders: &'a Colliders, iter: impl Iterator<Item = (CollHandle, CollHandle, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)>, effective_only: bool)
-                           -> impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)> {
+    fn filter_contacts<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        colliders: &'a Colliders,
+        iter: impl Iterator<
+            Item = (
+                CollHandle,
+                CollHandle,
+                &'a ContactAlgorithm<N>,
+                &'a ContactManifold<N>,
+            ),
+        >,
+        effective_only: bool,
+    ) -> impl Iterator<
+        Item = (
+            CollHandle,
+            &'a Collider<N, Handle>,
+            CollHandle,
+            &'a Collider<N, Handle>,
+            &'a ContactAlgorithm<N>,
+            &'a ContactManifold<N>,
+        ),
+    >
+    {
         iter.filter_map(move |inter| {
             let c1 = colliders.get(inter.0)?;
             let c2 = colliders.get(inter.1)?;
@@ -372,10 +477,36 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     }
 
     #[inline(always)]
-    fn filter_proximities<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(colliders: &'a Colliders, iter: impl Iterator<Item = (CollHandle, CollHandle, &'a dyn ProximityDetector<N>, Proximity)>)
-                           -> impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a dyn ProximityDetector<N>, Proximity)> {
+    fn filter_proximities<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        colliders: &'a Colliders,
+        iter: impl Iterator<
+            Item = (
+                CollHandle,
+                CollHandle,
+                &'a dyn ProximityDetector<N>,
+                Proximity,
+            ),
+        >,
+    ) -> impl Iterator<
+        Item = (
+            CollHandle,
+            &'a Collider<N, Handle>,
+            CollHandle,
+            &'a Collider<N, Handle>,
+            &'a dyn ProximityDetector<N>,
+            Proximity,
+        ),
+    >
+    {
         iter.filter_map(move |prox| {
-            Some((prox.0, colliders.get(prox.0)?, prox.1, colliders.get(prox.1)?, prox.2, prox.3))
+            Some((
+                prox.0,
+                colliders.get(prox.0)?,
+                prox.1,
+                colliders.get(prox.1)?,
+                prox.2,
+                prox.3,
+            ))
         })
     }
 
@@ -387,143 +518,321 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn interaction_pairs<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, effective_only: bool) -> impl Iterator<Item = (
-        CollHandle,
-        &'a Collider<N, Handle>,
-        CollHandle,
-        &'a Collider<N, Handle>,
-        &'a Interaction<N>
-    )> {
-        Self::filter_interactions(colliders, self.interactions.interaction_pairs(false), effective_only)
+    pub fn interaction_pairs<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        effective_only: bool,
+    ) -> impl Iterator<
+        Item = (
+            CollHandle,
+            &'a Collider<N, Handle>,
+            CollHandle,
+            &'a Collider<N, Handle>,
+            &'a Interaction<N>,
+        ),
+    >
+    {
+        Self::filter_interactions(
+            colliders,
+            self.interactions.interaction_pairs(false),
+            effective_only,
+        )
     }
-
 
     /// All the potential contact pairs.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn contact_pairs<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, effective_only: bool) -> impl Iterator<Item = (
-        CollHandle,
-        &'a Collider<N, Handle>,
-        CollHandle,
-        &'a Collider<N, Handle>,
-        &'a ContactAlgorithm<N>,
-        &'a ContactManifold<N>,
-    )> {
-        Self::filter_contacts(colliders, self.interactions.contact_pairs(false), effective_only)
+    pub fn contact_pairs<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        effective_only: bool,
+    ) -> impl Iterator<
+        Item = (
+            CollHandle,
+            &'a Collider<N, Handle>,
+            CollHandle,
+            &'a Collider<N, Handle>,
+            &'a ContactAlgorithm<N>,
+            &'a ContactManifold<N>,
+        ),
+    >
+    {
+        Self::filter_contacts(
+            colliders,
+            self.interactions.contact_pairs(false),
+            effective_only,
+        )
     }
-
 
     /// All the potential proximity pairs.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn proximity_pairs<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, effective_only: bool) -> impl Iterator<Item = (
-        CollHandle,
-        &'a Collider<N, Handle>,
-        CollHandle,
-        &'a Collider<N, Handle>,
-        &'a dyn ProximityDetector<N>,
-        Proximity,
-    )> {
+    pub fn proximity_pairs<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        effective_only: bool,
+    ) -> impl Iterator<
+        Item = (
+            CollHandle,
+            &'a Collider<N, Handle>,
+            CollHandle,
+            &'a Collider<N, Handle>,
+            &'a dyn ProximityDetector<N>,
+            Proximity,
+        ),
+    >
+    {
         Self::filter_proximities(colliders, self.interactions.proximity_pairs(effective_only))
     }
-
 
     /// The potential interaction pair between the two specified colliders.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn interaction_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle1: CollHandle, handle2: CollHandle, effective_only: bool)
-                            -> Option<(CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a Interaction<N>)> {
-        let id1 = colliders.get(handle1)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
-        let id2 = colliders.get(handle2)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
+    pub fn interaction_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        handle1: CollHandle,
+        handle2: CollHandle,
+        effective_only: bool,
+    ) -> Option<(
+        CollHandle,
+        &'a Collider<N, Handle>,
+        CollHandle,
+        &'a Collider<N, Handle>,
+        &'a Interaction<N>,
+    )>
+    {
+        let id1 = colliders
+            .get(handle1)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
+        let id2 = colliders
+            .get(handle2)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
 
-        self.interactions.interaction_pair(id1, id2, false).and_then(move |inter| {
-            let c1 = colliders.get(inter.0)?;
-            let c2 = colliders.get(inter.1)?;
+        self.interactions
+            .interaction_pair(id1, id2, false)
+            .and_then(move |inter| {
+                let c1 = colliders.get(inter.0)?;
+                let c2 = colliders.get(inter.1)?;
 
-            if !effective_only || Self::is_interaction_effective(c1, c2, inter.2) {
-                Some((inter.0, c1, inter.1, c2, inter.2))
-            } else {
-                None
-            }
-        })
+                if !effective_only || Self::is_interaction_effective(c1, c2, inter.2) {
+                    Some((inter.0, c1, inter.1, c2, inter.2))
+                } else {
+                    None
+                }
+            })
     }
 
     /// The potential contact pair between the two specified colliders.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn contact_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle1: CollHandle, handle2: CollHandle, effective_only: bool)
-                        -> Option<(CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)> {
-        let id1 = colliders.get(handle1)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
-        let id2 = colliders.get(handle2)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
+    pub fn contact_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        handle1: CollHandle,
+        handle2: CollHandle,
+        effective_only: bool,
+    ) -> Option<(
+        CollHandle,
+        &'a Collider<N, Handle>,
+        CollHandle,
+        &'a Collider<N, Handle>,
+        &'a ContactAlgorithm<N>,
+        &'a ContactManifold<N>,
+    )>
+    {
+        let id1 = colliders
+            .get(handle1)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
+        let id2 = colliders
+            .get(handle2)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
 
-        self.interactions.contact_pair(id1, id2, false).and_then(move |inter| {
-            let c1 = colliders.get(inter.0)?;
-            let c2 = colliders.get(inter.1)?;
-            if !effective_only || Self::is_contact_effective(c1, c2, inter.3) {
-                Some((inter.0, c1, inter.1, c2, inter.2, inter.3))
-            } else {
-                None
-            }
-        })
+        self.interactions
+            .contact_pair(id1, id2, false)
+            .and_then(move |inter| {
+                let c1 = colliders.get(inter.0)?;
+                let c2 = colliders.get(inter.1)?;
+                if !effective_only || Self::is_contact_effective(c1, c2, inter.3) {
+                    Some((inter.0, c1, inter.1, c2, inter.2, inter.3))
+                } else {
+                    None
+                }
+            })
     }
 
     /// The potential proximity pair between the two specified colliders.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn proximity_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle1: CollHandle, handle2: CollHandle, effective_only: bool)
-                          -> Option<(CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a dyn ProximityDetector<N>, Proximity)> {
-        let id1 = colliders.get(handle1)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
-        let id2 = colliders.get(handle2)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
+    pub fn proximity_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        handle1: CollHandle,
+        handle2: CollHandle,
+        effective_only: bool,
+    ) -> Option<(
+        CollHandle,
+        &'a Collider<N, Handle>,
+        CollHandle,
+        &'a Collider<N, Handle>,
+        &'a dyn ProximityDetector<N>,
+        Proximity,
+    )>
+    {
+        let id1 = colliders
+            .get(handle1)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
+        let id2 = colliders
+            .get(handle2)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
 
-        self.interactions.proximity_pair(id1, id2, effective_only).and_then(move |prox| {
-            Some((prox.0, colliders.get(prox.0)?, prox.1, colliders.get(prox.1)?, prox.2, prox.3))
-        })
+        self.interactions
+            .proximity_pair(id1, id2, effective_only)
+            .and_then(move |prox| {
+                Some((
+                    prox.0,
+                    colliders.get(prox.0)?,
+                    prox.1,
+                    colliders.get(prox.1)?,
+                    prox.2,
+                    prox.3,
+                ))
+            })
     }
 
     /// All the interaction pairs involving the specified collider.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn interactions_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle, effective_only: bool)
-                             -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a Interaction<N>)>> {
-        let idx = colliders.get(handle)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
-        Some(Self::filter_interactions(colliders, self.interactions.interactions_with(idx, false), effective_only))
+    pub fn interactions_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        handle: CollHandle,
+        effective_only: bool,
+    ) -> Option<
+        impl Iterator<
+            Item = (
+                CollHandle,
+                &'a Collider<N, Handle>,
+                CollHandle,
+                &'a Collider<N, Handle>,
+                &'a Interaction<N>,
+            ),
+        >,
+    >
+    {
+        let idx = colliders
+            .get(handle)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
+        Some(Self::filter_interactions(
+            colliders,
+            self.interactions.interactions_with(idx, false),
+            effective_only,
+        ))
     }
 
     /// All the contact pairs involving the specified collider.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn contacts_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle, effective_only: bool)
-                         -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)>> {
-        let idx = colliders.get(handle)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
-        Some(Self::filter_contacts(colliders, self.interactions.contacts_with(idx, false), effective_only))
+    pub fn contacts_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        handle: CollHandle,
+        effective_only: bool,
+    ) -> Option<
+        impl Iterator<
+            Item = (
+                CollHandle,
+                &'a Collider<N, Handle>,
+                CollHandle,
+                &'a Collider<N, Handle>,
+                &'a ContactAlgorithm<N>,
+                &'a ContactManifold<N>,
+            ),
+        >,
+    >
+    {
+        let idx = colliders
+            .get(handle)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
+        Some(Self::filter_contacts(
+            colliders,
+            self.interactions.contacts_with(idx, false),
+            effective_only,
+        ))
     }
 
     /// All the proximity pairs involving the specified collider.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn proximities_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle, effective_only: bool)
-                            -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a dyn ProximityDetector<N>, Proximity)>> {
-        let idx = colliders.get(handle)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
-        Some(Self::filter_proximities(colliders, self.interactions.proximities_with(idx, effective_only)))
+    pub fn proximities_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        handle: CollHandle,
+        effective_only: bool,
+    ) -> Option<
+        impl Iterator<
+            Item = (
+                CollHandle,
+                &'a Collider<N, Handle>,
+                CollHandle,
+                &'a Collider<N, Handle>,
+                &'a dyn ProximityDetector<N>,
+                Proximity,
+            ),
+        >,
+    >
+    {
+        let idx = colliders
+            .get(handle)?
+            .graph_index()
+            .expect(crate::NOT_REGISTERED_ERROR);
+        Some(Self::filter_proximities(
+            colliders,
+            self.interactions.proximities_with(idx, effective_only),
+        ))
     }
 
     /// All the collider handles of colliders interacting with the specified collider.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn colliders_interacting_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>> {
-        Some(self.interactions_with(colliders, handle, true)?
-            .map(move |(h1, c1, h2, c2, _)| {
-                if h1 == handle { (h2, c2) } else { (h1, c1) }
-            }))
+    pub fn colliders_interacting_with<
+        'a,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    >(
+        &'a self,
+        colliders: &'a Colliders,
+        handle: CollHandle,
+    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>>
+    {
+        Some(
+            self.interactions_with(colliders, handle, true)?
+                .map(
+                    move |(h1, c1, h2, c2, _)| {
+                        if h1 == handle {
+                            (h2, c2)
+                        } else {
+                            (h1, c1)
+                        }
+                    },
+                ),
+        )
     }
 
     /// All the collider handles of colliders in potential contact with the specified collision
@@ -531,11 +840,24 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn colliders_in_contact_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>> {
-        Some(self.contacts_with(colliders, handle, true)?
-            .map(move |(h1, c1, h2, c2, _, _)| {
-                if h1 == handle { (h2, c2) } else { (h1, c1) }
-            }))
+    pub fn colliders_in_contact_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        handle: CollHandle,
+    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>>
+    {
+        Some(
+            self.contacts_with(colliders, handle, true)?
+                .map(
+                    move |(h1, c1, h2, c2, _, _)| {
+                        if h1 == handle {
+                            (h2, c2)
+                        } else {
+                            (h1, c1)
+                        }
+                    },
+                ),
+        )
     }
 
     /// All the collider handles of colliders in potential proximity of with the specified
@@ -543,21 +865,49 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn colliders_in_proximity_of<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>> {
-        Some(self.proximities_with(colliders, handle, true)?
-            .map(move |(h1, c1, h2, c2, _, _)| {
-                if h1 == handle { (h2, c2) } else { (h1, c1) }
-            }))
+    pub fn colliders_in_proximity_of<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &'a self,
+        colliders: &'a Colliders,
+        handle: CollHandle,
+    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>>
+    {
+        Some(
+            self.proximities_with(colliders, handle, true)?
+                .map(
+                    move |(h1, c1, h2, c2, _, _)| {
+                        if h1 == handle {
+                            (h2, c2)
+                        } else {
+                            (h1, c1)
+                        }
+                    },
+                ),
+        )
     }
 }
 
 struct DefaultCollisionFilter;
 
-impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle> for DefaultCollisionFilter {
-    fn is_pair_valid(&self, c1: &Collider<N, Handle>, c2: &Collider<N, Handle>, _: CollHandle, _: CollHandle) -> bool {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle> for DefaultCollisionFilter
+{
+    fn is_pair_valid(
+        &self,
+        c1: &Collider<N, Handle>,
+        c2: &Collider<N, Handle>,
+        _: CollHandle,
+        _: CollHandle,
+    ) -> bool
+    {
         match (c1.anchor(), c2.anchor()) {
-            (ColliderAnchor::OnBodyPart { body_part: part1, .. },
-                ColliderAnchor::OnBodyPart { body_part: part2, .. }) => {
+            (
+                ColliderAnchor::OnBodyPart {
+                    body_part: part1, ..
+                },
+                ColliderAnchor::OnBodyPart {
+                    body_part: part2, ..
+                },
+            ) => {
                 if part1 == part2 {
                     return false;
                 }

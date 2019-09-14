@@ -2,7 +2,7 @@ use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector
 
 use crate::joint::{Joint, RevoluteJoint};
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::{Multibody, MultibodyLink, BodyPartHandle};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows only two relative rotations between two multibody links.
@@ -36,7 +36,8 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
     }
 
     fn body_to_parent(&self, parent_shift: &Vector3<N>, body_shift: &Vector3<N>) -> Isometry3<N> {
-        Translation3::from(*parent_shift) * self.revo1.rotation()
+        Translation3::from(*parent_shift)
+            * self.revo1.rotation()
             * self.revo2.body_to_parent(&na::zero(), body_shift)
     }
 
@@ -75,7 +76,8 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         transform: &Isometry3<N>,
         vels: &[N],
         out: &mut JacobianSliceMut<N>,
-    ) {
+    )
+    {
         let jac1 = *self.revo1.local_jacobian_dot_veldiff() + self.coupling_dot_veldiff;
         out.column_mut(0)
             .copy_from(jac1.transformed(transform).as_vector());
@@ -95,9 +97,11 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
     fn jacobian_dot_mul_coordinates(&self, vels: &[N]) -> Velocity<N> {
         let rot1 = self.revo1.rotation();
         self.revo1.jacobian_dot_mul_coordinates(vels)
-            + self.revo2
-            .jacobian_dot_mul_coordinates(&[vels[1]])
-            .rotated(&rot1) + self.coupling_dot * vels[1]
+            + self
+                .revo2
+                .jacobian_dot_mul_coordinates(&[vels[1]])
+                .rotated(&rot1)
+            + self.coupling_dot * vels[1]
     }
 
     fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
@@ -121,8 +125,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
     }
 
     fn num_velocity_constraints(&self) -> usize {
-        self.revo1.num_velocity_constraints() +
-           self.revo2.num_velocity_constraints()
+        self.revo1.num_velocity_constraints() + self.revo2.num_velocity_constraints()
     }
 
     fn velocity_constraints(
@@ -136,7 +139,8 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    ) {
+    )
+    {
         self.revo1.velocity_constraints(
             parameters,
             multibody,
@@ -174,9 +178,11 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>> {
+    ) -> Option<GenericNonlinearConstraint<N, ()>>
+    {
         if i == 0 {
-            self.revo1.position_constraint(0, multibody, link, handle, dof_id, jacobians)
+            self.revo1
+                .position_constraint(0, multibody, link, handle, dof_id, jacobians)
         } else {
             self.revo2
                 .position_constraint(0, multibody, link, handle, dof_id + 1, jacobians)

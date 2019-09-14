@@ -1,11 +1,14 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2, Isometry2, Point3};
+use na::{Isometry2, Point2, Point3, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{BodyStatus, FEMSurfaceDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics2d::object::{
+    BodyPartHandle, BodyStatus, ColliderDesc, DefaultBodySet, DefaultColliderSet, FEMSurfaceDesc,
+    RigidBodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
 
 pub fn init_world(testbed: &mut Testbed) {
@@ -23,8 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let platform_height = 0.4;
-    let platform_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(0.03, 0.03)));
+    let platform_shape = ShapeHandle::new(Cuboid::new(Vector2::new(0.03, 0.03)));
 
     let positions = [
         Isometry2::new(Vector2::new(0.4, platform_height), na::zero()),
@@ -43,8 +45,7 @@ pub fn init_world(testbed: &mut Testbed) {
             .build();
         platforms.push(bodies.insert(platform));
 
-        let co = ColliderDesc::new(platform_shape.clone())
-            .build(BodyPartHandle(platforms[i], 0));
+        let co = ColliderDesc::new(platform_shape.clone()).build(BodyPartHandle(platforms[i], 0));
         colliders.insert(co);
     }
 
@@ -66,7 +67,14 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Set up the testbed.
      */
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.set_body_color(deformable_surface_handle, Point3::new(0.0, 0.0, 1.0));
 
     for platform in &platforms {
@@ -103,10 +111,7 @@ pub fn init_world(testbed: &mut Testbed) {
     testbed.look_at(Point2::origin(), 1000.0);
 }
 
-
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Plasticity", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Plasticity", init_world)]);
     testbed.run()
 }

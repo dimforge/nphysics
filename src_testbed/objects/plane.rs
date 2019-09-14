@@ -1,12 +1,12 @@
-use kiss3d::window::Window;
-#[cfg(feature = "dim3")]
-use na::Vector3;
-use na::Point3;
-use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-#[cfg(feature = "dim2")]
-use nphysics::math::{Point, Vector};
 #[cfg(feature = "dim3")]
 use crate::objects::node::GraphicsNode;
+use kiss3d::window::Window;
+use na::Point3;
+#[cfg(feature = "dim3")]
+use na::Vector3;
+#[cfg(feature = "dim2")]
+use nphysics::math::{Point, Vector};
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 #[cfg(feature = "dim3")]
 use num::Zero;
 
@@ -34,7 +34,8 @@ impl Plane {
         normal: &Vector<f32>,
         color: Point3<f32>,
         _: &mut Window,
-    ) -> Plane {
+    ) -> Plane
+    {
         let mut res = Plane {
             color,
             base_color: color,
@@ -55,7 +56,8 @@ impl Plane {
         world_normal: &Vector3<f32>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Plane {
+    ) -> Plane
+    {
         let mut res = Plane {
             gfx: window.add_quad(100.0, 100.0, 10, 10),
             collider,

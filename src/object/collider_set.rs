@@ -1,24 +1,27 @@
-
-
 use generational_arena::Arena;
 
+use crate::object::{BodyHandle, Collider, ColliderRemovalData, DefaultBodyHandle};
 use na::RealField;
 use ncollide::pipeline::{CollisionObjectHandle, CollisionObjectSet};
-use crate::object::{Collider, BodyHandle, DefaultBodyHandle, ColliderRemovalData};
 
 /// Trait auto-implemented for types that can be used as a Collider handle.
 ///
 /// Collider handles must be unique, i.e., they should not suffer from the ABA problem.
-pub trait ColliderHandle: CollisionObjectHandle + std::fmt::Debug {
-}
+pub trait ColliderHandle: CollisionObjectHandle + std::fmt::Debug {}
 
-impl<T: CollisionObjectHandle + std::fmt::Debug> ColliderHandle for T { }
+impl<T: CollisionObjectHandle + std::fmt::Debug> ColliderHandle for T {}
 
 /// Trait implemented by sets of colliders.
 ///
 /// A set of colliders maps a collider handle to a collider instance. In addition, it must maintain a set of
 /// data related to colliders that have been inserted or removed (see the `pop_insertion_event` and `pop_removal_event` methods for details).
-pub trait ColliderSet<N: RealField, Handle: BodyHandle>: CollisionObjectSet<N, CollisionObject = Collider<N, Handle>, CollisionObjectHandle = <Self as ColliderSet<N, Handle>>::Handle> {
+pub trait ColliderSet<N: RealField, Handle: BodyHandle>:
+    CollisionObjectSet<
+    N,
+    CollisionObject = Collider<N, Handle>,
+    CollisionObjectHandle = <Self as ColliderSet<N, Handle>>::Handle,
+>
+{
     /// Type of a collider handle identifying a collider in this set.
     type Handle: ColliderHandle;
 
@@ -30,7 +33,12 @@ pub trait ColliderSet<N: RealField, Handle: BodyHandle>: CollisionObjectSet<N, C
     /// Gets a reference to the two colliders identified by `handle1` and `handle2`.
     ///
     /// Both handles are allowed to be equal.
-    fn get_pair(&self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&Collider<N, Handle>>, Option<&Collider<N, Handle>>) {
+    fn get_pair(
+        &self,
+        handle1: Self::Handle,
+        handle2: Self::Handle,
+    ) -> (Option<&Collider<N, Handle>>, Option<&Collider<N, Handle>>)
+    {
         (self.get(handle1), self.get(handle2))
     }
 
@@ -41,7 +49,6 @@ pub trait ColliderSet<N: RealField, Handle: BodyHandle>: CollisionObjectSet<N, C
     fn foreach(&self, f: impl FnMut(Self::Handle, &Collider<N, Handle>));
     /// Mutable iterates through all the colliders on this set, applying the closure `f` on them.
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Collider<N, Handle>));
-
 
     /// Gets the handle of one collider that has been inserted.
     ///
@@ -77,7 +84,6 @@ pub struct DefaultColliderSet<N: RealField, Handle: BodyHandle = DefaultBodyHand
     inserted: Vec<DefaultColliderHandle>,
 }
 
-
 impl<N: RealField, Handle: BodyHandle> DefaultColliderSet<N, Handle> {
     /// Creates an empty set.
     pub fn new() -> Self {
@@ -111,7 +117,6 @@ impl<N: RealField, Handle: BodyHandle> DefaultColliderSet<N, Handle> {
         self.colliders.contains(handle)
     }
 
-
     /// Gets a reference to the collider identified by `handle`.
     pub fn get(&self, handle: DefaultColliderHandle) -> Option<&Collider<N, Handle>> {
         self.colliders.get(handle)
@@ -128,7 +133,9 @@ impl<N: RealField, Handle: BodyHandle> DefaultColliderSet<N, Handle> {
     }
 
     /// Mutably iterate through all the colliders and their handles.
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultColliderHandle, &mut Collider<N, Handle>)> {
+    pub fn iter_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (DefaultColliderHandle, &mut Collider<N, Handle>)> {
         self.colliders.iter_mut()
     }
 }
@@ -137,7 +144,11 @@ impl<N: RealField, Handle: BodyHandle> CollisionObjectSet<N> for DefaultCollider
     type CollisionObject = Collider<N, Handle>;
     type CollisionObjectHandle = DefaultColliderHandle;
 
-    fn collision_object(&self, handle: Self::CollisionObjectHandle) -> Option<&Self::CollisionObject> {
+    fn collision_object(
+        &self,
+        handle: Self::CollisionObjectHandle,
+    ) -> Option<&Self::CollisionObject>
+    {
         self.get(handle)
     }
 

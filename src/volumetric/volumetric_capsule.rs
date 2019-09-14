@@ -1,8 +1,8 @@
 use na::RealField;
 use ncollide::shape::Capsule;
 
+use crate::math::{AngularInertia, Point};
 use crate::volumetric::{self, Volumetric};
-use crate::math::{Point, AngularInertia};
 
 /// Computes the volume of a capsule.
 pub fn capsule_volume<N: RealField>(half_height: N, radius: N) -> N {
@@ -33,7 +33,6 @@ pub fn capsule_unit_angular_inertia<N: RealField>(half_height: N, radius: N) -> 
 
     res
 }
-
 
 impl<N: RealField> Volumetric<N> for Capsule<N> {
     fn area(&self) -> N {

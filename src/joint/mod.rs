@@ -6,8 +6,10 @@ pub use self::free_joint::FreeJoint;
 pub use self::joint::Joint;
 pub use self::prismatic_joint::PrismaticJoint;
 pub use self::revolute_joint::RevoluteJoint;
-pub use self::unit_joint::{unit_joint_num_velocity_constraints, unit_joint_position_constraint,
-                           unit_joint_velocity_constraints, UnitJoint};
+pub use self::unit_joint::{
+    unit_joint_num_velocity_constraints, unit_joint_position_constraint,
+    unit_joint_velocity_constraints, UnitJoint,
+};
 
 #[cfg(feature = "dim3")]
 pub use self::ball_joint::BallJoint;
@@ -26,7 +28,9 @@ pub use self::universal_joint::UniversalJoint;
 
 pub use self::cartesian_constraint::CartesianConstraint;
 pub use self::fixed_constraint::FixedConstraint;
-pub use self::joint_constraint::{DefaultJointConstraintHandle, JointConstraint, JointConstraintSet, DefaultJointConstraintSet};
+pub use self::joint_constraint::{
+    DefaultJointConstraintHandle, DefaultJointConstraintSet, JointConstraint, JointConstraintSet,
+};
 pub use self::joint_motor::JointMotor;
 pub use self::mouse_constraint::MouseConstraint;
 pub use self::prismatic_constraint::PrismaticConstraint;

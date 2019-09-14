@@ -1,6 +1,5 @@
 use std::any::Any;
 
-
 /// Trait to be implemented by user-defined data.
 pub trait UserData: Any + Send + Sync {
     /// Clone this trait-object.

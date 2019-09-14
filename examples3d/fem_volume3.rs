@@ -2,10 +2,12 @@ extern crate nalgebra as na;
 
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{FEMVolumeDesc, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, FEMVolumeDesc, Ground,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
 pub fn init_world(testbed: &mut Testbed) {
@@ -32,7 +34,6 @@ pub fn init_world(testbed: &mut Testbed) {
         .translation(Vector3::y() * (-ground_thickness - 1.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
-
 
     let ground_size = 3.0;
     let obstacle = ShapeHandle::new(Cuboid::new(Vector3::new(0.02, 0.02, ground_size)));
@@ -69,13 +70,18 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("FEM volume", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("FEM volume", init_world)]);
     testbed.run()
 }
