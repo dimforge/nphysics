@@ -11,6 +11,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: instal rustfmt
+          command: rustup component add rustfmt
+      - run:
           name: check formatting
           command: cargo fmt -- --check
       - run:
