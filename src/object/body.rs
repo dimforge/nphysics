@@ -275,8 +275,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
         _part_index: usize,
         _com: Point<N>,
         _inertia: Inertia<N>,
-    )
-    {
+    ) {
     } // FIXME: don't auto-impl.
 
     /// The number of degrees of freedom (DOF) of this body, taking its status into account.

@@ -42,8 +42,7 @@ impl<N: RealField> Joint<N> for CartesianJoint<N> {
         _: &Isometry<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
 
     }
 

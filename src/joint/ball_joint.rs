@@ -66,8 +66,7 @@ impl<N: RealField> Joint<N> for BallJoint<N> {
         transform: &Isometry3<N>,
         acc: &[N],
         out: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
         let angvel = Vector3::from_row_slice(&acc[..3]);
         let rotmat = transform.rotation.to_rotation_matrix();
         let res = rotmat * angvel.gcross_matrix() * self.jacobian_v;

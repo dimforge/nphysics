@@ -30,8 +30,7 @@ impl<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         handle2: CollHandle,
         collider2: &'a Collider<N, Handle>,
         manifold: &'a ContactManifold<N>,
-    ) -> Self
-    {
+    ) -> Self {
         ColliderContactManifold {
             handle1,
             collider1,

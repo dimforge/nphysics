@@ -34,8 +34,7 @@ impl Plane {
         normal: &Vector<f32>,
         color: Point3<f32>,
         _: &mut Window,
-    ) -> Plane
-    {
+    ) -> Plane {
         let mut res = Plane {
             color,
             base_color: color,
@@ -56,8 +55,7 @@ impl Plane {
         world_normal: &Vector3<f32>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Plane
-    {
+    ) -> Plane {
         let mut res = Plane {
             gfx: window.add_quad(100.0, 100.0, 10, 10),
             collider,

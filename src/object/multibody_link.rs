@@ -56,8 +56,7 @@ impl<N: RealField> MultibodyLink<N> {
         local_to_parent: Isometry<N>,
         local_inertia: Inertia<N>,
         local_com: Point<N>,
-    ) -> Self
-    {
+    ) -> Self {
         let is_leaf = true;
         let velocity = Velocity::zero();
         let velocity_dot_wrt_joint = Velocity::zero();

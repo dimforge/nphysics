@@ -33,8 +33,7 @@ impl NonlinearSORProx {
         internal_constraints: &[Bodies::Handle],
         jacobians: &mut [N],
         max_iter: usize,
-    )
-    {
+    ) {
         for _ in 0..max_iter {
             for handle in island_joints {
                 if let Some(joint) = joints_constraints.get(*handle) {
@@ -68,8 +67,7 @@ impl NonlinearSORProx {
         bodies: &mut Bodies,
         generator: &Gen,
         jacobians: &mut [N],
-    )
-    {
+    ) {
         let nconstraints = generator.num_position_constraints(bodies);
 
         for i in 0..nconstraints {
@@ -86,8 +84,7 @@ impl NonlinearSORProx {
         bodies: &mut Bodies,
         constraint: &mut GenericNonlinearConstraint<N, Bodies::Handle>,
         jacobians: &mut [N],
-    )
-    {
+    ) {
         let dim1 = Dynamic::new(constraint.dim1);
         let dim2 = Dynamic::new(constraint.dim2);
 
@@ -139,8 +136,7 @@ impl NonlinearSORProx {
         jacobians: &mut [N],
         dim1: D1,
         dim2: D2,
-    )
-    {
+    ) {
         if Self::update_contact_constraint(parameters, bodies, colliders, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
@@ -171,8 +167,7 @@ impl NonlinearSORProx {
         colliders: &Colliders,
         constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>,
         jacobians: &mut [N],
-    ) -> bool
-    {
+    ) -> bool {
         let body1 = try_ret!(bodies.get(constraint.body1.0), false);
         let body2 = try_ret!(bodies.get(constraint.body2.0), false);
         let part1 = try_ret!(body1.part(constraint.body1.1), false);
@@ -307,8 +302,7 @@ impl NonlinearSORProx {
         rhs: N,
         is_angular: bool,
         parameters: &IntegrationParameters<N>,
-    ) -> N
-    {
+    ) -> N {
         if is_angular {
             na::sup(
                 &((rhs + parameters.allowed_angular_error) * parameters.erp),

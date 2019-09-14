@@ -28,8 +28,7 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
     j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, usize>,
-)
-{
+) {
     let offset = axis.dot(&(anchor2 - anchor1));
 
     let (unilateral, dir) = match (min, max) {
@@ -139,8 +138,7 @@ pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>
     min: Option<N>,
     max: Option<N>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, H>>
-{
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let offset = axis.dot(&(anchor2 - anchor1));
     let mut error = N::zero();
     let mut dir = *axis;

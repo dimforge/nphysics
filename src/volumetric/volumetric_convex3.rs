@@ -16,8 +16,7 @@ fn tetrahedron_unit_inertia_tensor_wrt_point<N: RealField>(
     p2: &Point<N>,
     p3: &Point<N>,
     p4: &Point<N>,
-) -> AngularInertia<N>
-{
+) -> AngularInertia<N> {
     let p1 = *p1 - *point;
     let p2 = *p2 - *point;
     let p3 = *p3 - *point;
@@ -184,8 +183,7 @@ pub fn convex_mesh_volume_and_center_of_mass_unchecked<N: RealField>(
 pub fn convex_mesh_mass_properties_unchecked<N: RealField>(
     convex_mesh: &TriMesh<N>,
     density: N,
-) -> (N, Point<N>, AngularInertia<N>)
-{
+) -> (N, Point<N>, AngularInertia<N>) {
     let (volume, com) = convex_mesh_volume_and_center_of_mass_unchecked(convex_mesh);
 
     if volume.is_zero() {

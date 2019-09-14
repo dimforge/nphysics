@@ -37,8 +37,7 @@ pub trait ColliderSet<N: RealField, Handle: BodyHandle>:
         &self,
         handle1: Self::Handle,
         handle2: Self::Handle,
-    ) -> (Option<&Collider<N, Handle>>, Option<&Collider<N, Handle>>)
-    {
+    ) -> (Option<&Collider<N, Handle>>, Option<&Collider<N, Handle>>) {
         (self.get(handle1), self.get(handle2))
     }
 
@@ -147,8 +146,7 @@ impl<N: RealField, Handle: BodyHandle> CollisionObjectSet<N> for DefaultCollider
     fn collision_object(
         &self,
         handle: Self::CollisionObjectHandle,
-    ) -> Option<&Self::CollisionObject>
-    {
+    ) -> Option<&Self::CollisionObject> {
         self.get(handle)
     }
 

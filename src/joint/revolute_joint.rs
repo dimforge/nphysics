@@ -219,8 +219,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         transform: &Isometry<N>,
         acc: &[N],
         out: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
         out.copy_from((self.jacobian_dot_veldiff.transformed(transform) * acc[0]).as_vector())
     }
 
@@ -266,8 +265,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    )
-    {
+    ) {
         joint::unit_joint_velocity_constraints(
             self,
             parameters,
@@ -298,8 +296,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         joint::unit_joint_position_constraint(
             self, multibody, link, handle, dof_id, true, jacobians,
         )

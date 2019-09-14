@@ -21,8 +21,7 @@ impl Polyline {
         indices: Vec<Point2<usize>>,
         color: Point3<f32>,
         _: &mut Window,
-    ) -> Polyline
-    {
+    ) -> Polyline {
         let mut res = Polyline {
             color,
             pos: Isometry2::identity(),

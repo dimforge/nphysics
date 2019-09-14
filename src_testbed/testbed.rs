@@ -225,8 +225,7 @@ impl Testbed {
         colliders: DefaultColliderSet<f32>,
         constraints: DefaultJointConstraintSet<f32>,
         forces: DefaultForceGeneratorSet<f32>,
-    ) -> Self
-    {
+    ) -> Self {
         let mut res = Self::new_empty();
         res.set_world(
             mechanical_world,
@@ -278,8 +277,7 @@ impl Testbed {
         colliders: DefaultColliderSet<f32>,
         joint_constraints: DefaultJointConstraintSet<f32>,
         force_generators: DefaultForceGeneratorSet<f32>,
-    )
-    {
+    ) {
         mechanical_world.integration_parameters =
             self.mechanical_world.integration_parameters.clone();
 
@@ -398,8 +396,7 @@ impl Testbed {
     >(
         &mut self,
         callback: F,
-    )
-    {
+    ) {
         self.callbacks.push(Box::new(callback));
     }
 
@@ -1084,8 +1081,7 @@ fn draw_collisions(
     colliders: &DefaultColliderSet<f32>,
     existing: &mut HashMap<ContactId, bool>,
     running: bool,
-)
-{
+) {
     for (_, _, _, _, _, manifold) in geometrical_world.contact_pairs(colliders, false) {
         for c in manifold.contacts() {
             existing

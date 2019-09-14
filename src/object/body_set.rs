@@ -34,8 +34,7 @@ pub trait BodySet<N: RealField> {
         &self,
         handle1: Self::Handle,
         handle2: Self::Handle,
-    ) -> (Option<&Self::Body>, Option<&Self::Body>)
-    {
+    ) -> (Option<&Self::Body>, Option<&Self::Body>) {
         (self.get(handle1), self.get(handle2))
     }
 

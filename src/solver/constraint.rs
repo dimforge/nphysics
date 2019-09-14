@@ -85,8 +85,7 @@ impl<N: RealField, Id> UnilateralConstraint<N, Id> {
         rhs: N,
         impulse: N,
         impulse_id: Id,
-    ) -> Self
-    {
+    ) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         UnilateralConstraint {
             impulse,
@@ -137,8 +136,7 @@ impl<N: RealField, Id> UnilateralGroundConstraint<N, Id> {
         rhs: N,
         impulse: N,
         impulse_id: Id,
-    ) -> Self
-    {
+    ) -> Self {
         if geom.ndofs1 == 0 {
             UnilateralGroundConstraint {
                 impulse,
@@ -232,8 +230,7 @@ impl<N: RealField, Id> BilateralConstraint<N, Id> {
         rhs: N,
         impulse: N,
         impulse_id: Id,
-    ) -> Self
-    {
+    ) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         BilateralConstraint {
             impulse,
@@ -289,8 +286,7 @@ impl<N: RealField, Id> BilateralGroundConstraint<N, Id> {
         rhs: N,
         impulse: N,
         impulse_id: Id,
-    ) -> Self
-    {
+    ) -> Self {
         if geom.ndofs1 == 0 {
             BilateralGroundConstraint {
                 impulse,

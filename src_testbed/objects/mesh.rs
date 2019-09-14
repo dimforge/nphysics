@@ -25,8 +25,7 @@ impl Mesh {
         indices: Vec<Point3<u32>>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Mesh
-    {
+    ) -> Mesh {
         let vs = vertices;
         let is = indices.into_iter().map(na::convert).collect();
 

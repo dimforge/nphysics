@@ -49,8 +49,7 @@ pub fn convex_polyline_area_and_center_of_mass_unchecked<N: RealField>(
 pub fn convex_polyline_mass_properties_unchecked<N: RealField>(
     convex_polyline: &[Point<N>],
     density: N,
-) -> (N, Point<N>, N)
-{
+) -> (N, Point<N>, N) {
     let (area, com) = convex_polyline_area_and_center_of_mass_unchecked(convex_polyline);
 
     if area.is_zero() {

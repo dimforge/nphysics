@@ -79,8 +79,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
         anchor: ColliderAnchor<N, Handle>,
         body_status_dependent_ndofs: usize,
         material: MaterialHandle<N>,
-    ) -> Self
-    {
+    ) -> Self {
         ColliderData {
             margin,
             density,
@@ -199,8 +198,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     pub fn set_user_data(
         &mut self,
         data: Option<Box<dyn Any + Send + Sync>>,
-    ) -> Option<Box<dyn Any + Send + Sync>>
-    {
+    ) -> Option<Box<dyn Any + Send + Sync>> {
         std::mem::replace(&mut self.0.data_mut().user_data, data)
     }
 
@@ -530,8 +528,7 @@ impl<N: RealField> ColliderDesc<N> {
     pub fn build<Handle: BodyHandle>(
         &self,
         parent_handle: BodyPartHandle<Handle>,
-    ) -> Collider<N, Handle>
-    {
+    ) -> Collider<N, Handle> {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction)
         } else {

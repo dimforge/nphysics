@@ -32,8 +32,7 @@ impl<N: RealField, Handle: BodyHandle> MouseConstraint<N, Handle> {
         anchor1: Point<N>,
         anchor2: Point<N>,
         limit: N,
-    ) -> Self
-    {
+    ) -> Self {
         MouseConstraint {
             b1,
             b2,
@@ -74,8 +73,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
         j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut LinearConstraints<N, usize>,
-    )
-    {
+    ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
@@ -169,8 +167,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
         _: usize,
         _: &mut Bodies,
         _: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         None
     }
 }

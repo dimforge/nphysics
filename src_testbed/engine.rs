@@ -144,8 +144,7 @@ impl GraphicsManager {
         colliders: &DefaultColliderSet<f32>,
         window: &mut Window,
         part: DefaultBodyPartHandle,
-    ) -> DefaultBodyPartHandle
-    {
+    ) -> DefaultBodyPartHandle {
         let mut delete_array = true;
 
         if let Some(sns) = self.b2sn.get_mut(&part.0) {
@@ -180,8 +179,7 @@ impl GraphicsManager {
         &mut self,
         colliders: &DefaultColliderSet<f32>,
         body_key: DefaultBodyHandle,
-    )
-    {
+    ) {
         if let Some(color) = self.b2color.remove(&body_key) {
             if let Some(sns) = self.b2sn.remove(&body_key) {
                 for sn in sns {
@@ -280,8 +278,7 @@ impl GraphicsManager {
         window: &mut Window,
         id: DefaultColliderHandle,
         colliders: &DefaultColliderSet<f32>,
-    )
-    {
+    ) {
         let collider = colliders.get(id).unwrap();
 
         let color = if let Some(c) = self.c2color.get(&id).cloned() {
@@ -301,8 +298,7 @@ impl GraphicsManager {
         id: DefaultColliderHandle,
         colliders: &DefaultColliderSet<f32>,
         color: Point3<f32>,
-    )
-    {
+    ) {
         let collider = colliders.get(id).unwrap();
         let key = collider.body();
         let shape = collider.shape();
@@ -349,8 +345,7 @@ impl GraphicsManager {
         shape: &dyn Shape<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         if let Some(s) = shape.as_shape::<shape::Plane<f32>>() {
             self.add_plane(window, object, colliders, s, color, out)
         } else if let Some(s) = shape.as_shape::<shape::Ball<f32>>() {
@@ -396,8 +391,7 @@ impl GraphicsManager {
         shape: &shape::Plane<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         let pos = colliders.get(object).unwrap().position();
         let position = Point::from(pos.translation.vector);
         let normal = pos * shape.normal();
@@ -417,8 +411,7 @@ impl GraphicsManager {
         shape: &shape::Polyline<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         let vertices = shape.points().to_vec();
         let indices = shape.edges().iter().map(|e| e.indices).collect();
 
@@ -437,8 +430,7 @@ impl GraphicsManager {
         shape: &TriMesh<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         let points = shape.points();
         let faces = shape.faces();
 
@@ -467,8 +459,7 @@ impl GraphicsManager {
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         out.push(Node::HeightField(HeightField::new(
             object,
             colliders,
@@ -488,8 +479,7 @@ impl GraphicsManager {
         shape: &shape::Capsule<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         let margin = colliders.get(object).unwrap().margin();
         out.push(Node::Capsule(Capsule::new(
             object,
@@ -511,8 +501,7 @@ impl GraphicsManager {
         shape: &shape::Ball<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         let margin = colliders.get(object).unwrap().margin();
         out.push(Node::Ball(Ball::new(
             object,
@@ -533,8 +522,7 @@ impl GraphicsManager {
         shape: &Cuboid<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         let margin = colliders.get(object).unwrap().margin();
 
         out.push(Node::Box(Box::new(
@@ -557,8 +545,7 @@ impl GraphicsManager {
         shape: &ConvexPolygon<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         let points = shape.points();
 
         out.push(Node::Convex(Convex::new(
@@ -581,8 +568,7 @@ impl GraphicsManager {
         shape: &ConvexHull<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    )
-    {
+    ) {
         let mut chull = transformation::convex_hull(shape.points());
         chull.replicate_vertices();
         chull.recompute_normals();
@@ -597,8 +583,7 @@ impl GraphicsManager {
         _geometrical_world: &DefaultGeometricalWorld<f32>,
         colliders: &DefaultColliderSet<f32>,
         window: &mut Window,
-    )
-    {
+    ) {
         for (_, ns) in self.b2sn.iter() {
             for n in ns.iter() {
                 let handle = n.collider();
@@ -633,8 +618,7 @@ impl GraphicsManager {
         geometrical_world: &DefaultGeometricalWorld<f32>,
         colliders: &DefaultColliderSet<f32>,
         window: &mut Window,
-    )
-    {
+    ) {
         //        use crate::kiss3d::camera::Camera;
         //        println!("eye: {}, at: {}", self.camera.eye(), self.camera.at());
         for (_, ns) in self.b2sn.iter_mut() {

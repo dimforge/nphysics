@@ -91,8 +91,7 @@ impl TestbedUi {
         window: &mut Window,
         world: &mut DefaultMechanicalWorld<f32>,
         state: &mut TestbedState,
-    )
-    {
+    ) {
         let ui_root = window.conrod_ui().window;
         let mut ui = window.conrod_ui_mut().set_widgets();
         conrod::widget::Canvas::new()
@@ -404,8 +403,7 @@ fn toggles(
     prev: conrod::widget::Id,
     ui: &mut conrod::UiCell,
     flags: &mut TestbedStateFlags,
-)
-{
+) {
     toggle(
         toggles[0].0,
         toggles[0].2,
@@ -429,8 +427,7 @@ fn toggle(
     curr: conrod::widget::Id,
     ui: &mut conrod::UiCell,
     flags: &mut TestbedStateFlags,
-)
-{
+) {
     if title == "" {
         // This is a separator.
         separator(canvas, prev, curr, ui)
@@ -459,8 +456,7 @@ fn separator(
     prev: conrod::widget::Id,
     curr: conrod::widget::Id,
     ui: &mut conrod::UiCell,
-)
-{
+) {
     conrod::widget::Line::centred([-ELEMENT_W / 2.0, 0.0], [ELEMENT_W / 2.0, 0.0])
         .align_middle_x_of(canvas)
         .down_from(prev, VSPACE)

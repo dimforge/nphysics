@@ -227,8 +227,7 @@ impl<N: RealField> MassConstraintSystem<N> {
         ny: usize,
         mass: N,
         stiffness: Option<N>,
-    ) -> Self
-    {
+    ) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh
@@ -552,8 +551,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>,
-    )
-    {
+    ) {
         let elt = part
             .downcast_ref::<MassConstraintElement<N>>()
             .expect("The provided body part must be a triangular mass-spring element");
@@ -586,8 +584,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         &mut self,
         _: &DVectorSlice<N>,
         _: &IntegrationParameters<N>,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -740,8 +737,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -813,8 +809,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let dim = self.elements[part_id].indices.as_slice().len();
         let inv_dim: N = na::convert(1.0 / dim as f64);
         let barycenter = Point::from(Vector::repeat(inv_dim));
@@ -833,8 +828,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force(part_id, &force, force_type, auto_wake_up);
     }
@@ -846,8 +840,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
     }
@@ -859,8 +852,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up);
@@ -873,8 +865,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force_at_local_point(part_id, &force, &point, force_type, auto_wake_up);
     }

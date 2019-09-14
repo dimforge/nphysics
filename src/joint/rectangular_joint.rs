@@ -54,8 +54,7 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
         _: &Isometry3<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
     }
 
     fn jacobian_mul_coordinates(&self, vels: &[N]) -> Velocity<N> {
@@ -102,8 +101,7 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    )
-    {
+    ) {
         self.prism1.velocity_constraints(
             parameters,
             multibody,
@@ -141,8 +139,7 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         if i == 0 {
             self.prism1
                 .position_constraint(0, multibody, link, handle, dof_id, jacobians)

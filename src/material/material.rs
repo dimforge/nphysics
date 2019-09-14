@@ -31,8 +31,7 @@ impl<'a, N: RealField> MaterialContext<'a, N> {
         position: &'a Isometry<N>,
         contact: &'a TrackedContact<N>,
         is_first: bool,
-    ) -> Self
-    {
+    ) -> Self {
         MaterialContext {
             shape,
             position,

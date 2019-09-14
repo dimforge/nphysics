@@ -27,8 +27,7 @@ impl<N: RealField, Handle: BodyHandle> Spring<N, Handle> {
         anchor2: Point<N>,
         length: N,
         stiffness: N,
-    ) -> Self
-    {
+    ) -> Self {
         Spring {
             b1,
             b2,

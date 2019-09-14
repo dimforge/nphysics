@@ -67,8 +67,7 @@ impl<N: RealField> Joint<N> for PinSlotJoint<N> {
         transform: &Isometry3<N>,
         vels: &[N],
         out: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
         self.prism.jacobian_dot_veldiff_mul_coordinates(
             transform,
             vels,
@@ -126,8 +125,7 @@ impl<N: RealField> Joint<N> for PinSlotJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    )
-    {
+    ) {
         self.prism.velocity_constraints(
             parameters,
             multibody,
@@ -165,8 +163,7 @@ impl<N: RealField> Joint<N> for PinSlotJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         if i == 0 {
             self.prism
                 .position_constraint(0, multibody, link, handle, dof_id, jacobians)
