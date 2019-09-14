@@ -6,16 +6,20 @@ executors:
       - image: rust:latest
 
 jobs:
-  build-native:
+  check-fmt:
     executor: rust-executor
     steps:
       - checkout
       - run:
-          name: instal rustfmt
-          command: rustup component add rustfmt
+        name: install rustfmt
+        command: rustup component add rustfmt
       - run:
-          name: check formatting
-          command: cargo fmt -- --check
+        name: check formatting
+        command: cargo fmt -- --check
+  build-native:
+    executor: rust-executor
+    steps:
+      - checkout
       - run:
           name: build nphysics2d
           command: cargo build --verbose -p nphysics2d;
@@ -77,5 +81,10 @@ workflows:
   version: 2
   build:
     jobs:
+      - check-fmt
       - build-native
+        requires:
+          - check-fmt
       - build-wasm
+        requires:
+          - check-fmt
