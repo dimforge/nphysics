@@ -94,8 +94,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn insert(
         &mut self,
         constraint: impl JointConstraint<N, Bodies>,
-    ) -> DefaultJointConstraintHandle
-    {
+    ) -> DefaultJointConstraintHandle {
         self.insert_boxed(Box::new(constraint))
     }
 
@@ -103,8 +102,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn insert_boxed(
         &mut self,
         constraint: Box<dyn JointConstraint<N, Bodies>>,
-    ) -> DefaultJointConstraintHandle
-    {
+    ) -> DefaultJointConstraintHandle {
         let (part1, part2) = constraint.anchors();
         let handle = self.constraints.insert(constraint);
         self.inserted.push((handle, part1, part2));
@@ -115,8 +113,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn remove(
         &mut self,
         to_remove: DefaultJointConstraintHandle,
-    ) -> Option<Box<dyn JointConstraint<N, Bodies>>>
-    {
+    ) -> Option<Box<dyn JointConstraint<N, Bodies>>> {
         let res = self.constraints.remove(to_remove)?;
         let (part1, part2) = res.anchors();
         self.removed.push((to_remove, part1, part2));
@@ -132,8 +129,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn get(
         &self,
         handle: DefaultJointConstraintHandle,
-    ) -> Option<&dyn JointConstraint<N, Bodies>>
-    {
+    ) -> Option<&dyn JointConstraint<N, Bodies>> {
         self.constraints.get(handle).map(|b| &**b)
     }
 
@@ -141,8 +137,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn get_mut(
         &mut self,
         handle: DefaultJointConstraintHandle,
-    ) -> Option<&mut dyn JointConstraint<N, Bodies>>
-    {
+    ) -> Option<&mut dyn JointConstraint<N, Bodies>> {
         self.constraints.get_mut(handle).map(|b| &mut **b)
     }
 

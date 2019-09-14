@@ -44,7 +44,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
 {
     /// Creates a geometrical world from the provided broad-phase and narrow-phase structures.
     pub fn from_parts<BF>(broad_phase: BF, narrow_phase: NarrowPhase<N, CollHandle>) -> Self
-    where BF: BroadPhase<N, AABB<N>, CollHandle> {
+    where
+        BF: BroadPhase<N, AABB<N>, CollHandle>,
+    {
         GeometricalWorld {
             broad_phase: Box::new(broad_phase),
             narrow_phase,
@@ -306,7 +308,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
 
     /// Executes the broad phase of the collision detection pipeline.
     pub fn perform_broad_phase<Colliders>(&mut self, colliders: &Colliders)
-    where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+    where
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    {
         pipeline::perform_broad_phase(
             colliders,
             &mut *self.broad_phase,
@@ -319,7 +323,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
 
     /// Executes the narrow phase of the collision detection pipeline.
     pub fn perform_narrow_phase<Colliders>(&mut self, colliders: &Colliders)
-    where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+    where
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    {
         pipeline::perform_narrow_phase(colliders, &mut self.narrow_phase, &mut self.interactions)
     }
 
@@ -339,8 +345,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         colliders: &'a Colliders,
         ray: &'b Ray<N>,
         groups: &'b CollisionGroups,
-    ) -> pipeline::InterferencesWithRay<'a, 'b, N, Colliders>
-    {
+    ) -> pipeline::InterferencesWithRay<'a, 'b, N, Colliders> {
         pipeline::interferences_with_ray(&colliders, &*self.broad_phase, ray, groups)
     }
 
@@ -355,8 +360,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         colliders: &'a Colliders,
         point: &'b Point<N>,
         groups: &'b CollisionGroups,
-    ) -> pipeline::InterferencesWithPoint<'a, 'b, N, Colliders>
-    {
+    ) -> pipeline::InterferencesWithPoint<'a, 'b, N, Colliders> {
         pipeline::interferences_with_point(&colliders, &*self.broad_phase, point, groups)
     }
 
@@ -371,8 +375,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         colliders: &'a Colliders,
         aabb: &'b AABB<N>,
         groups: &'b CollisionGroups,
-    ) -> pipeline::InterferencesWithAABB<'a, 'b, N, Colliders>
-    {
+    ) -> pipeline::InterferencesWithAABB<'a, 'b, N, Colliders> {
         pipeline::interferences_with_aabb(&colliders, &*self.broad_phase, aabb, groups)
     }
 
@@ -395,8 +398,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         c1: &Collider<N, Handle>,
         c2: &Collider<N, Handle>,
         interaction: &Interaction<N>,
-    ) -> bool
-    {
+    ) -> bool {
         match interaction {
             Interaction::Contact(_, manifold) => Self::is_contact_effective(c1, c2, manifold),
             Interaction::Proximity(_, prox) => *prox == Proximity::Intersecting,
@@ -407,8 +409,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         c1: &Collider<N, Handle>,
         c2: &Collider<N, Handle>,
         manifold: &ContactManifold<N>,
-    ) -> bool
-    {
+    ) -> bool {
         if let Some(c) = manifold.deepest_contact() {
             c.contact.depth >= -(c1.margin() + c2.margin())
         } else {
@@ -429,8 +430,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             &'a Collider<N, Handle>,
             &'a Interaction<N>,
         ),
-    >
-    {
+    > {
         iter.filter_map(move |inter| {
             let c1 = colliders.get(inter.0)?;
             let c2 = colliders.get(inter.1)?;
@@ -463,8 +463,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             &'a ContactAlgorithm<N>,
             &'a ContactManifold<N>,
         ),
-    >
-    {
+    > {
         iter.filter_map(move |inter| {
             let c1 = colliders.get(inter.0)?;
             let c2 = colliders.get(inter.1)?;
@@ -496,8 +495,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             &'a dyn ProximityDetector<N>,
             Proximity,
         ),
-    >
-    {
+    > {
         iter.filter_map(move |prox| {
             Some((
                 prox.0,
@@ -530,8 +528,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             &'a Collider<N, Handle>,
             &'a Interaction<N>,
         ),
-    >
-    {
+    > {
         Self::filter_interactions(
             colliders,
             self.interactions.interaction_pairs(false),
@@ -556,8 +553,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             &'a ContactAlgorithm<N>,
             &'a ContactManifold<N>,
         ),
-    >
-    {
+    > {
         Self::filter_contacts(
             colliders,
             self.interactions.contact_pairs(false),
@@ -582,8 +578,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             &'a dyn ProximityDetector<N>,
             Proximity,
         ),
-    >
-    {
+    > {
         Self::filter_proximities(colliders, self.interactions.proximity_pairs(effective_only))
     }
 
@@ -603,8 +598,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         CollHandle,
         &'a Collider<N, Handle>,
         &'a Interaction<N>,
-    )>
-    {
+    )> {
         let id1 = colliders
             .get(handle1)?
             .graph_index()
@@ -645,8 +639,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         &'a Collider<N, Handle>,
         &'a ContactAlgorithm<N>,
         &'a ContactManifold<N>,
-    )>
-    {
+    )> {
         let id1 = colliders
             .get(handle1)?
             .graph_index()
@@ -686,8 +679,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         &'a Collider<N, Handle>,
         &'a dyn ProximityDetector<N>,
         Proximity,
-    )>
-    {
+    )> {
         let id1 = colliders
             .get(handle1)?
             .graph_index()
@@ -730,8 +722,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
                 &'a Interaction<N>,
             ),
         >,
-    >
-    {
+    > {
         let idx = colliders
             .get(handle)?
             .graph_index()
@@ -763,8 +754,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
                 &'a ContactManifold<N>,
             ),
         >,
-    >
-    {
+    > {
         let idx = colliders
             .get(handle)?
             .graph_index()
@@ -796,8 +786,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
                 Proximity,
             ),
         >,
-    >
-    {
+    > {
         let idx = colliders
             .get(handle)?
             .graph_index()
@@ -819,8 +808,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         &'a self,
         colliders: &'a Colliders,
         handle: CollHandle,
-    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>>
-    {
+    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>> {
         Some(
             self.interactions_with(colliders, handle, true)?
                 .map(
@@ -844,8 +832,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         &'a self,
         colliders: &'a Colliders,
         handle: CollHandle,
-    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>>
-    {
+    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>> {
         Some(
             self.contacts_with(colliders, handle, true)?
                 .map(
@@ -869,8 +856,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         &'a self,
         colliders: &'a Colliders,
         handle: CollHandle,
-    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>>
-    {
+    ) -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>)>> {
         Some(
             self.proximities_with(colliders, handle, true)?
                 .map(
@@ -897,8 +883,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         c2: &Collider<N, Handle>,
         _: CollHandle,
         _: CollHandle,
-    ) -> bool
-    {
+    ) -> bool {
         match (c1.anchor(), c2.anchor()) {
             (
                 ColliderAnchor::OnBodyPart {

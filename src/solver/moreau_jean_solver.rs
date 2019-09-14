@@ -58,8 +58,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         island_joints: &[Constraints::Handle],
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-    )
-    {
+    ) {
         counters.assembly_started();
         self.assemble_system(
             counters,
@@ -107,8 +106,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         island_joints: &[Constraints::Handle],
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-    )
-    {
+    ) {
         self.assemble_system(
             counters,
             parameters,
@@ -138,8 +136,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
         island: &[Bodies::Handle],
         island_joints: &[Constraints::Handle],
-    )
-    {
+    ) {
         self.internal_constraints.clear();
         let mut system_ndofs = 0;
 
@@ -266,8 +263,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         &mut self,
         parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
-    )
-    {
+    ) {
         SORProx::solve(
             bodies,
             &mut self.contact_constraints.velocity,
@@ -289,8 +285,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         colliders: &Colliders,
         joints: &mut Constraints,
         island_joints: &[Constraints::Handle],
-    )
-    {
+    ) {
         // XXX: avoid the systematic clone.
         // This is needed for cases where we perform the position resolution
         // before the velocity resolution.
@@ -314,8 +309,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         _bodies: &mut Bodies,
         joints: &mut Constraints,
         island_joints: &[Constraints::Handle],
-    )
-    {
+    ) {
         self.contact_model.cache_impulses(&self.contact_constraints);
 
         for handle in island_joints {
@@ -336,8 +330,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         island: &[Bodies::Handle],
-    )
-    {
+    ) {
         for handle in island {
             let body = try_continue!(bodies.get_mut(*handle));
             let id = body.companion_id();

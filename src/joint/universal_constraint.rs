@@ -40,8 +40,7 @@ impl<N: RealField, Handle: BodyHandle> UniversalConstraint<N, Handle> {
         anchor2: Point<N>,
         axis2: Unit<AngularVector<N>>,
         angle: N,
-    ) -> Self
-    {
+    ) -> Self {
         UniversalConstraint {
             b1,
             b2,
@@ -95,8 +94,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
         j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut LinearConstraints<N, usize>,
-    )
-    {
+    ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
@@ -219,8 +217,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         let body1 = bodies.get(self.b1.0)?;
         let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;

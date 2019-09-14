@@ -18,8 +18,7 @@ use crate::solver::ForceDirection;
 pub(crate) fn elasticity_coefficients<N: RealField>(
     young_modulus: N,
     poisson_ratio: N,
-) -> (N, N, N)
-{
+) -> (N, N, N) {
     let _1 = N::one();
     let _2: N = na::convert(2.0);
 
@@ -70,8 +69,7 @@ pub(crate) fn world_point_at_material_point<N: RealField>(
     indices: FiniteElementIndices,
     positions: &DVector<N>,
     point: &Point<N>,
-) -> Point<N>
-{
+) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
@@ -108,8 +106,7 @@ pub(crate) fn material_point_at_world_point<N: RealField>(
     indices: FiniteElementIndices,
     positions: &DVector<N>,
     point: &Point<N>,
-) -> Point<N>
-{
+) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
@@ -186,8 +183,7 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
     inv_r: &mut N,
     ext_vels: Option<&DVectorSlice<N>>,
     out_vel: Option<&mut N>,
-)
-{
+) {
     if status == BodyStatus::Static || status == BodyStatus::Disabled {
         return;
     }

@@ -25,8 +25,7 @@ impl Convex {
         vertices: Vec<Point<f32>>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Convex
-    {
+    ) -> Convex {
         let mut res = Convex {
             color,
             base_color: color,
@@ -61,8 +60,7 @@ impl Convex {
         convex: &TriMesh<f32>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Convex
-    {
+    ) -> Convex {
         let mut res = Convex {
             color,
             base_color: color,

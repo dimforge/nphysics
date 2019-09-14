@@ -38,8 +38,7 @@ impl Box2dWorld {
         colliders: &DefaultColliderSet<f32>,
         _joint_constraints: &DefaultJointConstraintSet<f32>,
         _force_generators: &DefaultForceGeneratorSet<f32>,
-    ) -> Self
-    {
+    ) -> Self {
         let world = b2::World::new(&na_vec_to_b2_vec(&mechanical_world.gravity));
 
         let mut res = Box2dWorld {
@@ -118,8 +117,7 @@ impl Box2dWorld {
         shape: &dyn Shape<f32>,
         dpos: &Isometry2<f32>,
         body: &mut b2::MetaBody<NoUserData>,
-    )
-    {
+    ) {
         let center = na_vec_to_b2_vec(&dpos.translation.vector);
         let mut fixture_def = b2::FixtureDef::new();
 

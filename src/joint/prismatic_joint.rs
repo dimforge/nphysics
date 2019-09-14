@@ -170,8 +170,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         _: &Isometry<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
     }
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
@@ -212,8 +211,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    )
-    {
+    ) {
         joint::unit_joint_velocity_constraints(
             self,
             parameters,
@@ -244,8 +242,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         joint::unit_joint_position_constraint(
             self, multibody, link, handle, dof_id, false, jacobians,
         )

@@ -160,8 +160,7 @@ pub fn update_scene_node(
     coll: DefaultColliderHandle,
     color: &Point3<f32>,
     delta: &Isometry<f32>,
-)
-{
+) {
     if let Some(co) = colliders.get(coll) {
         node.set_local_transformation(co.position() * delta);
         node.set_color(color.x, color.y, color.z);

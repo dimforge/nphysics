@@ -54,8 +54,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
     ground_j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut ConstraintSet<N, (), (), usize>,
-)
-{
+) {
     let ndofs = multibody.ndofs();
     let impulses = multibody.impulses();
     let mut is_min_constraint_active = false;
@@ -180,8 +179,7 @@ pub fn unit_joint_position_constraint<N: RealField, J: UnitJoint<N>>(
     dof_id: usize,
     is_angular: bool,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, ()>>
-{
+) -> Option<GenericNonlinearConstraint<N, ()>> {
     let mut sign = N::one();
     let mut rhs = None;
 

@@ -190,8 +190,7 @@ impl<N: RealField> Body<N> for Ground<N> {
         _: &mut N,
         _: Option<&DVectorSlice<N>>,
         _: Option<&mut N>,
-    )
-    {
+    ) {
     }
 
     fn advance(&mut self, _: N) {}
@@ -214,8 +213,7 @@ impl<N: RealField> Body<N> for Ground<N> {
         &mut self,
         _: &DVectorSlice<N>,
         _: &IntegrationParameters<N>,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -241,8 +239,7 @@ impl<N: RealField> Body<N> for Ground<N> {
         _: &Point<N>,
         _: ForceType,
         _: bool,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -253,8 +250,7 @@ impl<N: RealField> Body<N> for Ground<N> {
         _: &Point<N>,
         _: ForceType,
         _: bool,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -265,8 +261,7 @@ impl<N: RealField> Body<N> for Ground<N> {
         _: &Point<N>,
         _: ForceType,
         _: bool,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -277,8 +272,7 @@ impl<N: RealField> Body<N> for Ground<N> {
         _: &Point<N>,
         _: ForceType,
         _: bool,
-    )
-    {
+    ) {
     }
 }
 

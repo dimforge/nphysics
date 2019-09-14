@@ -50,8 +50,7 @@ impl<N: RealField> Joint<N> for FreeJoint<N> {
         _: &Isometry<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
     }
 
     fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {

@@ -21,8 +21,7 @@ impl Capsule {
         h: f32,
         color: Point3<f32>,
         window: &mut window::Window,
-    ) -> Capsule
-    {
+    ) -> Capsule {
         #[cfg(feature = "dim2")]
         let node = window.add_planar_capsule(r, h);
         #[cfg(feature = "dim3")]

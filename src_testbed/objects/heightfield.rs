@@ -33,8 +33,7 @@ impl HeightField {
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         _: &mut Window,
-    ) -> HeightField
-    {
+    ) -> HeightField {
         let mut vertices = Vec::new();
 
         for seg in heightfield.segments() {
@@ -61,8 +60,7 @@ impl HeightField {
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> HeightField
-    {
+    ) -> HeightField {
         let mesh = heightfield.to_trimesh(());
 
         let mut res = HeightField {

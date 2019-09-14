@@ -660,8 +660,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>,
-    )
-    {
+    ) {
         let pos = point - self.com.coords;
         let force = force_dir.at_point(&pos);
         let mut masked_force = force.clone();
@@ -711,8 +710,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         &mut self,
         _: &DVectorSlice<N>,
         _: &IntegrationParameters<N>,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -755,8 +753,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -809,8 +806,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let world_force = force.transform_by(&self.position);
         self.apply_force(0, &world_force, force_type, auto_wake_up)
     }
@@ -822,8 +818,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let force = Force::linear_at_point(*force, &(point - self.com.coords));
         self.apply_force(0, &force, force_type, auto_wake_up)
     }
@@ -835,8 +830,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         self.apply_force_at_point(0, &(self.position * force), point, force_type, auto_wake_up)
     }
 
@@ -847,8 +841,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         self.apply_force_at_point(0, force, &(self.position * point), force_type, auto_wake_up)
     }
 
@@ -859,8 +852,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         self.apply_force_at_point(
             0,
             &(self.position * force),

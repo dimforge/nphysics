@@ -67,8 +67,7 @@ pub fn constraint_pair_geometry<N: RealField, B: ?Sized + Body<N>, H: BodyHandle
     ext_vels1: Option<&DVectorSlice<N>>,
     ext_vels2: Option<&DVectorSlice<N>>,
     mut out_vel: Option<&mut N>,
-) -> ConstraintGeometry<N>
-{
+) -> ConstraintGeometry<N> {
     let mut res = ConstraintGeometry::new();
 
     res.ndofs1 = body1.status_dependent_ndofs();
@@ -142,8 +141,7 @@ pub fn constraint_pair_geometry<N: RealField, B: ?Sized + Body<N>, H: BodyHandle
 pub fn constraints_are_ground_constraints<N: RealField, B: ?Sized + Body<N>>(
     body1: &B,
     body2: &B,
-) -> bool
-{
+) -> bool {
     body1.status_dependent_ndofs() == 0 || body2.status_dependent_ndofs() == 0
 }
 
@@ -155,8 +153,7 @@ pub fn split_ext_vels<'a, N: RealField, B: ?Sized + Body<N>>(
     assembly_id1: usize,
     assembly_id2: usize,
     ext_vels: &'a DVector<N>,
-) -> (DVectorSlice<'a, N>, DVectorSlice<'a, N>)
-{
+) -> (DVectorSlice<'a, N>, DVectorSlice<'a, N>) {
     let ndofs1 = body1.status_dependent_ndofs();
     let ndofs2 = body2.status_dependent_ndofs();
     (
@@ -192,8 +189,7 @@ pub fn cancel_relative_linear_velocity_wrt_axis<
     j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, Id>,
-)
-{
+) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
         max: N::max_value(),
@@ -267,8 +263,7 @@ pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>, H: Bod
     j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, usize>,
-)
-{
+) {
     let mut i = 0;
     Vector::canonical_basis(|dir| {
         cancel_relative_linear_velocity_wrt_axis(
@@ -313,8 +308,7 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>, H
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, H>>
-{
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let mut depth = axis.dot(&(anchor2 - anchor1));
 
     let force = if depth < N::zero() {
@@ -379,8 +373,7 @@ pub fn cancel_relative_translation<N: RealField, B: ?Sized + Body<N>, H: BodyHan
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, H>>
-{
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let error = anchor2 - anchor1;
 
     if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_linear_error) {
@@ -451,8 +444,7 @@ pub fn cancel_relative_angular_velocity_wrt_axis<
     j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, Id>,
-)
-{
+) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
         max: N::max_value(),
@@ -526,8 +518,7 @@ pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>, H: Bo
     j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, usize>,
-)
-{
+) {
     let mut i = 0;
     AngularVector::canonical_basis(|dir| {
         cancel_relative_angular_velocity_wrt_axis(
@@ -573,8 +564,7 @@ pub fn cancel_relative_rotation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle
     rotation1: &Rotation<N>,
     rotation2: &Rotation<N>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, H>>
-{
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let error = (rotation2 / rotation1).scaled_axis();
 
     if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_angular_error) {
@@ -645,8 +635,7 @@ pub fn restrict_relative_angular_velocity_to_axis<
     j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, usize>,
-)
-{
+) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
         max: N::max_value(),
@@ -723,8 +712,7 @@ pub fn align_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     axis1: &Unit<Vector<N>>,
     axis2: &Unit<Vector<N>>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, H>>
-{
+) -> Option<GenericNonlinearConstraint<N, H>> {
     // Angular regularization for two coincident axis.
     let mut error;
     if let Some(error_rot) = Rotation::rotation_between_axis(&axis1, &axis2) {
@@ -804,8 +792,7 @@ pub fn restrict_relative_linear_velocity_to_axis<
     j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, usize>,
-)
-{
+) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
         max: N::max_value(),
@@ -881,8 +868,7 @@ pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, H>>
-{
+) -> Option<GenericNonlinearConstraint<N, H>> {
     // Linear regularization of a point on an axis.
     let dpt = anchor2 - anchor1;
     let proj = anchor1 + axis1.into_inner() * axis1.dot(&dpt);
@@ -947,8 +933,7 @@ pub fn restore_angle_between_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHand
     axis2: &Unit<Vector<N>>,
     angle: N,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N, H>>
-{
+) -> Option<GenericNonlinearConstraint<N, H>> {
     // Angular regularization for two coincident axis.
     let mut separation;
     if let Some(separation_rot) = Rotation::rotation_between_axis(&axis1, &axis2) {

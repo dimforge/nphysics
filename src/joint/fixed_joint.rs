@@ -45,8 +45,7 @@ impl<N: RealField> Joint<N> for FixedJoint<N> {
         _: &Isometry<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
     }
 
     fn integrate(&mut self, _: &IntegrationParameters<N>, _: &[N]) {}

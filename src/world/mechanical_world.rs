@@ -892,8 +892,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         b2: Handle,
         is_proximity: bool,
         timestamp: usize,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             toi,
             c1,
@@ -918,8 +917,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         params: &IntegrationParameters<N>,
         end_time: N,
         body_times: &HashMap<Handle, N>,
-    ) -> Option<Self>
-    {
+    ) -> Option<Self> {
         let _margins = c1.margin() + c2.margin();
         let target = params.allowed_linear_error; // self.integration_parameters.allowed_linear_error.max(margins - self.integration_parameters.allowed_linear_error * na::convert(3.0));
 

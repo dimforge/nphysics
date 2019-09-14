@@ -40,8 +40,7 @@ impl<N: RealField, Handle: BodyHandle> GenericNonlinearConstraint<N, Handle> {
         wj_id2: usize,
         rhs: N,
         r: N,
-    ) -> Self
-    {
+    ) -> Self {
         GenericNonlinearConstraint {
             body1,
             body2,
@@ -119,8 +118,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         normal1: Unit<Vector<N>>,
         normal2: Unit<Vector<N>>,
         kinematic: ContactKinematic<N>,
-    ) -> Self
-    {
+    ) -> Self {
         let r = N::zero();
         let rhs = N::zero();
 
@@ -163,8 +161,7 @@ impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies>
         _: usize,
         _: &mut Bodies,
         _: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Bodies::Handle>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, Bodies::Handle>> {
         None
     }
 }

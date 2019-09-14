@@ -20,8 +20,7 @@ impl Ball {
         radius: f32,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Ball
-    {
+    ) -> Ball {
         #[cfg(feature = "dim2")]
         let node = window.add_circle(radius);
         #[cfg(feature = "dim3")]

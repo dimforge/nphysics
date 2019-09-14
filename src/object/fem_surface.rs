@@ -90,8 +90,7 @@ impl<N: RealField> FEMSurface<N> {
         young_modulus: N,
         poisson_ratio: N,
         damping_coeffs: (N, N),
-    ) -> Self
-    {
+    ) -> Self {
         let ndofs = vertices.len() * DIM;
         let mut rest_positions = DVector::zeros(ndofs);
 
@@ -617,8 +616,7 @@ impl<N: RealField> FEMSurface<N> {
         young_modulus: N,
         poisson_ratio: N,
         damping_coeffs: (N, N),
-    ) -> Self
-    {
+    ) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -891,8 +889,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>,
-    )
-    {
+    ) {
         let elt = part
             .downcast_ref::<TriangularElement<N>>()
             .expect("The provided body part must be a triangular element");
@@ -925,8 +922,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         &mut self,
         _: &DVectorSlice<N>,
         _: &IntegrationParameters<N>,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -945,8 +941,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -1013,8 +1008,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let _1_3: N = na::convert(1.0 / 3.0);
         let barycenter = Point::new(_1_3, _1_3);
         self.apply_force_at_local_point(
@@ -1032,8 +1026,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let world_force = Force::new(self.elements[part_id].rot * force.linear, force.angular);
         self.apply_force(part_id, &world_force, force_type, auto_wake_up);
     }
@@ -1045,8 +1038,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
     }
@@ -1058,8 +1050,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let world_force = self.elements[part_id].rot * force;
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(
@@ -1078,8 +1069,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let world_force = self.elements[part_id].rot * force;
         self.apply_force_at_local_point(part_id, &world_force, &point, force_type, auto_wake_up);
     }

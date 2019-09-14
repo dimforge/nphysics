@@ -136,8 +136,7 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
             b1: Bodies::Handle,
             b2: Bodies::Handle,
             ufs: &mut [UnionFindSet],
-        )
-        {
+        ) {
             let b1 = try_ret!(bodies.get(b1));
             let b2 = try_ret!(bodies.get(b2));
             if (b1.status_dependent_ndofs() != 0 || b1.is_kinematic())

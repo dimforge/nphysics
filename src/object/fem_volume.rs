@@ -87,8 +87,7 @@ impl<N: RealField> FEMVolume<N> {
         young_modulus: N,
         poisson_ratio: N,
         damping_coeffs: (N, N),
-    ) -> Self
-    {
+    ) -> Self {
         let ndofs = vertices.len() * 3;
         let mut rest_positions = DVector::zeros(ndofs);
 
@@ -658,8 +657,7 @@ impl<N: RealField> FEMVolume<N> {
         young_modulus: N,
         poisson_ratio: N,
         damping_coeffs: (N, N),
-    ) -> Self
-    {
+    ) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -919,8 +917,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         &self,
         part: &dyn BodyPart<N>,
         point: &Point3<N>,
-    ) -> Point3<N>
-    {
+    ) -> Point3<N> {
         let elt = part
             .downcast_ref::<TetrahedralElement<N>>()
             .expect("The provided body part must be tetrahedral element");
@@ -935,8 +932,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         &self,
         part: &dyn BodyPart<N>,
         point: &Point3<N>,
-    ) -> Isometry3<N>
-    {
+    ) -> Isometry3<N> {
         let elt = part
             .downcast_ref::<TetrahedralElement<N>>()
             .expect("The provided body part must be a tetrahedral element");
@@ -952,8 +948,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         &self,
         part: &dyn BodyPart<N>,
         point: &Point3<N>,
-    ) -> Point3<N>
-    {
+    ) -> Point3<N> {
         let elt = part
             .downcast_ref::<TetrahedralElement<N>>()
             .expect("The provided body part must be tetrahedral element");
@@ -976,8 +971,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>,
-    )
-    {
+    ) {
         let elt = part
             .downcast_ref::<TetrahedralElement<N>>()
             .expect("The provided body part must be a tetrahedral element");
@@ -1010,8 +1004,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         &mut self,
         _: &DVectorSlice<N>,
         _: &IntegrationParameters<N>,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -1030,8 +1023,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         point: &Point3<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -1099,8 +1091,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let _1_4: N = na::convert(1.0 / 4.0);
         let barycenter = Point3::new(_1_4, _1_4, _1_4);
         self.apply_force_at_local_point(
@@ -1118,8 +1109,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let world_force = Force::new(
             self.elements[part_id].rot * force.linear,
             self.elements[part_id].rot * force.angular,
@@ -1134,8 +1124,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         point: &Point3<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
     }
@@ -1147,8 +1136,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         point: &Point3<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let world_force = self.elements[part_id].rot * force;
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(
@@ -1167,8 +1155,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         point: &Point3<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let world_force = self.elements[part_id].rot * force;
         self.apply_force_at_local_point(part_id, &world_force, &point, force_type, auto_wake_up);
     }

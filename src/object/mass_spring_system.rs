@@ -53,8 +53,7 @@ impl<N: RealField> Spring<N> {
         positions: &[N],
         stiffness: N,
         damping_ratio: N,
-    ) -> Self
-    {
+    ) -> Self {
         let p0 = Point::from_slice(&positions[nodes.0..nodes.0 + DIM]);
         let p1 = Point::from_slice(&positions[nodes.1..nodes.1 + DIM]);
         let rest_length = na::distance(&p0, &p1);
@@ -255,8 +254,7 @@ impl<N: RealField> MassSpringSystem<N> {
         mass: N,
         stiffness: N,
         damping_ratio: N,
-    ) -> Self
-    {
+    ) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh
@@ -692,8 +690,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>,
-    )
-    {
+    ) {
         let elt = part
             .downcast_ref::<MassSpringElement<N>>()
             .expect("The provided body part must be a mass-spring element");
@@ -726,8 +723,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         &mut self,
         _: &DVectorSlice<N>,
         _: &IntegrationParameters<N>,
-    )
-    {
+    ) {
     }
 
     #[inline]
@@ -746,8 +742,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -821,8 +816,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let dim = self.elements[part_id].indices.as_slice().len();
         let inv_dim: N = na::convert(1.0 / dim as f64);
         let barycenter = Point::from(Vector::repeat(inv_dim));
@@ -841,8 +835,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force(part_id, &force, force_type, auto_wake_up);
     }
@@ -854,8 +847,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
     }
@@ -867,8 +859,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up);
@@ -881,8 +872,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force_at_local_point(part_id, &force, &point, force_type, auto_wake_up);
     }

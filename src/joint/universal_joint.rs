@@ -76,8 +76,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         transform: &Isometry3<N>,
         vels: &[N],
         out: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
         let jac1 = *self.revo1.local_jacobian_dot_veldiff() + self.coupling_dot_veldiff;
         out.column_mut(0)
             .copy_from(jac1.transformed(transform).as_vector());
@@ -139,8 +138,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    )
-    {
+    ) {
         self.revo1.velocity_constraints(
             parameters,
             multibody,
@@ -178,8 +176,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         if i == 0 {
             self.revo1
                 .position_constraint(0, multibody, link, handle, dof_id, jacobians)

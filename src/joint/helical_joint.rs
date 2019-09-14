@@ -68,8 +68,7 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         transform: &Isometry3<N>,
         acc: &[N],
         out: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
         self.revo
             .jacobian_dot_veldiff_mul_coordinates(transform, acc, out)
     }
@@ -116,8 +115,7 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    )
-    {
+    ) {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo.velocity_constraints(
             parameters,
@@ -145,8 +143,7 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo
             .position_constraint(0, multibody, link, handle, dof_id, jacobians)

@@ -26,8 +26,7 @@ impl<N: RealField> PlanarJoint<N> {
         pos1: N,
         pos2: N,
         angle: N,
-    ) -> Self
-    {
+    ) -> Self {
         let cross = axis1.cross(&*axis2);
         let normal = Unit::try_new(cross, N::default_epsilon())
             .expect("A planar joint cannot be defined from two collinear axis.");
@@ -81,8 +80,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         transform: &Isometry3<N>,
         vels: &[N],
         out: &mut JacobianSliceMut<N>,
-    )
-    {
+    ) {
         self.prism1.jacobian_dot_veldiff_mul_coordinates(
             transform,
             vels,
@@ -153,8 +151,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    )
-    {
+    ) {
         self.prism1.velocity_constraints(
             parameters,
             multibody,
@@ -203,8 +200,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>>
-    {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         if i == 0 {
             self.prism1
                 .position_constraint(0, multibody, link, handle, dof_id, jacobians)

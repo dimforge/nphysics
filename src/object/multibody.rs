@@ -116,8 +116,7 @@ impl<N: RealField> Multibody<N> {
     pub fn links_with_name<'a>(
         &'a self,
         name: &'a str,
-    ) -> impl Iterator<Item = (usize, &'a MultibodyLink<N>)>
-    {
+    ) -> impl Iterator<Item = (usize, &'a MultibodyLink<N>)> {
         self.rbs
             .iter()
             .enumerate()
@@ -186,8 +185,7 @@ impl<N: RealField> Multibody<N> {
         body_shift: Vector<N>,
         local_inertia: Inertia<N>,
         local_com: Point<N>,
-    ) -> &mut MultibodyLink<N>
-    {
+    ) -> &mut MultibodyLink<N> {
         assert!(
             parent.is_none() || !self.rbs.is_empty(),
             "Multibody::build_body: invalid parent id."
@@ -644,8 +642,7 @@ impl<N: RealField> Multibody<N> {
         link: &MultibodyLink<N>,
         force: &Force<N>,
         out: &mut [N],
-    )
-    {
+    ) {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[link.internal_id].tr_mul_to(force.as_vector(), &mut out);
     }
@@ -656,8 +653,7 @@ impl<N: RealField> Multibody<N> {
         link: &MultibodyLink<N>,
         force: &Force<N>,
         out: &mut [N],
-    )
-    {
+    ) {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[link.internal_id].tr_mul_to(force.as_vector(), &mut out);
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
@@ -672,8 +668,7 @@ impl<N: RealField> Multibody<N> {
         dof_id: usize,
         force: N,
         out: &mut [N],
-    )
-    {
+    ) {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         out.fill(N::zero());
         out[link.assembly_id + dof_id] = force;
@@ -686,8 +681,7 @@ impl<N: RealField> Multibody<N> {
         link: &MultibodyLink<N>,
         force: DVectorSlice<N>,
         out: &mut [N],
-    )
-    {
+    ) {
         let ndofs = link.dof.ndofs();
 
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
@@ -981,8 +975,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>,
-    )
-    {
+    ) {
         let link = part
             .downcast_ref::<MultibodyLink<N>>()
             .expect("The provided body part must be a multibody link");
@@ -1036,8 +1029,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
         &mut self,
         ext_vels: &DVectorSlice<N>,
         parameters: &IntegrationParameters<N>,
-    )
-    {
+    ) {
         let mut ground_j_id = 0;
         let mut workspace = self.solver_workspace.take().unwrap();
 
@@ -1179,8 +1171,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -1235,8 +1226,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
         force: &Force<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let world_force = force.transform_by(&self.rbs[part_id].local_to_world);
         self.apply_force(part_id, &world_force, force_type, auto_wake_up);
     }
@@ -1248,8 +1238,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         let force = Force::linear_at_point(*force, &(point - self.rbs[part_id].com.coords));
         self.apply_force(part_id, &force, force_type, auto_wake_up)
     }
@@ -1261,8 +1250,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         self.apply_force_at_point(
             part_id,
             &(self.rbs[part_id].local_to_world * force),
@@ -1279,8 +1267,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         self.apply_force_at_point(
             part_id,
             force,
@@ -1297,8 +1284,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
         point: &Point<N>,
         force_type: ForceType,
         auto_wake_up: bool,
-    )
-    {
+    ) {
         self.apply_force_at_point(
             part_id,
             &(self.rbs[part_id].local_to_world * force),
@@ -1413,8 +1399,7 @@ impl<N: RealField> MultibodyDesc<N> {
         &self,
         multibody: &'m mut Multibody<N>,
         parent_id: usize,
-    ) -> &'m mut MultibodyLink<N>
-    {
+    ) -> &'m mut MultibodyLink<N> {
         self.do_build_with_parent(multibody, Some(parent_id))
     }
 
@@ -1422,8 +1407,7 @@ impl<N: RealField> MultibodyDesc<N> {
         &self,
         multibody: &'m mut Multibody<N>,
         parent_id: Option<usize>,
-    ) -> &'m mut MultibodyLink<N>
-    {
+    ) -> &'m mut MultibodyLink<N> {
         let mut link = multibody.add_link(
             parent_id,
             self.joint.clone(),

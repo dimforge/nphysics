@@ -94,8 +94,7 @@ impl<N: RealField> IntegrationParameters<N> {
         return_after_ccd_substep: bool,
         multiple_ccd_substep_sensor_events_enabled: bool,
         ccd_on_penetration_enabled: bool,
-    ) -> Self
-    {
+    ) -> Self {
         IntegrationParameters {
             t: N::zero(),
             dt,
