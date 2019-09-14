@@ -67,6 +67,7 @@ The libraries needed to compile the examples are:
 #![deny(unused_qualifications)]
 #![deny(missing_docs)] // FIXME: deny this
 #![deny(unused_results)]
+#![deny(bare_trait_objects)]
 #![allow(type_alias_bounds)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]
