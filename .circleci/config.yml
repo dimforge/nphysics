@@ -11,11 +11,11 @@ jobs:
     steps:
       - checkout
       - run:
-        name: install rustfmt
-        command: rustup component add rustfmt
+          name: install rustfmt
+          command: rustup component add rustfmt
       - run:
-        name: check formatting
-        command: cargo fmt -- --check
+          name: check formatting
+          command: cargo fmt -- --check
   build-native:
     executor: rust-executor
     steps:
@@ -83,8 +83,8 @@ workflows:
     jobs:
       - check-fmt
       - build-native:
-        requires:
-          - check-fmt
+          requires:
+            - check-fmt
       - build-wasm:
-        requires:
-          - check-fmt
+          requires:
+            - check-fmt
