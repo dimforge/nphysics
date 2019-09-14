@@ -51,10 +51,7 @@ fn now() -> f64 {
     time::precise_time_s()
 }
 
-#[cfg(all(
-    any(target_arch = "wasm32", target_arch = "asmjs"),
-    feature = "stdweb",
-))]
+#[cfg(all(any(target_arch = "wasm32", target_arch = "asmjs"), feature = "stdweb",))]
 #[allow(unused_results)] // Needed because the js macro triggers it.
 fn now() -> f64 {
     use stdweb::unstable::TryInto;

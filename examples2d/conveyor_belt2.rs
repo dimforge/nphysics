@@ -2,14 +2,14 @@ extern crate nalgebra as na;
 
 use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
-use nphysics2d::material::{MaterialHandle, BasicMaterial};
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics2d::material::{BasicMaterial, MaterialHandle};
+use nphysics2d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
-
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -32,8 +32,14 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 5.0;
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.2)));
-    let conveyor_material1 = BasicMaterial { surface_velocity: Some(Vector2::x()), ..BasicMaterial::default() };
-    let conveyor_material2 = BasicMaterial { surface_velocity: Some(-Vector2::x()), ..BasicMaterial::default() };
+    let conveyor_material1 = BasicMaterial {
+        surface_velocity: Some(Vector2::x()),
+        ..BasicMaterial::default()
+    };
+    let conveyor_material2 = BasicMaterial {
+        surface_velocity: Some(-Vector2::x()),
+        ..BasicMaterial::default()
+    };
 
     for i in 0..10 {
         let co = ColliderDesc::new(ground_shape.clone())
@@ -42,7 +48,6 @@ pub fn init_world(testbed: &mut Testbed) {
             .material(MaterialHandle::new(conveyor_material1))
             .build(BodyPartHandle(ground_handle, 0));
         colliders.insert(co);
-
 
         let co = ColliderDesc::new(ground_shape.clone())
             .translation(Vector2::new(2.0, 3.0 - i as f32 * 4.0))
@@ -70,9 +75,7 @@ pub fn init_world(testbed: &mut Testbed) {
             let y = j as f32 * shift + centery;
 
             // Build the rigid body.
-            let rb = RigidBodyDesc::new()
-                .translation(Vector2::new(x, y))
-                .build();
+            let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
             let rb_handle = bodies.insert(rb);
 
             // Build the collider.
@@ -87,14 +90,18 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point2::new(0.0, -2.5), 95.0);
 }
 
-
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Conveyor belt", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Conveyor belt", init_world)]);
     testbed.run()
 }

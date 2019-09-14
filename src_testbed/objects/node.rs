@@ -1,17 +1,17 @@
-use na::Point3;
-use kiss3d::window::Window;
-use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-use nphysics::math::Isometry;
 use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
 use crate::objects::capsule::Capsule;
 use crate::objects::convex::Convex;
-#[cfg(feature = "dim2")]
-use crate::objects::polyline::Polyline;
+use crate::objects::heightfield::HeightField;
 #[cfg(feature = "dim3")]
 use crate::objects::mesh::Mesh;
-use crate::objects::heightfield::HeightField;
 use crate::objects::plane::Plane;
+#[cfg(feature = "dim2")]
+use crate::objects::polyline::Polyline;
+use kiss3d::window::Window;
+use na::Point3;
+use nphysics::math::Isometry;
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 
 #[cfg(feature = "dim2")]
 pub type GraphicsNode = kiss3d::scene::PlanarSceneNode;
@@ -160,7 +160,8 @@ pub fn update_scene_node(
     coll: DefaultColliderHandle,
     color: &Point3<f32>,
     delta: &Isometry<f32>,
-) {
+)
+{
     if let Some(co) = colliders.get(coll) {
         node.set_local_transformation(co.position() * delta);
         node.set_color(color.x, color.y, color.z);

@@ -1,13 +1,14 @@
 extern crate nalgebra as na;
 
 use na::{Point3, Vector3};
-use ncollide3d::shape::{Plane, Ball, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
-use nphysics3d::force_generator::{DefaultForceGeneratorSet, ConstantAcceleration};
+use ncollide3d::shape::{Ball, Plane, ShapeHandle};
+use nphysics3d::force_generator::{ConstantAcceleration, DefaultForceGeneratorSet};
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -31,8 +32,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let ground_handle = bodies.insert(Ground::new());
     let plane = ShapeHandle::new(Plane::new(Vector3::y_axis()));
 
-    let co = ColliderDesc::new(plane)
-        .build(BodyPartHandle(ground_handle, 0));
+    let co = ColliderDesc::new(plane).build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let plane = ShapeHandle::new(Plane::new(-Vector3::y_axis()));
@@ -99,13 +99,18 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(-1.0, 5.0, -1.0), Point3::new(0.0, 0.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Force generators", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Force generators", init_world)]);
     testbed.run()
 }

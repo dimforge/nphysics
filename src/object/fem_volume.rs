@@ -1,22 +1,25 @@
-use std::ops::AddAssign;
-use std::iter;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::any::Any;
 use either::Either;
+use std::any::Any;
+use std::collections::HashMap;
+use std::iter;
+use std::ops::AddAssign;
+use std::sync::Arc;
 
-use na::{self, RealField, Point3, Point4, Vector3, Vector6, Matrix3, Matrix3x4, DMatrix, Isometry3,
-         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, Rotation3, Unit, Translation3};
+use na::{
+    self, Cholesky, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, Isometry3, Matrix3,
+    Matrix3x4, Point3, Point4, RealField, Rotation3, Translation3, Unit, Vector3, Vector6, U3,
+};
+use ncollide::shape::{DeformationsType, ShapeHandle, TriMesh};
 use ncollide::utils::{self, DeterministicState};
-use ncollide::shape::{TriMesh, DeformationsType, ShapeHandle};
 
-use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
-                    ActivationStatus, FiniteElementIndices, DeformableColliderDesc};
-use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, DIM};
 use crate::object::fem_helper;
+use crate::object::{
+    ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus, DeformableColliderDesc,
+    FiniteElementIndices,
+};
+use crate::solver::{ForceDirection, IntegrationParameters};
 use crate::utils::{UserData, UserDataBox};
-
 
 /// One element of a deformable volume.
 #[derive(Clone)]
@@ -75,52 +78,74 @@ pub struct FEMVolume<N: RealField> {
 
 impl<N: RealField> FEMVolume<N> {
     /// Initializes a new deformable volume from its tetrahedral elements.
-    pub fn new(vertices: &[Point3<N>], tetrahedrons: &[Point4<usize>], pos: &Isometry3<N>,
-               scale: &Vector3<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    pub fn new(
+        vertices: &[Point3<N>],
+        tetrahedrons: &[Point4<usize>],
+        pos: &Isometry3<N>,
+        scale: &Vector3<N>,
+        density: N,
+        young_modulus: N,
+        poisson_ratio: N,
+        damping_coeffs: (N, N),
+    ) -> Self
+    {
         let ndofs = vertices.len() * 3;
         let mut rest_positions = DVector::zeros(ndofs);
 
-        for (i, pt)  in vertices.iter().enumerate() {
+        for (i, pt) in vertices.iter().enumerate() {
             let pt = pos * Point3::from(pt.coords.component_mul(&scale));
-            rest_positions.fixed_rows_mut::<U3>(i * 3).copy_from(&pt.coords);
+            rest_positions
+                .fixed_rows_mut::<U3>(i * 3)
+                .copy_from(&pt.coords);
         }
 
-        let elements = tetrahedrons.iter().map(|idx| {
-            let rest_a = rest_positions.fixed_rows::<U3>(idx.x * 3);
-            let rest_b = rest_positions.fixed_rows::<U3>(idx.y * 3);
-            let rest_c = rest_positions.fixed_rows::<U3>(idx.z * 3);
-            let rest_d = rest_positions.fixed_rows::<U3>(idx.w * 3);
+        let elements = tetrahedrons
+            .iter()
+            .map(|idx| {
+                let rest_a = rest_positions.fixed_rows::<U3>(idx.x * 3);
+                let rest_b = rest_positions.fixed_rows::<U3>(idx.y * 3);
+                let rest_c = rest_positions.fixed_rows::<U3>(idx.z * 3);
+                let rest_d = rest_positions.fixed_rows::<U3>(idx.w * 3);
 
-            let rest_ab = rest_b - rest_a;
-            let rest_ac = rest_c - rest_a;
-            let rest_ad = rest_d - rest_a;
+                let rest_ab = rest_b - rest_a;
+                let rest_ac = rest_c - rest_a;
+                let rest_ad = rest_d - rest_a;
 
-            let local_j = Matrix3::new(
-                rest_ab.x, rest_ab.y, rest_ab.z,
-                rest_ac.x, rest_ac.y, rest_ac.z,
-                rest_ad.x, rest_ad.y, rest_ad.z,
-            );
+                let local_j = Matrix3::new(
+                    rest_ab.x, rest_ab.y, rest_ab.z, rest_ac.x, rest_ac.y, rest_ac.z, rest_ad.x,
+                    rest_ad.y, rest_ad.z,
+                );
 
-            let local_j_inv = local_j.try_inverse().unwrap_or(Matrix3::identity());
-            let local_j_inv = Matrix3x4::new(
-                -local_j_inv.m11 - local_j_inv.m12 - local_j_inv.m13, local_j_inv.m11, local_j_inv.m12, local_j_inv.m13,
-                -local_j_inv.m21 - local_j_inv.m22 - local_j_inv.m23, local_j_inv.m21, local_j_inv.m22, local_j_inv.m23,
-                -local_j_inv.m31 - local_j_inv.m32 - local_j_inv.m33, local_j_inv.m31, local_j_inv.m32, local_j_inv.m33,
-            );
+                let local_j_inv = local_j.try_inverse().unwrap_or(Matrix3::identity());
+                let local_j_inv = Matrix3x4::new(
+                    -local_j_inv.m11 - local_j_inv.m12 - local_j_inv.m13,
+                    local_j_inv.m11,
+                    local_j_inv.m12,
+                    local_j_inv.m13,
+                    -local_j_inv.m21 - local_j_inv.m22 - local_j_inv.m23,
+                    local_j_inv.m21,
+                    local_j_inv.m22,
+                    local_j_inv.m23,
+                    -local_j_inv.m31 - local_j_inv.m32 - local_j_inv.m33,
+                    local_j_inv.m31,
+                    local_j_inv.m32,
+                    local_j_inv.m33,
+                );
 
-            TetrahedralElement {
-                indices: idx * 3,
-                com: Point3::origin(),
-                rot: Rotation3::identity(),
-                inv_rot: Rotation3::identity(),
-                j: local_j,
-                local_j_inv,
-                total_strain: Vector6::zeros(),
-                plastic_strain: Vector6::zeros(),
-                volume: local_j.determinant() / na::convert(6.0),
-                density,
-            }
-        }).collect();
+                TetrahedralElement {
+                    indices: idx * 3,
+                    com: Point3::origin(),
+                    rot: Rotation3::identity(),
+                    inv_rot: Rotation3::identity(),
+                    j: local_j,
+                    local_j_inv,
+                    total_strain: Vector6::zeros(),
+                    plastic_strain: Vector6::zeros(),
+                    volume: local_j.determinant() / na::convert(6.0),
+                    density,
+                }
+            })
+            .collect();
 
         let (d0, d1, d2) = fem_helper::elasticity_coefficients(young_modulus, poisson_ratio);
 
@@ -138,7 +163,9 @@ impl<N: RealField> FEMVolume<N> {
             damping_coeffs,
             young_modulus,
             poisson_ratio,
-            d0, d1, d2,
+            d0,
+            d1,
+            d2,
             companion_id: 0,
             plasticity_threshold: N::zero(),
             plasticity_max_force: N::zero(),
@@ -147,12 +174,11 @@ impl<N: RealField> FEMVolume<N> {
             status: BodyStatus::Dynamic,
             update_status: BodyUpdateStatus::all(),
             gravity_enabled: true,
-            user_data: None
+            user_data: None,
         }
     }
 
     user_data_accessors!();
-
 
     /// The position of this body in generalized coordinates.
     #[inline]
@@ -179,7 +205,6 @@ impl<N: RealField> FEMVolume<N> {
         &mut self.velocities
     }
 
-
     /// Sets the plastic properties of this deformable volume.
     ///
     /// Note that large plasticity creep coefficient can yield to significant instability.
@@ -194,7 +219,8 @@ impl<N: RealField> FEMVolume<N> {
         self.update_status.set_local_inertia_changed(true);
         self.young_modulus = young_modulus;
 
-        let (d0, d1, d2) = fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
+        let (d0, d1, d2) =
+            fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
         self.d0 = d0;
         self.d1 = d1;
         self.d2 = d2;
@@ -205,7 +231,8 @@ impl<N: RealField> FEMVolume<N> {
         self.update_status.set_local_inertia_changed(true);
         self.poisson_ratio = poisson_ratio;
 
-        let (d0, d1, d2) = fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
+        let (d0, d1, d2) =
+            fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
         self.d0 = d0;
         self.d1 = d1;
         self.d2 = d2;
@@ -215,7 +242,8 @@ impl<N: RealField> FEMVolume<N> {
         let mass_damping = dt * self.damping_coeffs.0;
 
         for elt in self.elements.iter() {
-            let coeff_mass = elt.density * elt.volume / na::convert::<_, N>(20.0f64) * (N::one() + mass_damping);
+            let coeff_mass =
+                elt.density * elt.volume / na::convert::<_, N>(20.0f64) * (N::one() + mass_damping);
 
             for a in 0..4 {
                 let ia = elt.indices[a];
@@ -231,7 +259,8 @@ impl<N: RealField> FEMVolume<N> {
                                 coeff_mass
                             };
 
-                            let mut node_mass = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
+                            let mut node_mass =
+                                self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
                             node_mass[(0, 0)] += mass_contribution;
                             node_mass[(1, 1)] += mass_contribution;
                             node_mass[(2, 2)] += mass_contribution;
@@ -244,7 +273,9 @@ impl<N: RealField> FEMVolume<N> {
         // Set the identity for kinematic nodes.
         for i in 0..self.kinematic_nodes.len() {
             if self.kinematic_nodes[i] {
-                self.augmented_mass.fixed_slice_mut::<U3, U3>(i * DIM, i * DIM).fill_diagonal(N::one());
+                self.augmented_mass
+                    .fixed_slice_mut::<U3, U3>(i * DIM, i * DIM)
+                    .fill_diagonal(N::one());
             }
         }
     }
@@ -299,23 +330,35 @@ impl<N: RealField> FEMVolume<N> {
                             // however we don't because this has a significant memory
                             // cost (Matrix3 * 4 * 4 for each element).
                             let node_stiffness = Matrix3::new(
-                                bn0 * bm + cn2 * cm + dn2 * dm, bn1 * cm + cn2 * bm, bn1 * dm + dn2 * bm,
-                                cn1 * bm + bn2 * cm, cn0 * cm + bn2 * bm + dn2 * dm, cn1 * dm + dn2 * cm,
-                                dn1 * bm + bn2 * dm, dn1 * cm + cn2 * dm, dn0 * dm + bn2 * bm + cn2 * cm,
+                                bn0 * bm + cn2 * cm + dn2 * dm,
+                                bn1 * cm + cn2 * bm,
+                                bn1 * dm + dn2 * bm,
+                                cn1 * bm + bn2 * cm,
+                                cn0 * cm + bn2 * bm + dn2 * dm,
+                                cn1 * dm + dn2 * cm,
+                                dn1 * bm + bn2 * dm,
+                                dn1 * cm + cn2 * dm,
+                                dn0 * dm + bn2 * bm + cn2 * cm,
                             );
 
                             let rot_stiffness = elt.rot * node_stiffness;
-                            let mut mass_part = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
-                            mass_part.gemm(stiffness_coeff, &rot_stiffness, elt.inv_rot.matrix(), N::one());
+                            let mut mass_part =
+                                self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
+                            mass_part.gemm(
+                                stiffness_coeff,
+                                &rot_stiffness,
+                                elt.inv_rot.matrix(),
+                                N::one(),
+                            );
                         }
                     }
                 }
             }
 
-//            println!("Stiffness: {}", elt.stiffness * (dt * dt));
+            //            println!("Stiffness: {}", elt.stiffness * (dt * dt));
         }
 
-//        println!("Augmented mass: {}", self.augmented_mass);
+        //        println!("Augmented mass: {}", self.augmented_mass);
     }
 
     fn assemble_forces(&mut self, gravity: &Vector3<N>, parameters: &IntegrationParameters<N>) {
@@ -329,7 +372,8 @@ impl<N: RealField> FEMVolume<N> {
         // Gravity
         if self.gravity_enabled {
             for elt in self.elements.iter() {
-                let contribution = gravity * (elt.density * elt.volume * na::convert::<_, N>(1.0 / 4.0));
+                let contribution =
+                    gravity * (elt.density * elt.volume * na::convert::<_, N>(1.0 / 4.0));
 
                 for k in 0..4 {
                     let ie = elt.indices[k];
@@ -372,7 +416,7 @@ impl<N: RealField> FEMVolume<N> {
                     dn * dpos.z,
                     cn * dpos.x + bn * dpos.y,
                     dn * dpos.x + bn * dpos.z,
-                    dn * dpos.y + cn * dpos.z
+                    dn * dpos.y + cn * dpos.z,
                 );
             }
 
@@ -447,35 +491,54 @@ impl<N: RealField> FEMVolume<N> {
             let k3 = key(elt.indices.z, elt.indices.w, elt.indices.x);
             let k4 = key(elt.indices.w, elt.indices.x, elt.indices.y);
 
-            faces.entry(k1).or_insert((0, elt.indices.w, i)).0.add_assign(1);
-            faces.entry(k2).or_insert((0, elt.indices.x, i)).0.add_assign(1);
-            faces.entry(k3).or_insert((0, elt.indices.y, i)).0.add_assign(1);
-            faces.entry(k4).or_insert((0, elt.indices.z, i)).0.add_assign(1);
+            faces
+                .entry(k1)
+                .or_insert((0, elt.indices.w, i))
+                .0
+                .add_assign(1);
+            faces
+                .entry(k2)
+                .or_insert((0, elt.indices.x, i))
+                .0
+                .add_assign(1);
+            faces
+                .entry(k3)
+                .or_insert((0, elt.indices.y, i))
+                .0
+                .add_assign(1);
+            faces
+                .entry(k4)
+                .or_insert((0, elt.indices.z, i))
+                .0
+                .add_assign(1);
         }
 
-        let boundary = faces.iter().filter_map(|(k, n)| {
-            if n.0 == 1 {
-                // Ensure the triangle has an outward normal.
-                // FIXME: there is a much more efficient way of doing this, given the
-                // tetrahedrons orientations and the face.
-                let a = self.positions.fixed_rows::<U3>(k.0);
-                let b = self.positions.fixed_rows::<U3>(k.1);
-                let c = self.positions.fixed_rows::<U3>(k.2);
-                let d = self.positions.fixed_rows::<U3>(n.1);
+        let boundary = faces
+            .iter()
+            .filter_map(|(k, n)| {
+                if n.0 == 1 {
+                    // Ensure the triangle has an outward normal.
+                    // FIXME: there is a much more efficient way of doing this, given the
+                    // tetrahedrons orientations and the face.
+                    let a = self.positions.fixed_rows::<U3>(k.0);
+                    let b = self.positions.fixed_rows::<U3>(k.1);
+                    let c = self.positions.fixed_rows::<U3>(k.2);
+                    let d = self.positions.fixed_rows::<U3>(n.1);
 
-                let ab = b - a;
-                let ac = c - a;
-                let ad = d - a;
+                    let ab = b - a;
+                    let ac = c - a;
+                    let ad = d - a;
 
-                if ab.cross(&ac).dot(&ad) < N::zero() {
-                    Some((Point3::new(k.0, k.1, k.2), n.2))
+                    if ab.cross(&ac).dot(&ad) < N::zero() {
+                        Some((Point3::new(k.0, k.1, k.2), n.2))
+                    } else {
+                        Some((Point3::new(k.0, k.2, k.1), n.2))
+                    }
                 } else {
-                    Some((Point3::new(k.0, k.2, k.1), n.2))
+                    None
                 }
-            } else {
-                None
-            }
-        }).collect();
+            })
+            .collect();
 
         boundary
     }
@@ -489,7 +552,9 @@ impl<N: RealField> FEMVolume<N> {
         const INVALID: usize = usize::max_value();
         let mut deformation_indices = Vec::new();
         let mut indices = self.boundary();
-        let mut idx_remap: Vec<usize> = iter::repeat(INVALID).take(self.positions.len() / 3).collect();
+        let mut idx_remap: Vec<usize> = iter::repeat(INVALID)
+            .take(self.positions.len() / 3)
+            .collect();
         let mut vertices = Vec::new();
 
         for (idx, _) in &mut indices {
@@ -500,8 +565,8 @@ impl<N: RealField> FEMVolume<N> {
                     vertices.push(Point3::new(
                         self.positions[*idx_i + 0],
                         self.positions[*idx_i + 1],
-                        self.positions[*idx_i + 2])
-                    );
+                        self.positions[*idx_i + 2],
+                    ));
                     deformation_indices.push(*idx_i);
                     idx_remap[*idx_i / 3] = new_id;
                     *idx_i = new_id;
@@ -512,10 +577,14 @@ impl<N: RealField> FEMVolume<N> {
         }
 
         let body_parts = indices.iter().map(|i| i.1).collect();
-//        println!("Number of trimesh triangles: {}", indices.len());
+        //        println!("Number of trimesh triangles: {}", indices.len());
         let indices = indices.into_iter().map(|i| i.0).collect();
 
-        (TriMesh::new(vertices, indices, None), deformation_indices, body_parts)
+        (
+            TriMesh::new(vertices, indices, None),
+            deformation_indices,
+            body_parts,
+        )
     }
 
     /// Computes the `DeformableColliderDesc` that can generate a collider covering the boundary surface of this FEM volume.
@@ -540,8 +609,12 @@ impl<N: RealField> FEMVolume<N> {
         for (target_i, orig_i) in deformation_indices.iter().cloned().enumerate() {
             assert!(!remapped[orig_i], "Duplicate DOF remapping found.");
             let target_i = target_i * 3;
-            new_positions.fixed_rows_mut::<U3>(target_i).copy_from(&self.positions.fixed_rows::<U3>(orig_i));
-            new_rest_positions.fixed_rows_mut::<U3>(target_i).copy_from(&self.rest_positions.fixed_rows::<U3>(orig_i));
+            new_positions
+                .fixed_rows_mut::<U3>(target_i)
+                .copy_from(&self.positions.fixed_rows::<U3>(orig_i));
+            new_rest_positions
+                .fixed_rows_mut::<U3>(target_i)
+                .copy_from(&self.rest_positions.fixed_rows::<U3>(orig_i));
             dof_map[orig_i] = target_i;
             remapped[orig_i] = true;
         }
@@ -550,8 +623,12 @@ impl<N: RealField> FEMVolume<N> {
 
         for orig_i in (0..self.positions.len()).step_by(3) {
             if !remapped[orig_i] {
-                new_positions.fixed_rows_mut::<U3>(curr_target).copy_from(&self.positions.fixed_rows::<U3>(orig_i));
-                new_rest_positions.fixed_rows_mut::<U3>(curr_target).copy_from(&self.rest_positions.fixed_rows::<U3>(orig_i));
+                new_positions
+                    .fixed_rows_mut::<U3>(curr_target)
+                    .copy_from(&self.positions.fixed_rows::<U3>(orig_i));
+                new_rest_positions
+                    .fixed_rows_mut::<U3>(curr_target)
+                    .copy_from(&self.rest_positions.fixed_rows::<U3>(orig_i));
                 dof_map[orig_i] = curr_target;
                 curr_target += 3;
             }
@@ -565,13 +642,24 @@ impl<N: RealField> FEMVolume<N> {
         self.rest_positions = new_rest_positions;
     }
 
-// FIXME: add a method to apply a transformation to the whole volume.
+    // FIXME: add a method to apply a transformation to the whole volume.
 
     /// Constructs an axis-aligned cube with regular subdivisions along each axis.
     ///
     /// The cube is subdivided `nx` (resp. `ny` and `nz`) times along
     /// the `x` (resp. `y` and `z`) axis.
-    pub fn cube(pos: &Isometry3<N>, extents: &Vector3<N>, nx: usize, ny: usize, nz: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    pub fn cube(
+        pos: &Isometry3<N>,
+        extents: &Vector3<N>,
+        nx: usize,
+        ny: usize,
+        nz: usize,
+        density: N,
+        young_modulus: N,
+        poisson_ratio: N,
+        damping_coeffs: (N, N),
+    ) -> Self
+    {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -628,8 +716,8 @@ impl<N: RealField> FEMVolume<N> {
                     let _6 = _0 + shift(ny, nz, 1, 1, 1);
                     let _7 = _0 + shift(ny, nz, 1, 1, 0);
 
-                    if (i % 2) == 0 && ((j % 2) == (k % 2)) ||
-                        (i % 2) == 1 && ((j % 2) != (k % 2)) {
+                    if (i % 2) == 0 && ((j % 2) == (k % 2)) || (i % 2) == 1 && ((j % 2) != (k % 2))
+                    {
                         indices.push(Point4::new(_0, _1, _2, _5));
                         indices.push(Point4::new(_2, _5, _6, _7));
                         indices.push(Point4::new(_2, _7, _3, _0));
@@ -646,8 +734,16 @@ impl<N: RealField> FEMVolume<N> {
             }
         }
 
-        Self::new(&vertices, &indices, pos, extents, density,
-                  young_modulus, poisson_ratio, damping_coeffs)
+        Self::new(
+            &vertices,
+            &indices,
+            pos,
+            extents,
+            density,
+            young_modulus,
+            poisson_ratio,
+            damping_coeffs,
+        )
     }
 
     /// Restrict the specified node acceleration to always be zero so
@@ -704,12 +800,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
             let ac = c - a;
             let ad = d - a;
 
-            elt.j = Matrix3::new(
-                ab.x, ab.y, ab.z,
-                ac.x, ac.y, ac.z,
-                ad.x, ad.y, ad.z,
-            );
-
+            elt.j = Matrix3::new(ab.x, ab.y, ab.z, ac.x, ac.y, ac.z, ad.x, ad.y, ad.z);
 
             let g = (elt.local_j_inv.fixed_slice::<U3, U3>(0, 1) * elt.j).transpose();
             elt.rot = Rotation3::from_matrix_eps(&g, N::default_epsilon(), 20, elt.rot);
@@ -733,9 +824,9 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
             // FIXME: if Cholesky fails fallback to some sort of mass-spring formulation?
             //        If we do so we should add a bool to let give the user the ability to check which
             //        model has been used during the last timestep.
-            self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).expect("Singular system found.");
+            self.inv_augmented_mass =
+                Cholesky::new(self.augmented_mass.clone()).expect("Singular system found.");
         }
-
     }
 
     fn update_acceleration(&mut self, gravity: &Vector3<N>, parameters: &IntegrationParameters<N>) {
@@ -802,7 +893,8 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
 
     fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(parameters.dt(), &self.velocities, N::one())
+        self.positions
+            .axpy(parameters.dt(), &self.velocities, N::one())
     }
 
     fn activate_with_energy(&mut self, energy: N) {
@@ -823,20 +915,53 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         self.elements.get(id).map(|e| e as &dyn BodyPart<N>)
     }
 
-    fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point3<N>) -> Point3<N> {
-        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedral element");
-        fem_helper::world_point_at_material_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)
+    fn world_point_at_material_point(
+        &self,
+        part: &dyn BodyPart<N>,
+        point: &Point3<N>,
+    ) -> Point3<N>
+    {
+        let elt = part
+            .downcast_ref::<TetrahedralElement<N>>()
+            .expect("The provided body part must be tetrahedral element");
+        fem_helper::world_point_at_material_point(
+            FiniteElementIndices::Tetrahedron(elt.indices),
+            &self.positions,
+            point,
+        )
     }
 
-    fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point3<N>) -> Isometry3<N> {
-        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
-        let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point);
+    fn position_at_material_point(
+        &self,
+        part: &dyn BodyPart<N>,
+        point: &Point3<N>,
+    ) -> Isometry3<N>
+    {
+        let elt = part
+            .downcast_ref::<TetrahedralElement<N>>()
+            .expect("The provided body part must be a tetrahedral element");
+        let pt = fem_helper::world_point_at_material_point(
+            FiniteElementIndices::Tetrahedron(elt.indices),
+            &self.positions,
+            point,
+        );
         Isometry3::from_parts(Translation3::from(pt.coords), na::one())
     }
 
-    fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point3<N>) -> Point3<N> {
-        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedral element");
-        fem_helper::material_point_at_world_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)
+    fn material_point_at_world_point(
+        &self,
+        part: &dyn BodyPart<N>,
+        point: &Point3<N>,
+    ) -> Point3<N>
+    {
+        let elt = part
+            .downcast_ref::<TetrahedralElement<N>>()
+            .expect("The provided body part must be tetrahedral element");
+        fem_helper::material_point_at_world_point(
+            FiniteElementIndices::Tetrahedron(elt.indices),
+            &self.positions,
+            point,
+        )
     }
 
     fn fill_constraint_geometry(
@@ -850,9 +975,12 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         jacobians: &mut [N],
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
-        out_vel: Option<&mut N>
-    ) {
-        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
+        out_vel: Option<&mut N>,
+    )
+    {
+        let elt = part
+            .downcast_ref::<TetrahedralElement<N>>()
+            .expect("The provided body part must be a tetrahedral element");
         fem_helper::fill_contact_geometry_fem(
             self.ndofs(),
             self.status,
@@ -868,10 +996,9 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
             jacobians,
             inv_r,
             ext_vels,
-            out_vel
+            out_vel,
         );
     }
-
 
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {
@@ -879,7 +1006,13 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &DVectorSlice<N>, _: &IntegrationParameters<N>) {}
+    fn setup_internal_velocity_constraints(
+        &mut self,
+        _: &DVectorSlice<N>,
+        _: &IntegrationParameters<N>,
+    )
+    {
+    }
 
     #[inline]
     fn warmstart_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
@@ -890,8 +1023,15 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 
-
-    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector3<N>, point: &Point3<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector3<N>,
+        point: &Point3<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -899,7 +1039,6 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         if auto_wake_up {
             self.activate()
         }
-
 
         let element = &self.elements[part_id];
         let forces = [
@@ -913,7 +1052,9 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
             ForceType::Force => {
                 for i in 0..4 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        self.forces.fixed_rows_mut::<U3>(element.indices[i]).add_assign(forces[i]);
+                        self.forces
+                            .fixed_rows_mut::<U3>(element.indices[i])
+                            .add_assign(forces[i]);
                     }
                 }
             }
@@ -922,7 +1063,8 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
                 dvel.fill(N::zero());
                 for i in 0..4 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        dvel.fixed_rows_mut::<U3>(element.indices[i]).copy_from(&forces[i]);
+                        dvel.fixed_rows_mut::<U3>(element.indices[i])
+                            .copy_from(&forces[i]);
                     }
                 }
                 self.inv_augmented_mass.solve_mut(dvel);
@@ -933,51 +1075,104 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
 
                 for i in 0..4 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        self.forces.fixed_rows_mut::<U3>(element.indices[i]).add_assign(forces[i] * mass);
+                        self.forces
+                            .fixed_rows_mut::<U3>(element.indices[i])
+                            .add_assign(forces[i] * mass);
                     }
                 }
             }
             ForceType::VelocityChange => {
                 for i in 0..4 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        self.velocities.fixed_rows_mut::<U3>(element.indices[i]).add_assign(forces[i]);
+                        self.velocities
+                            .fixed_rows_mut::<U3>(element.indices[i])
+                            .add_assign(forces[i]);
                     }
                 }
             }
         }
     }
 
-    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let _1_4: N = na::convert(1.0 / 4.0);
         let barycenter = Point3::new(_1_4, _1_4, _1_4);
-        self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
+        self.apply_force_at_local_point(
+            part_id,
+            &force.linear,
+            &barycenter,
+            force_type,
+            auto_wake_up,
+        )
     }
 
-    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let world_force = Force::new(
             self.elements[part_id].rot * force.linear,
-            self.elements[part_id].rot * force.angular);
+            self.elements[part_id].rot * force.angular,
+        );
         self.apply_force(part_id, &world_force, force_type, auto_wake_up);
     }
 
-    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector3<N>, point: &Point3<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector3<N>,
+        point: &Point3<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
     }
 
-    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector3<N>, point: &Point3<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector3<N>,
+        point: &Point3<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let world_force = self.elements[part_id].rot * force;
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
-        self.apply_force_at_local_point(part_id, &world_force, &local_point, force_type, auto_wake_up);
+        self.apply_force_at_local_point(
+            part_id,
+            &world_force,
+            &local_point,
+            force_type,
+            auto_wake_up,
+        );
     }
 
-
-    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector3<N>, point: &Point3<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector3<N>,
+        point: &Point3<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let world_force = self.elements[part_id].rot * force;
         self.apply_force_at_local_point(part_id, &world_force, &point, force_type, auto_wake_up);
     }
 }
-
 
 impl<N: RealField> BodyPart<N> for TetrahedralElement<N> {
     fn center_of_mass(&self) -> Point3<N> {
@@ -1007,7 +1202,7 @@ impl<N: RealField> BodyPart<N> for TetrahedralElement<N> {
 
 enum FEMVolumeDescGeometry<'a, N: RealField> {
     Cube(usize, usize, usize),
-    Tetrahedrons(&'a [Point3<N>], &'a [Point4<usize>])
+    Tetrahedrons(&'a [Point3<N>], &'a [Point4<usize>]),
 }
 
 /// A builder for FEMVolume bodies.
@@ -1026,9 +1221,8 @@ pub struct FEMVolumeDesc<'a, N: RealField> {
     density: N,
     plasticity: (N, N, N),
     kinematic_nodes: Vec<usize>,
-    status: BodyStatus
+    status: BodyStatus,
 }
-
 
 impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
     fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
@@ -1047,7 +1241,7 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
             density: N::one(),
             plasticity: (N::zero(), N::zero(), N::zero()),
             kinematic_nodes: Vec::new(),
-            status: BodyStatus::Dynamic
+            status: BodyStatus::Dynamic,
         }
     }
 
@@ -1114,15 +1308,27 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
     /// Builds a finite-element based deformable body from this description.
     pub fn build(&self) -> FEMVolume<N> {
         let mut vol = match self.geom {
-            FEMVolumeDescGeometry::Cube(nx, ny, nz) =>
-                FEMVolume::cube(&self.position, &self.scale,
-                                       nx, ny, nz, self.density, self.young_modulus,
-                                       self.poisson_ratio,
-                                       (self.mass_damping, self.stiffness_damping)),
-            FEMVolumeDescGeometry::Tetrahedrons(pts, idx) =>
-                FEMVolume::new(pts, idx, &self.position, &self.scale,
-                                      self.density, self.young_modulus, self.poisson_ratio,
-                                      (self.mass_damping, self.stiffness_damping))
+            FEMVolumeDescGeometry::Cube(nx, ny, nz) => FEMVolume::cube(
+                &self.position,
+                &self.scale,
+                nx,
+                ny,
+                nz,
+                self.density,
+                self.young_modulus,
+                self.poisson_ratio,
+                (self.mass_damping, self.stiffness_damping),
+            ),
+            FEMVolumeDescGeometry::Tetrahedrons(pts, idx) => FEMVolume::new(
+                pts,
+                idx,
+                &self.position,
+                &self.scale,
+                self.density,
+                self.young_modulus,
+                self.poisson_ratio,
+                (self.mass_damping, self.stiffness_damping),
+            ),
         };
 
         vol.set_deactivation_threshold(self.sleep_threshold);

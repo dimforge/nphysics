@@ -1,12 +1,12 @@
+use crate::objects::node::{self, GraphicsNode};
 use kiss3d::window::Window;
 use na::Point3;
 #[cfg(feature = "dim3")]
 use ncollide::procedural::TriMesh;
-use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 #[cfg(feature = "dim2")]
 use nphysics::math::Point;
 use nphysics::math::{Isometry, Vector};
-use crate::objects::node::{self, GraphicsNode};
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 
 pub struct Convex {
     color: Point3<f32>,
@@ -25,7 +25,8 @@ impl Convex {
         vertices: Vec<Point<f32>>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Convex {
+    ) -> Convex
+    {
         let mut res = Convex {
             color,
             base_color: color,
@@ -52,7 +53,6 @@ impl Convex {
         res
     }
 
-
     #[cfg(feature = "dim3")]
     pub fn new(
         collider: DefaultColliderHandle,
@@ -61,7 +61,8 @@ impl Convex {
         convex: &TriMesh<f32>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Convex {
+    ) -> Convex
+    {
         let mut res = Convex {
             color,
             base_color: color,

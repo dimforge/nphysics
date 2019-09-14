@@ -3,12 +3,12 @@ use std::ops::IndexMut;
 /// Methods for simultaneously indexing a container with two distinct indices.
 pub trait IndexMut2<I>: IndexMut<I> {
     /// Gets mutable references to two distinct elements of the container.
-    /// 
+    ///
     /// Panics if `i == j`.
     fn index_mut2(&mut self, i: usize, j: usize) -> (&mut Self::Output, &mut Self::Output);
 
     /// Gets a mutable reference to one element, and immutable reference to a second one.
-    /// 
+    ///
     /// Panics if `i == j`.
     #[inline]
     fn index_mut_const(&mut self, i: usize, j: usize) -> (&mut Self::Output, &Self::Output) {

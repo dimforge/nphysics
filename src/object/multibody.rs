@@ -1,18 +1,20 @@
-use std::ops::MulAssign;
 use std::any::Any;
+use std::ops::MulAssign;
 
-use ncollide::shape::DeformationsType;
 use crate::joint::Joint;
 use crate::math::{
-    AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
-    Vector, Velocity, DIM, Translation, ForceType
+    AngularDim, Dim, Force, ForceType, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
+    Translation, Vector, Velocity, DIM,
+};
+use crate::object::{
+    ActivationStatus, Body, BodyHandle, BodyPart, BodyPartHandle, BodyStatus, BodyUpdateStatus,
+    ColliderHandle, MultibodyLink, MultibodyLinkVec,
+};
+use crate::solver::{
+    ConstraintSet, ForceDirection, IntegrationParameters, NonlinearSORProx, SORProx,
 };
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, RealField, LU};
-use crate::object::{
-    ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
-    MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderHandle,
-};
-use crate::solver::{ConstraintSet, IntegrationParameters, ForceDirection, SORProx, NonlinearSORProx};
+use ncollide::shape::DeformationsType;
 
 use crate::utils::{GeneralizedCross, IndexMut2};
 
@@ -49,7 +51,7 @@ pub struct Multibody<N: RealField> {
      * FIXME: we should void explicitly generating those constraints by
      * just iterating on all joints at each step of the resolution.
      */
-    solver_workspace: Option<SolverWorkspace<N, (), ()>>
+    solver_workspace: Option<SolverWorkspace<N, (), ()>>,
 }
 
 impl<N: RealField> Multibody<N> {
@@ -76,7 +78,7 @@ impl<N: RealField> Multibody<N> {
             coriolis_w: Vec::new(),
             i_coriolis_dt: Jacobian::zeros(0),
             solver_workspace: Some(SolverWorkspace::new()),
-            user_data: None
+            user_data: None,
         }
     }
 
@@ -111,8 +113,15 @@ impl<N: RealField> Multibody<N> {
     }
 
     /// The links of this multibody with the given `name`.
-    pub fn links_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = (usize, &'a MultibodyLink<N>)> {
-        self.rbs.iter().enumerate().filter(move |(_i, l)| l.name == name)
+    pub fn links_with_name<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = (usize, &'a MultibodyLink<N>)>
+    {
+        self.rbs
+            .iter()
+            .enumerate()
+            .filter(move |(_i, l)| l.name == name)
     }
 
     /// The number of links on this multibody.
@@ -146,7 +155,6 @@ impl<N: RealField> Multibody<N> {
         &mut self.damping
     }
 
-
     /// Set the mass of the specified link.
     #[inline]
     pub fn set_link_mass(&mut self, link_id: usize, mass: N) {
@@ -178,7 +186,8 @@ impl<N: RealField> Multibody<N> {
         body_shift: Vector<N>,
         local_inertia: Inertia<N>,
         local_com: Point<N>,
-    ) -> &mut MultibodyLink<N> {
+    ) -> &mut MultibodyLink<N>
+    {
         assert!(
             parent.is_none() || !self.rbs.is_empty(),
             "Multibody::build_body: invalid parent id."
@@ -248,14 +257,17 @@ impl<N: RealField> Multibody<N> {
 
     fn grow_buffers(&mut self, ndofs: usize, nimpulses: usize) {
         let len = self.velocities.len();
-        self.velocities.resize_vertically_mut(len + ndofs, N::zero());
+        self.velocities
+            .resize_vertically_mut(len + ndofs, N::zero());
         self.forces.resize_vertically_mut(len + ndofs, N::zero());
         self.damping.resize_vertically_mut(len + ndofs, N::zero());
-        self.accelerations.resize_vertically_mut(len + ndofs, N::zero());
+        self.accelerations
+            .resize_vertically_mut(len + ndofs, N::zero());
         self.body_jacobians.push(Jacobian::zeros(0));
 
         let len = self.impulses.len();
-        self.impulses.resize_vertically_mut(len + nimpulses, N::zero());
+        self.impulses
+            .resize_vertically_mut(len + nimpulses, N::zero());
     }
 
     fn update_acceleration(&mut self, gravity: &Vector<N>) {
@@ -282,15 +294,17 @@ impl<N: RealField> Multibody<N> {
                         .angular_vector()
                         .gcross(&rb.velocity_wrt_joint.linear);
                     #[cfg(feature = "dim3")]
-                        {
-                            acc.angular += parent_vel.angular.cross(&rb.velocity_wrt_joint.angular);
-                        }
+                    {
+                        acc.angular += parent_vel.angular.cross(&rb.velocity_wrt_joint.angular);
+                    }
 
                     let shift = rb.center_of_mass() - parent_rb.center_of_mass();
                     let dvel = rb.velocity.linear - parent_rb.velocity.linear;
 
                     acc.linear += parent_rb.velocity.angular_vector().gcross(&dvel);
-                    acc.linear += self.workspace.accs[parent_id].angular_vector().gcross(&shift);
+                    acc.linear += self.workspace.accs[parent_id]
+                        .angular_vector()
+                        .gcross(&shift);
                 }
 
                 self.workspace.accs[i] = acc;
@@ -304,16 +318,16 @@ impl<N: RealField> Multibody<N> {
                 let gyroscopic;
 
                 #[cfg(feature = "dim3")]
-                    {
-                        gyroscopic = rb
-                            .velocity
-                            .angular
-                            .cross(&(rb.inertia.angular * rb.velocity.angular));
-                    }
+                {
+                    gyroscopic = rb
+                        .velocity
+                        .angular
+                        .cross(&(rb.inertia.angular * rb.velocity.angular));
+                }
                 #[cfg(feature = "dim2")]
-                    {
-                        gyroscopic = N::zero();
-                    }
+                {
+                    gyroscopic = N::zero();
+                }
 
                 external_forces = Force::new(gravity_force, -gyroscopic) - rb.inertia * acc;
                 self.accelerations.gemv_tr(
@@ -326,7 +340,8 @@ impl<N: RealField> Multibody<N> {
         }
 
         self.accelerations.axpy(N::one(), &self.forces, N::one());
-        self.accelerations.cmpy(-N::one(), &self.damping, &self.velocities, N::one());
+        self.accelerations
+            .cmpy(-N::one(), &self.damping, &self.velocities, N::one());
 
         assert!(self.inv_augmented_mass.solve_mut(&mut self.accelerations));
     }
@@ -458,14 +473,14 @@ impl<N: RealField> Multibody<N> {
             let mut augmented_inertia = rb.inertia;
 
             #[cfg(feature = "dim3")]
-                {
-                    // Derivative of gyroscopic forces.
-                    let ang_inertia = rb.inertia.angular;
-                    let gyroscopic_matrix = rb.velocity.angular.gcross_matrix() * ang_inertia
-                        - (ang_inertia * rb.velocity.angular).gcross_matrix();
+            {
+                // Derivative of gyroscopic forces.
+                let ang_inertia = rb.inertia.angular;
+                let gyroscopic_matrix = rb.velocity.angular.gcross_matrix() * ang_inertia
+                    - (ang_inertia * rb.velocity.angular).gcross_matrix();
 
-                    augmented_inertia.angular += gyroscopic_matrix * dt;
-                }
+                augmented_inertia.angular += gyroscopic_matrix * dt;
+            }
 
             // FIXME: optimize that (knowing the structure of the augmented inertia matrix).
             // FIXME: this could be better optimized in 2D.
@@ -520,10 +535,10 @@ impl<N: RealField> Multibody<N> {
                 coriolis_v.gemm(-N::one(), &parent_w, &parent_j_v, N::one());
 
                 #[cfg(feature = "dim3")]
-                    {
-                        let vel_wrt_joint_w = rb.velocity_wrt_joint.angular_vector().gcross_matrix();
-                        coriolis_w.gemm(-N::one(), &vel_wrt_joint_w, &parent_j_w, N::one());
-                    }
+                {
+                    let vel_wrt_joint_w = rb.velocity_wrt_joint.angular_vector().gcross_matrix();
+                    coriolis_w.gemm(-N::one(), &vel_wrt_joint_w, &parent_j_w, N::one());
+                }
 
                 {
                     let mut coriolis_v_part = coriolis_v.columns_mut(rb.assembly_id, ndofs);
@@ -538,11 +553,11 @@ impl<N: RealField> Multibody<N> {
                     coriolis_v_part.gemm(N::one(), &parent_w, &rb_joint_j_v, N::one());
 
                     #[cfg(feature = "dim3")]
-                        {
-                            let rb_joint_j_w = rb_joint_j.fixed_rows::<AngularDim>(DIM);
-                            let mut coriolis_w_part = coriolis_w.columns_mut(rb.assembly_id, ndofs);
-                            coriolis_w_part.gemm(N::one(), &parent_w, &rb_joint_j_w, N::one());
-                        }
+                    {
+                        let rb_joint_j_w = rb_joint_j.fixed_rows::<AngularDim>(DIM);
+                        let mut coriolis_w_part = coriolis_w.columns_mut(rb.assembly_id, ndofs);
+                        coriolis_w_part.gemm(N::one(), &parent_w, &rb_joint_j_w, N::one());
+                    }
                 }
             } else {
                 self.coriolis_v[i].fill(N::zero());
@@ -595,12 +610,7 @@ impl<N: RealField> Multibody<N> {
             {
                 // FIXME: in 2D this is just an axpy.
                 let mut i_coriolis_dt_w = self.i_coriolis_dt.fixed_rows_mut::<AngularDim>(DIM);
-                i_coriolis_dt_w.gemm(
-                    dt,
-                    rb.inertia.angular_matrix(),
-                    &coriolis_w,
-                    N::zero(),
-                );
+                i_coriolis_dt_w.gemm(dt, rb.inertia.angular_matrix(), &coriolis_w, N::zero());
             }
 
             self.augmented_mass
@@ -629,13 +639,25 @@ impl<N: RealField> Multibody<N> {
     }
 
     /// Convert a force applied to the center of mass of the link `rb_id` into generalized force.
-    pub fn link_jacobian_mul_force(&self, link: &MultibodyLink<N>, force: &Force<N>, out: &mut [N]) {
+    pub fn link_jacobian_mul_force(
+        &self,
+        link: &MultibodyLink<N>,
+        force: &Force<N>,
+        out: &mut [N],
+    )
+    {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[link.internal_id].tr_mul_to(force.as_vector(), &mut out);
     }
 
     /// Convert a force applied to this multibody's link `rb_id` center of mass into generalized accelerations.
-    pub fn inv_mass_mul_link_force(&self, link: &MultibodyLink<N>, force: &Force<N>, out: &mut [N]) {
+    pub fn inv_mass_mul_link_force(
+        &self,
+        link: &MultibodyLink<N>,
+        force: &Force<N>,
+        out: &mut [N],
+    )
+    {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[link.internal_id].tr_mul_to(force.as_vector(), &mut out);
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
@@ -650,7 +672,8 @@ impl<N: RealField> Multibody<N> {
         dof_id: usize,
         force: N,
         out: &mut [N],
-    ) {
+    )
+    {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         out.fill(N::zero());
         out[link.assembly_id + dof_id] = force;
@@ -663,7 +686,8 @@ impl<N: RealField> Multibody<N> {
         link: &MultibodyLink<N>,
         force: DVectorSlice<N>,
         out: &mut [N],
-    ) {
+    )
+    {
         let ndofs = link.dof.ndofs();
 
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
@@ -721,7 +745,7 @@ impl<N: RealField> MultibodyWorkspace<N> {
     pub fn new() -> Self {
         MultibodyWorkspace {
             accs: Vec::new(),
-            ndofs_vec: DVector::zeros(0)
+            ndofs_vec: DVector::zeros(0),
         }
     }
 
@@ -729,7 +753,6 @@ impl<N: RealField> MultibodyWorkspace<N> {
     pub fn resize(&mut self, nlinks: usize, ndofs: usize) {
         self.accs.resize(nlinks, Velocity::zero());
         self.ndofs_vec = DVector::zeros(ndofs)
-
     }
 }
 
@@ -738,7 +761,9 @@ struct SolverWorkspace<N: RealField, Handle: BodyHandle, CollHandle: ColliderHan
     constraints: ConstraintSet<N, Handle, CollHandle, usize>,
 }
 
-impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> SolverWorkspace<N, Handle, CollHandle> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    SolverWorkspace<N, Handle, CollHandle>
+{
     pub fn new() -> Self {
         SolverWorkspace {
             jacobians: DVector::zeros(0),
@@ -784,7 +809,8 @@ impl<N: RealField> Body<N> for Multibody<N> {
         self.update_status.set_position_changed(true);
 
         for rb in self.rbs.iter_mut() {
-            rb.dof.integrate(parameters, &self.velocities.as_slice()[rb.assembly_id..])
+            rb.dof
+                .integrate(parameters, &self.velocities.as_slice()[rb.assembly_id..])
         }
     }
 
@@ -810,7 +836,8 @@ impl<N: RealField> Body<N> for Multibody<N> {
         // Special case for the root, which has no parent.
         {
             let rb = &mut self.rbs[0];
-            rb.dof.update_jacobians(&rb.body_shift, &self.velocities.as_slice());
+            rb.dof
+                .update_jacobians(&rb.body_shift, &self.velocities.as_slice());
             rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
             rb.local_to_world = rb.local_to_parent;
             rb.com = rb.local_to_world * rb.local_com;
@@ -820,8 +847,10 @@ impl<N: RealField> Body<N> for Multibody<N> {
         for i in 1..self.rbs.len() {
             let (rb, parent_rb) = self.rbs.get_mut_with_parent(i);
 
-            rb.dof
-                .update_jacobians(&rb.body_shift, &self.velocities.as_slice()[rb.assembly_id..]);
+            rb.dof.update_jacobians(
+                &rb.body_shift,
+                &self.velocities.as_slice()[rb.assembly_id..],
+            );
             rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
             rb.local_to_world = parent_rb.local_to_world * rb.local_to_parent;
             rb.parent_to_world = parent_rb.local_to_world;
@@ -896,7 +925,6 @@ impl<N: RealField> Body<N> for Multibody<N> {
         self.status = status
     }
 
-
     #[inline]
     fn status(&self) -> BodyStatus {
         self.status
@@ -919,19 +947,25 @@ impl<N: RealField> Body<N> for Multibody<N> {
 
     #[inline]
     fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
-        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        let link = part
+            .downcast_ref::<MultibodyLink<N>>()
+            .expect("The provided body part must be a multibody link");
         link.local_to_world * point
     }
 
     #[inline]
     fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
-        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        let link = part
+            .downcast_ref::<MultibodyLink<N>>()
+            .expect("The provided body part must be a multibody link");
         link.local_to_world * Translation::from(point.coords)
     }
 
     #[inline]
     fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
-        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        let link = part
+            .downcast_ref::<MultibodyLink<N>>()
+            .expect("The provided body part must be a multibody link");
         link.local_to_world.inverse_transform_point(point)
     }
 
@@ -946,9 +980,12 @@ impl<N: RealField> Body<N> for Multibody<N> {
         jacobians: &mut [N],
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
-        out_vel: Option<&mut N>
-    ) {
-        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        out_vel: Option<&mut N>,
+    )
+    {
+        let link = part
+            .downcast_ref::<MultibodyLink<N>>()
+            .expect("The provided body part must be a multibody link");
         let pos = point - link.com.coords;
         let force = force_dir.at_point(&pos);
 
@@ -978,23 +1015,29 @@ impl<N: RealField> Body<N> for Multibody<N> {
                         *out_vel += j.dot(ext_vels)
                     }
                 }
-            },
+            }
             BodyStatus::Kinematic => {
                 if let Some(out_vel) = out_vel {
                     *out_vel += force.as_vector().dot(&link.velocity.as_vector())
                 }
-            },
+            }
             BodyStatus::Static | BodyStatus::Disabled => {}
         }
     }
 
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {
-        self.links().any(|link| link.joint().num_velocity_constraints() != 0)
+        self.links()
+            .any(|link| link.joint().num_velocity_constraints() != 0)
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, parameters: &IntegrationParameters<N>) {
+    fn setup_internal_velocity_constraints(
+        &mut self,
+        ext_vels: &DVectorSlice<N>,
+        parameters: &IntegrationParameters<N>,
+    )
+    {
         let mut ground_j_id = 0;
         let mut workspace = self.solver_workspace.take().unwrap();
 
@@ -1015,7 +1058,8 @@ impl<N: RealField> Body<N> for Multibody<N> {
         /*
          * Setup the constraints.
          */
-        let nconstraints = self.rbs
+        let nconstraints = self
+            .rbs
             .iter()
             .map(|l| l.joint().num_velocity_constraints())
             .sum();
@@ -1080,9 +1124,14 @@ impl<N: RealField> Body<N> for Multibody<N> {
                 // FIXME: should each link directly solve the constraint internally
                 // instead of having to return a GenericNonlinearConstraint struct
                 // every time.
-                let c = link
-                    .joint()
-                    .position_constraint(j, self, link, BodyPartHandle((), i), 0, jacobians.as_mut_slice());
+                let c = link.joint().position_constraint(
+                    j,
+                    self,
+                    link,
+                    BodyPartHandle((), i),
+                    0,
+                    jacobians.as_mut_slice(),
+                );
 
                 if let Some(c) = c {
                     // FIXME: the following has been copy-pasted from the NonlinearSORProx.
@@ -1095,7 +1144,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
 
                         // FIXME: we should not use apply_displacement to avoid
                         // performing the .update_kinematic().
-                        self.apply_displacement(jacobians.rows(c.wj_id1, c.dim1).as_slice(), );
+                        self.apply_displacement(jacobians.rows(c.wj_id1, c.dim1).as_slice());
                     }
                 }
             }
@@ -1112,7 +1161,8 @@ impl<N: RealField> Body<N> for Multibody<N> {
 
         // Update center of mass.
         if !mass_sum.is_zero() {
-            link.local_com = (link.local_com * link.inertia.linear + com.coords * inertia.linear) / mass_sum;
+            link.local_com =
+                (link.local_com * link.inertia.linear + com.coords * inertia.linear) / mass_sum;
             link.com = link.local_to_world * link.local_com;
         } else {
             link.local_com = Point::origin();
@@ -1123,7 +1173,14 @@ impl<N: RealField> Body<N> for Multibody<N> {
         link.local_inertia += inertia;
     }
 
-    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -1133,55 +1190,124 @@ impl<N: RealField> Body<N> for Multibody<N> {
         }
 
         match force_type {
-            ForceType::Force => {
-                self.forces.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::one())
-            }
+            ForceType::Force => self.forces.gemv_tr(
+                N::one(),
+                &self.body_jacobians[part_id],
+                force.as_vector(),
+                N::one(),
+            ),
             ForceType::Impulse => {
                 self.update_status.set_velocity_changed(true);
                 let dvel = &mut self.workspace.ndofs_vec;
-                dvel.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::zero());
+                dvel.gemv_tr(
+                    N::one(),
+                    &self.body_jacobians[part_id],
+                    force.as_vector(),
+                    N::zero(),
+                );
                 let _ = self.inv_augmented_mass.solve_mut(dvel);
                 self.velocities.axpy(N::one(), dvel, N::one());
             }
             ForceType::AccelerationChange => {
                 let force = self.rbs[part_id].inertia * *force;
-                self.forces.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::one());
+                self.forces.gemv_tr(
+                    N::one(),
+                    &self.body_jacobians[part_id],
+                    force.as_vector(),
+                    N::one(),
+                );
             }
             ForceType::VelocityChange => {
                 self.update_status.set_velocity_changed(true);
-                self.velocities.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::one())
+                self.velocities.gemv_tr(
+                    N::one(),
+                    &self.body_jacobians[part_id],
+                    force.as_vector(),
+                    N::one(),
+                )
             }
         }
     }
 
-    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let world_force = force.transform_by(&self.rbs[part_id].local_to_world);
         self.apply_force(part_id, &world_force, force_type, auto_wake_up);
     }
 
-    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let force = Force::linear_at_point(*force, &(point - self.rbs[part_id].com.coords));
         self.apply_force(part_id, &force, force_type, auto_wake_up)
     }
 
-    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
-        self.apply_force_at_point(part_id, &(self.rbs[part_id].local_to_world * force), point, force_type, auto_wake_up)
+    fn apply_local_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
+        self.apply_force_at_point(
+            part_id,
+            &(self.rbs[part_id].local_to_world * force),
+            point,
+            force_type,
+            auto_wake_up,
+        )
     }
 
-    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
-        self.apply_force_at_point(part_id, force, &(self.rbs[part_id].local_to_world * point), force_type, auto_wake_up)
+    fn apply_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
+        self.apply_force_at_point(
+            part_id,
+            force,
+            &(self.rbs[part_id].local_to_world * point),
+            force_type,
+            auto_wake_up,
+        )
     }
 
-    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         self.apply_force_at_point(
             part_id,
             &(self.rbs[part_id].local_to_world * force),
             &(self.rbs[part_id].local_to_world * point),
             force_type,
-            auto_wake_up)
+            auto_wake_up,
+        )
     }
 }
-
 
 /// A multibody builder.
 pub struct MultibodyDesc<N: RealField> {
@@ -1192,7 +1318,7 @@ pub struct MultibodyDesc<N: RealField> {
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,
     body_shift: Vector<N>,
-    parent_shift: Vector<N>
+    parent_shift: Vector<N>,
 }
 
 impl<N: RealField> MultibodyDesc<N> {
@@ -1206,7 +1332,7 @@ impl<N: RealField> MultibodyDesc<N> {
             local_inertia: Inertia::zero(),
             local_center_of_mass: Point::origin(),
             body_shift: Vector::zeros(),
-            parent_shift: Vector::zeros()
+            parent_shift: Vector::zeros(),
         }
     }
 
@@ -1226,16 +1352,22 @@ impl<N: RealField> MultibodyDesc<N> {
 
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
-        self.angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
+        self.angular_inertia,
+        set_angular_inertia,
+        angular_inertia: N | { self.local_inertia.angular = angular_inertia }
     );
 
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
-        self.angular_inertia, set_angular_inertia, angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
+        self.angular_inertia,
+        set_angular_inertia,
+        angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
     );
 
     desc_custom_setters!(
-        self.mass, set_mass, mass: N | { self.local_inertia.linear = mass }
+        self.mass,
+        set_mass,
+        mass: N | { self.local_inertia.linear = mass }
     );
 
     desc_setters!(
@@ -1248,11 +1380,8 @@ impl<N: RealField> MultibodyDesc<N> {
         local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
     );
 
-
     #[cfg(feature = "dim2")]
-    desc_custom_getters!(
-        self.get_angular_inertia: N | { self.local_inertia.angular }
-    );
+    desc_custom_getters!(self.get_angular_inertia: N | { self.local_inertia.angular });
 
     #[cfg(feature = "dim3")]
     desc_custom_getters!(
@@ -1275,23 +1404,34 @@ impl<N: RealField> MultibodyDesc<N> {
     /// Build the multibody described by this factory.
     pub fn build(&self) -> Multibody<N> {
         let mut multibody = Multibody::new();
-        let _  = self.do_build_with_parent(&mut multibody, None);
+        let _ = self.do_build_with_parent(&mut multibody, None);
         multibody
     }
 
     /// Build the multibody links described by this factory and attach them to the `parent_id`-th link of the given `multibody`.
-    pub fn build_with_parent<'m>(&self, multibody: &'m mut Multibody<N>, parent_id: usize) -> &'m mut MultibodyLink<N> {
+    pub fn build_with_parent<'m>(
+        &self,
+        multibody: &'m mut Multibody<N>,
+        parent_id: usize,
+    ) -> &'m mut MultibodyLink<N>
+    {
         self.do_build_with_parent(multibody, Some(parent_id))
     }
 
-    fn do_build_with_parent<'m>(&self, multibody: &'m mut Multibody<N>, parent_id: Option<usize>) -> &'m mut MultibodyLink<N> {
+    fn do_build_with_parent<'m>(
+        &self,
+        multibody: &'m mut Multibody<N>,
+        parent_id: Option<usize>,
+    ) -> &'m mut MultibodyLink<N>
+    {
         let mut link = multibody.add_link(
             parent_id,
             self.joint.clone(),
             self.parent_shift,
             self.body_shift,
             self.local_inertia,
-            self.local_center_of_mass);
+            self.local_center_of_mass,
+        );
 
         link.velocity = self.velocity;
         link.name = self.name.clone();

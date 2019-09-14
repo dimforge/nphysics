@@ -1,18 +1,16 @@
-use std::hash::Hash;
 use generational_arena::Arena;
+use std::hash::Hash;
 
-use na::RealField;
+use crate::object::{Body, DefaultColliderHandle, Multibody, RigidBody};
 use crate::world::GeometricalWorld;
-use crate::object::{Body, DefaultColliderHandle, RigidBody, Multibody};
+use na::RealField;
 
 /// Trait auto-implemented for types that can be used as a Body handle.
 ///
 /// Body handles must be unique, i.e., they should not suffer from the ABA problem.
-pub trait BodyHandle: Copy + Hash + PartialEq + Eq + 'static + Send + Sync {
-}
+pub trait BodyHandle: Copy + Hash + PartialEq + Eq + 'static + Send + Sync {}
 
-impl<T: Copy + Hash + PartialEq + Eq + 'static + Send + Sync> BodyHandle for T {
-}
+impl<T: Copy + Hash + PartialEq + Eq + 'static + Send + Sync> BodyHandle for T {}
 
 /// Trait implemented by sets of bodies.
 ///
@@ -32,7 +30,12 @@ pub trait BodySet<N: RealField> {
     /// Gets a reference to the two bodies identified by `handle1` and `handle2`.
     ///
     /// Both handles are allowed to be equal.
-    fn get_pair(&self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&Self::Body>, Option<&Self::Body>) {
+    fn get_pair(
+        &self,
+        handle1: Self::Handle,
+        handle2: Self::Handle,
+    ) -> (Option<&Self::Body>, Option<&Self::Body>)
+    {
         (self.get(handle1), self.get(handle2))
     }
 
@@ -175,7 +178,6 @@ impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
     }
 }
 
-
 /// The body handle used by the `DefaultBodySet`.
 pub type DefaultBodyHandle = generational_arena::Index;
 /// The body part handle used by the `DefaultBodySet`.
@@ -191,5 +193,9 @@ pub trait BodyDesc<N: RealField> {
     type Body: Body<N>;
 
     /// Called by the `World` to create a body with the given allocated handle.
-    fn build_with_handle(&self, gworld: &mut GeometricalWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> Self::Body;
+    fn build_with_handle(
+        &self,
+        gworld: &mut GeometricalWorld<N, DefaultBodyHandle, DefaultColliderHandle>,
+        handle: DefaultBodyHandle,
+    ) -> Self::Body;
 }

@@ -1,9 +1,9 @@
 use num::Zero;
 
+use crate::math::{AngularInertia, Point, Vector, DIM};
+use crate::volumetric::Volumetric;
 use na::{self, RealField};
 use ncollide::shape::Cuboid;
-use crate::volumetric::Volumetric;
-use crate::math::{AngularInertia, Point, Vector, DIM};
 
 /// The volume of a cuboid.
 #[inline]

@@ -2,11 +2,11 @@ use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector
 
 use crate::joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::{Multibody, MultibodyLink, BodyPartHandle};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows one degree of freedom between two multibody links.
-/// 
+///
 /// The degree of freedom is the combination of a rotation and a translation along the same axis.
 /// Both rotational and translational motions are coupled to generate a screw motion.
 #[derive(Copy, Clone, Debug)]
@@ -17,7 +17,7 @@ pub struct HelicalJoint<N: RealField> {
 
 impl<N: RealField> HelicalJoint<N> {
     /// Create an helical joint with the given axis and initial angle.
-    /// 
+    ///
     /// The `pitch` controls how much translation is generated for how much rotation.
     /// In particular, the translational displacement along `axis` is given by `angle * pitch`.
     pub fn new(axis: Unit<Vector3<N>>, pitch: N, angle: N) -> Self {
@@ -68,7 +68,8 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         transform: &Isometry3<N>,
         acc: &[N],
         out: &mut JacobianSliceMut<N>,
-    ) {
+    )
+    {
         self.revo
             .jacobian_dot_veldiff_mul_coordinates(transform, acc, out)
     }
@@ -115,7 +116,8 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    ) {
+    )
+    {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo.velocity_constraints(
             parameters,
@@ -143,9 +145,11 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>> {
+    ) -> Option<GenericNonlinearConstraint<N, ()>>
+    {
         // XXX: is this correct even though we don't have the same jacobian?
-        self.revo.position_constraint(0, multibody, link, handle, dof_id, jacobians)
+        self.revo
+            .position_constraint(0, multibody, link, handle, dof_id, jacobians)
     }
 }
 

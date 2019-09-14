@@ -1,14 +1,16 @@
-use na::{self, DVector, Dim, Dynamic, RealField, U1, VectorSliceN, Vector};
 use na::storage::StorageMut;
+use na::{self, DVector, Dim, Dynamic, RealField, Vector, VectorSliceN, U1};
 
 use ncollide::query::ContactId;
 
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
 use crate::math::{SpatialDim, SPATIAL_DIM};
-use crate::object::{BodySet, Body};
-use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
-             UnilateralGroundConstraint, LinearConstraints};
+use crate::object::{Body, BodySet};
+use crate::solver::{
+    BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, LinearConstraints,
+    UnilateralConstraint, UnilateralGroundConstraint,
+};
 
 /// A SOR-Prox velocity-based constraints solver.
 pub(crate) struct SORProx;
@@ -19,7 +21,8 @@ impl SORProx {
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
-    ) {
+    )
+    {
         for c in constraints.unilateral.iter_mut() {
             let dim1 = Dynamic::new(c.ndofs1);
             let dim2 = Dynamic::new(c.ndofs2);
@@ -51,7 +54,8 @@ impl SORProx {
         mj_lambda: &mut DVector<N>,
         jacobians: &[N],
         max_iter: usize,
-    ) {
+    )
+    {
         Self::warmstart_set(bodies, contact_constraints, jacobians, mj_lambda);
         Self::warmstart_set(bodies, joint_constraints, jacobians, mj_lambda);
 
@@ -82,7 +86,8 @@ impl SORProx {
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
-    ) {
+    )
+    {
         for c in constraints.unilateral.iter_mut() {
             if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
                 // Most common case (between two free rigid bodies).
@@ -112,7 +117,8 @@ impl SORProx {
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
-    ) {
+    )
+    {
         for c in constraints.bilateral.iter_mut() {
             if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
                 // Most common case (between two free rigid bodies).
@@ -143,7 +149,13 @@ impl SORProx {
                 )
             } else {
                 let dim = Dynamic::new(c.ndofs);
-                Self::solve_bilateral_ground(c, &constraints.unilateral_ground, jacobians, mj_lambda, dim)
+                Self::solve_bilateral_ground(
+                    c,
+                    &constraints.unilateral_ground,
+                    jacobians,
+                    mj_lambda,
+                    dim,
+                )
             }
         }
     }
@@ -155,7 +167,8 @@ impl SORProx {
         internal: &[Bodies::Handle],
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
-    ) {
+    )
+    {
         Self::step_bilateral(bodies, joint_constraints, jacobians, mj_lambda);
         Self::step_bilateral(bodies, contact_constraints, jacobians, mj_lambda);
 
@@ -176,7 +189,8 @@ impl SORProx {
         mj_lambda: &mut DVector<N>,
         dim1: D1,
         dim2: D2,
-    ) {
+    )
+    {
         let id1 = c.assembly_id1;
         let id2 = c.assembly_id2;
 
@@ -186,7 +200,8 @@ impl SORProx {
         let weighted_jacobian2 = VectorSliceN::from_slice_generic(&jacobians[c.wj_id2..], dim2, U1);
 
         let dimpulse = jacobian1.dot(&mj_lambda.rows_generic(id1, dim1))
-            + jacobian2.dot(&mj_lambda.rows_generic(id2, dim2)) + c.rhs;
+            + jacobian2.dot(&mj_lambda.rows_generic(id2, dim2))
+            + c.rhs;
 
         let new_impulse = na::sup(&N::zero(), &(c.impulse - c.r * dimpulse));
         let dlambda = new_impulse - c.impulse;
@@ -205,7 +220,8 @@ impl SORProx {
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,
-    ) {
+    )
+    {
         let jacobian = VectorSliceN::from_slice_generic(&jacobians[c.j_id..], dim, U1);
         let weighted_jacobian = VectorSliceN::from_slice_generic(&jacobians[c.wj_id..], dim, U1);
 
@@ -227,7 +243,8 @@ impl SORProx {
         mj_lambda: &mut DVector<N>,
         dim1: D1,
         dim2: D2,
-    ) {
+    )
+    {
         let id1 = c.assembly_id1;
         let id2 = c.assembly_id2;
 
@@ -269,7 +286,8 @@ impl SORProx {
         let weighted_jacobian2 = VectorSliceN::from_slice_generic(&jacobians[c.wj_id2..], dim2, U1);
 
         let dimpulse = jacobian1.dot(&mj_lambda.rows_generic(id1, dim1))
-            + jacobian2.dot(&mj_lambda.rows_generic(id2, dim2)) + c.rhs;
+            + jacobian2.dot(&mj_lambda.rows_generic(id2, dim2))
+            + c.rhs;
 
         let new_impulse = na::clamp(c.impulse - c.r * dimpulse, min_impulse, max_impulse);
         let dlambda = new_impulse - c.impulse;
@@ -289,7 +307,8 @@ impl SORProx {
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,
-    ) {
+    )
+    {
         let min_impulse;
         let max_impulse;
 
@@ -338,7 +357,8 @@ impl SORProx {
         mj_lambda: &mut DVector<N>,
         dim1: D1,
         dim2: D2,
-    ) {
+    )
+    {
         if !c.impulse.is_zero() {
             let id1 = c.assembly_id1;
             let id2 = c.assembly_id2;
@@ -357,12 +377,19 @@ impl SORProx {
         }
     }
 
-    pub fn warmstart_unilateral_ground<N: RealField, D: Dim,  DMJ: Dim, S: StorageMut<N, DMJ>, Id>(
+    pub fn warmstart_unilateral_ground<
+        N: RealField,
+        D: Dim,
+        DMJ: Dim,
+        S: StorageMut<N, DMJ>,
+        Id,
+    >(
         c: &UnilateralGroundConstraint<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,
-    ) {
+    )
+    {
         if !c.impulse.is_zero() {
             let weighted_jacobian =
                 VectorSliceN::from_slice_generic(&jacobians[c.wj_id..], dim, U1);
@@ -381,7 +408,8 @@ impl SORProx {
         mj_lambda: &mut DVector<N>,
         dim1: D1,
         dim2: D2,
-    ) {
+    )
+    {
         if !c.impulse.is_zero() {
             let id1 = c.assembly_id1;
             let id2 = c.assembly_id2;
@@ -405,7 +433,8 @@ impl SORProx {
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,
-    ) {
+    )
+    {
         if !c.impulse.is_zero() {
             let weighted_jacobian =
                 VectorSliceN::from_slice_generic(&jacobians[c.wj_id..], dim, U1);

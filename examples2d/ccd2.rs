@@ -1,15 +1,16 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2, Isometry2, Point3};
-use ncollide2d::shape::{Cuboid, Compound, ShapeHandle};
+use na::{Isometry2, Point2, Point3, Vector2};
 use ncollide2d::query::Proximity;
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use ncollide2d::shape::{Compound, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics2d::math::Velocity;
+use nphysics2d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -31,12 +32,10 @@ pub fn init_world(testbed: &mut Testbed) {
      * as well).
      */
     let ground_size = 25.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
 
     let ground_handle = bodies.insert(Ground::new());
-    let co = ColliderDesc::new(ground_shape.clone())
-        .build(BodyPartHandle(ground_handle, 0));
+    let co = ColliderDesc::new(ground_shape.clone()).build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
@@ -54,7 +53,6 @@ pub fn init_world(testbed: &mut Testbed) {
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
-
     // Add a sensor, to show that CCD works on sensors too.
     let co = ColliderDesc::new(ground_shape)
         .position(Isometry2::new(Vector2::new(2.5, 0.0), 3.14 / 2.0))
@@ -67,30 +65,29 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the shapes
      */
     let num = 5;
-//    let mut rady = 0.1;
-//    let mut radx = rady * 4.0;
+    //    let mut rady = 0.1;
+    //    let mut radx = rady * 4.0;
     let rady;
     let radx;
 
-//    let shape = {
-//        let mut cross_geoms = Vec::new();
-//
-//        let large_rad = 0.4f32;
-//        let small_rad = 0.05f32;
-//
-//        radx = large_rad;
-//        rady = large_rad;
-//
-//        let edge_x = Cuboid::new(Vector2::new(large_rad, small_rad));
-//        let edge_y = Cuboid::new(Vector2::new(small_rad, large_rad));
-//
-//        cross_geoms.push((na::one(), ShapeHandle::new(edge_x)));
-//        cross_geoms.push((na::one(), ShapeHandle::new(edge_y)));
-//
-//        let compound = Compound::new(cross_geoms);
-//        ShapeHandle::new(compound)
-//    };
-
+    //    let shape = {
+    //        let mut cross_geoms = Vec::new();
+    //
+    //        let large_rad = 0.4f32;
+    //        let small_rad = 0.05f32;
+    //
+    //        radx = large_rad;
+    //        rady = large_rad;
+    //
+    //        let edge_x = Cuboid::new(Vector2::new(large_rad, small_rad));
+    //        let edge_y = Cuboid::new(Vector2::new(small_rad, large_rad));
+    //
+    //        cross_geoms.push((na::one(), ShapeHandle::new(edge_x)));
+    //        cross_geoms.push((na::one(), ShapeHandle::new(edge_y)));
+    //
+    //        let compound = Compound::new(cross_geoms);
+    //        ShapeHandle::new(compound)
+    //    };
 
     let shape = {
         let large_rad = 0.4f32;
@@ -104,14 +101,8 @@ pub fn init_world(testbed: &mut Testbed) {
         let delta3 = Isometry2::new(Vector2::new(large_rad - small_rad, 0.0), na::zero());
 
         let mut compound_geoms = Vec::new();
-        let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(
-            small_rad,
-            large_rad,
-        )));
-        let horizontal = ShapeHandle::new(Cuboid::new(Vector2::new(
-            large_rad,
-            small_rad,
-        )));
+        let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(small_rad, large_rad)));
+        let horizontal = ShapeHandle::new(Cuboid::new(Vector2::new(large_rad, small_rad)));
         compound_geoms.push((delta1, horizontal));
         compound_geoms.push((delta2, vertical.clone()));
         compound_geoms.push((delta3, vertical));
@@ -120,9 +111,8 @@ pub fn init_world(testbed: &mut Testbed) {
         ShapeHandle::new(compound)
     };
 
-
-//    let shape = ShapeHandle::new(Cuboid::new(Vector2::new(radx, rady)));
-//    let shape = ShapeHandle::new(Ball::new(rady));
+    //    let shape = ShapeHandle::new(Cuboid::new(Vector2::new(radx, rady)));
+    //    let shape = ShapeHandle::new(Ball::new(rady));
 
     let shiftx = (radx + ColliderDesc::<f32>::default_margin() + 0.005) * 2.0;
     let shifty = (rady + ColliderDesc::<f32>::default_margin() + 0.005) * 2.0;
@@ -160,7 +150,7 @@ pub fn init_world(testbed: &mut Testbed) {
     testbed.add_callback(move |_, geometrical_world, _, colliders, graphics, _| {
         for prox in geometrical_world.proximity_events() {
             let c1 = colliders.get(prox.collider1).unwrap();
-            let c2= colliders.get(prox.collider2).unwrap();
+            let c2 = colliders.get(prox.collider2).unwrap();
             let body1 = c1.body();
             let body2 = c2.body();
 
@@ -180,7 +170,7 @@ pub fn init_world(testbed: &mut Testbed) {
                             Point3::new(0.5, 0.5, 1.0)
                         }
                     }
-                },
+                }
             };
 
             if body1 != ground_handle {
@@ -194,13 +184,18 @@ pub fn init_world(testbed: &mut Testbed) {
     });
 
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point2::new(-3.0, -5.0), 95.0);
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("CCD", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("CCD", init_world)]);
     testbed.run()
 }

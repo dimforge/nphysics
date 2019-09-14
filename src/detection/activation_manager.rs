@@ -1,9 +1,9 @@
-use na::{self, RealField};
-use crate::world::GeometricalWorld;
-use crate::object::{Body, BodySet, BodyHandle, ColliderSet};
 use crate::joint::{JointConstraint, JointConstraintSet};
-use crate::utils::union_find::UnionFindSet;
+use crate::object::{Body, BodyHandle, BodySet, ColliderSet};
 use crate::utils::union_find;
+use crate::utils::union_find::UnionFindSet;
+use crate::world::GeometricalWorld;
+use na::{self, RealField};
 
 /// Structure that monitors island-based activation/deactivation of bodies.
 ///
@@ -65,10 +65,11 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
         gworld: &GeometricalWorld<N, Handle, Colliders::Handle>,
         constraints: &Constraints,
         active_bodies: &mut Vec<Handle>,
-    )
-        where Bodies: BodySet<N, Handle = Handle>,
-              Colliders: ColliderSet<N, Handle>,
-              Constraints: JointConstraintSet<N, Bodies> {
+    ) where
+        Bodies: BodySet<N, Handle = Handle>,
+        Colliders: ColliderSet<N, Handle>,
+        Constraints: JointConstraintSet<N, Bodies>,
+    {
         /*
          *
          * Update bodies energy
@@ -135,14 +136,15 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
             b1: Bodies::Handle,
             b2: Bodies::Handle,
             ufs: &mut [UnionFindSet],
-        ) {
+        )
+        {
             let b1 = try_ret!(bodies.get(b1));
             let b2 = try_ret!(bodies.get(b2));
             if (b1.status_dependent_ndofs() != 0 || b1.is_kinematic())
                 && (b2.status_dependent_ndofs() != 0 || b2.is_kinematic())
-                {
-                    union_find::union(b1.companion_id(), b2.companion_id(), ufs)
-                }
+            {
+                union_find::union(b1.companion_id(), b2.companion_id(), ufs)
+            }
         }
 
         for (_, c1, _, c2, _, manifold) in gworld.contact_pairs(colliders, false) {

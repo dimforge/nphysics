@@ -4,7 +4,7 @@ use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
 use crate::math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use crate::object::{MultibodyLink, Multibody, BodyPartHandle};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A unit joint that allows only one translational degree on freedom.
@@ -145,15 +145,13 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
 
     #[cfg(feature = "dim3")]
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
-        let trans =
-            Translation::from(parent_shift - body_shift + self.axis.as_ref() * self.offset);
+        let trans = Translation::from(parent_shift - body_shift + self.axis.as_ref() * self.offset);
         Isometry::from_parts(trans, Rotation::identity())
     }
 
     #[cfg(feature = "dim2")]
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
-        let trans =
-            Translation::from(parent_shift - body_shift + self.axis.as_ref() * self.offset);
+        let trans = Translation::from(parent_shift - body_shift + self.axis.as_ref() * self.offset);
         Isometry::from_parts(trans, Rotation::identity())
     }
 
@@ -172,7 +170,9 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         _: &Isometry<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    ) {}
+    )
+    {
+    }
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
@@ -212,7 +212,8 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    ) {
+    )
+    {
         joint::unit_joint_velocity_constraints(
             self,
             parameters,
@@ -243,8 +244,11 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>> {
-        joint::unit_joint_position_constraint(self, multibody, link, handle, dof_id, false, jacobians)
+    ) -> Option<GenericNonlinearConstraint<N, ()>>
+    {
+        joint::unit_joint_position_constraint(
+            self, multibody, link, handle, dof_id, false, jacobians,
+        )
     }
 }
 

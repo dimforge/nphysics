@@ -1,14 +1,14 @@
-
 use na::{DVector, RealField};
 use ncollide::query::ContactId;
 
 use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
 use crate::joint::{JointConstraint, JointConstraintSet};
-use crate::object::{BodySet, Body, ColliderHandle, ColliderSet};
 use crate::material::MaterialsCoefficientsTable;
-use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
-
+use crate::object::{Body, BodySet, ColliderHandle, ColliderSet};
+use crate::solver::{
+    ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx,
+};
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {
@@ -22,7 +22,9 @@ pub struct MoreauJeanSolver<N: RealField, Bodies: BodySet<N>, CollHandle: Collid
     internal_constraints: Vec<Bodies::Handle>,
 }
 
-impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSolver<N, Bodies, CollHandle> {
+impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
+    MoreauJeanSolver<N, Bodies, CollHandle>
+{
     /// Create a new time-stepping scheme with the given contact model.
     pub fn new(contact_model: Box<dyn ContactModel<N, Bodies, CollHandle>>) -> Self {
         MoreauJeanSolver {
@@ -42,7 +44,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
     }
 
     /// Perform one step of the time-stepping scheme.
-    pub fn step<Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>, Constraints: JointConstraintSet<N, Bodies>>(
+    pub fn step<
+        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Bodies>,
+    >(
         &mut self,
         counters: &mut Counters,
         bodies: &mut Bodies,
@@ -53,11 +58,23 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         island_joints: &[Constraints::Handle],
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-    ) {
+    )
+    {
         counters.assembly_started();
-        self.assemble_system(counters, parameters, coefficients, bodies, joints, manifolds, island, island_joints);
+        self.assemble_system(
+            counters,
+            parameters,
+            coefficients,
+            bodies,
+            joints,
+            manifolds,
+            island,
+            island_joints,
+        );
         counters.assembly_completed();
-        counters.set_nconstraints(self.contact_constraints.velocity.len() + self.joint_constraints.velocity.len());
+        counters.set_nconstraints(
+            self.contact_constraints.velocity.len() + self.joint_constraints.velocity.len(),
+        );
 
         counters.velocity_resolution_started();
         self.solve_velocity_constraints(parameters, bodies);
@@ -75,7 +92,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
 
     // FIXME: this comment is bad.
     /// Perform one sub-step of the time-stepping scheme as part of a CCD integration.
-    pub fn step_ccd<Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>, Constraints: JointConstraintSet<N, Bodies>>(
+    pub fn step_ccd<
+        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Bodies>,
+    >(
         &mut self,
         counters: &mut Counters,
         bodies: &mut Bodies,
@@ -87,13 +107,22 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         island_joints: &[Constraints::Handle],
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-    ) {
-        self.assemble_system(counters, parameters, coefficients, bodies, joints, manifolds, island, island_joints);
+    )
+    {
+        self.assemble_system(
+            counters,
+            parameters,
+            coefficients,
+            bodies,
+            joints,
+            manifolds,
+            island,
+            island_joints,
+        );
         self.solve_position_constraints(parameters, bodies, colliders, joints, island_joints);
         for ccd_body in ccd_bodies {
             bodies.get_mut(*ccd_body).unwrap().validate_advancement();
         }
-
 
         self.solve_velocity_constraints(parameters, bodies);
         self.update_velocities_and_integrate(parameters, bodies, island);
@@ -108,8 +137,9 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
         island: &[Bodies::Handle],
-        island_joints: &[Constraints::Handle]
-    ) {
+        island_joints: &[Constraints::Handle],
+    )
+    {
         self.internal_constraints.clear();
         let mut system_ndofs = 0;
 
@@ -196,7 +226,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         let mut j_id = 0;
         let mut ground_j_id = jacobian_sz;
 
-
         for handle in island_joints {
             if let Some(joint) = joints.get_mut(*handle) {
                 joint.velocity_constraints(
@@ -225,7 +254,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         );
         counters.custom_completed();
 
-
         for handle in &self.internal_constraints {
             if let Some(body) = bodies.get_mut(*handle) {
                 let ext_vels = self.ext_vels.rows(body.companion_id(), body.ndofs());
@@ -234,7 +262,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         }
     }
 
-    fn solve_velocity_constraints(&mut self, parameters: &IntegrationParameters<N>, bodies: &mut Bodies) {
+    fn solve_velocity_constraints(
+        &mut self,
+        parameters: &IntegrationParameters<N>,
+        bodies: &mut Bodies,
+    )
+    {
         SORProx::solve(
             bodies,
             &mut self.contact_constraints.velocity,
@@ -246,14 +279,18 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         );
     }
 
-    fn solve_position_constraints<Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>, Constraints: JointConstraintSet<N, Bodies>>(
+    fn solve_position_constraints<
+        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Bodies>,
+    >(
         &mut self,
         parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         colliders: &Colliders,
         joints: &mut Constraints,
         island_joints: &[Constraints::Handle],
-    ) {
+    )
+    {
         // XXX: avoid the systematic clone.
         // This is needed for cases where we perform the position resolution
         // before the velocity resolution.
@@ -277,7 +314,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         _bodies: &mut Bodies,
         joints: &mut Constraints,
         island_joints: &[Constraints::Handle],
-    ) {
+    )
+    {
         self.contact_model.cache_impulses(&self.contact_constraints);
 
         for handle in island_joints {
@@ -298,7 +336,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         island: &[Bodies::Handle],
-    ) {
+    )
+    {
         for handle in island {
             let body = try_continue!(bodies.get_mut(*handle));
             let id = body.companion_id();

@@ -1,15 +1,15 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3, Isometry3};
-use ncollide3d::shape::{Cuboid, Ball, Capsule, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, MultibodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use na::{Isometry3, Point3, Vector3};
+use ncollide3d::shape::{Ball, Capsule, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics3d::joint::{BallJoint, FreeJoint};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, MultibodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
-
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -26,8 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let ground_thickness = 0.2;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(5.0, ground_thickness, 5.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(5.0, ground_thickness, 5.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -44,7 +43,14 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(-10.0, 5.0, -10.0), Point3::new(0.0, 1.0, 0.0));
 }
 
@@ -79,9 +85,11 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<f32>, colliders: &mut DefaultColli
      * Head.
      */
     let head_collider = ColliderDesc::new(head_geom).density(0.3);
-    body.add_child(spherical)
-        .set_parent_shift(Vector3::new(0.0, body_rady + head_rad + space, 0.0));
-
+    body.add_child(spherical).set_parent_shift(Vector3::new(
+        0.0,
+        body_rady + head_rad + space,
+        0.0,
+    ));
 
     /*
      * Arms.
@@ -133,10 +141,7 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<f32>, colliders: &mut DefaultColli
     }
 }
 
-
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Ragdolls", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Ragdolls", init_world)]);
     testbed.run()
 }

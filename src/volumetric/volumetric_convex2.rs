@@ -1,12 +1,12 @@
 use num::Zero;
 
+use crate::math::{AngularInertia, Point};
+use crate::volumetric::Volumetric;
+use na;
 use na::RealField;
 use na::{Matrix1, Point2};
-use na;
-use ncollide::utils;
 use ncollide::shape::ConvexPolygon;
-use crate::volumetric::Volumetric;
-use crate::math::{AngularInertia, Point};
+use ncollide::utils;
 
 /// The area and center of mass of a 2D convex Polyline.
 ///
@@ -49,7 +49,8 @@ pub fn convex_polyline_area_and_center_of_mass_unchecked<N: RealField>(
 pub fn convex_polyline_mass_properties_unchecked<N: RealField>(
     convex_polyline: &[Point<N>],
     density: N,
-) -> (N, Point<N>, N) {
+) -> (N, Point<N>, N)
+{
     let (area, com) = convex_polyline_area_and_center_of_mass_unchecked(convex_polyline);
 
     if area.is_zero() {
@@ -157,8 +158,8 @@ impl<N: RealField> Volumetric<N> for ConvexPolygon<N> {
 #[cfg(test)]
 mod test {
     use na::{self, Matrix1, Point2, Vector2};
-    use ncollide::shape::{Cuboid, ConvexPolygon};
-    
+    use ncollide::shape::{ConvexPolygon, Cuboid};
+
     use crate::volumetric::Volumetric;
 
     #[test]

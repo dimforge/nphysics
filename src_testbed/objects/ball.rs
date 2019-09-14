@@ -1,8 +1,8 @@
+use crate::objects::node::{self, GraphicsNode};
 use kiss3d::window::Window;
 use na::Point3;
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-use crate::objects::node::{self, GraphicsNode};
 
 pub struct Ball {
     color: Point3<f32>,
@@ -20,11 +20,12 @@ impl Ball {
         radius: f32,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Ball {
+    ) -> Ball
+    {
         #[cfg(feature = "dim2")]
-            let node = window.add_circle(radius);
+        let node = window.add_circle(radius);
         #[cfg(feature = "dim3")]
-            let node = window.add_sphere(radius);
+        let node = window.add_sphere(radius);
 
         let mut res = Ball {
             color,

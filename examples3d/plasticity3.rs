@@ -1,13 +1,15 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3, Isometry3};
+use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{Ground, BodyStatus, FEMVolumeDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, BodyStatus, ColliderDesc, DefaultBodySet, DefaultColliderSet, FEMVolumeDesc,
+    Ground, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -25,8 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let platform_height = 0.4;
     let platform_size = 0.6;
-    let platform_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(0.03, 0.03, platform_size)));
+    let platform_shape = ShapeHandle::new(Cuboid::new(Vector3::new(0.03, 0.03, platform_size)));
 
     let positions = [
         Isometry3::new(Vector3::new(0.4, platform_height, 0.0), na::zero()),
@@ -45,8 +46,7 @@ pub fn init_world(testbed: &mut Testbed) {
             .build();
         platforms.push(bodies.insert(platform));
 
-        let co = ColliderDesc::new(platform_shape.clone())
-            .build(BodyPartHandle(platforms[i], 0));
+        let co = ColliderDesc::new(platform_shape.clone()).build(BodyPartHandle(platforms[i], 0));
         colliders.insert(co);
     }
 
@@ -73,7 +73,6 @@ pub fn init_world(testbed: &mut Testbed) {
     for platform in &platforms {
         testbed.set_body_color(*platform, Point3::new(0.5, 0.5, 0.5));
     }
-
 
     testbed.add_callback(move |_, _, bodies, _, _, _| {
         for (i, handle) in platforms.iter().enumerate() {
@@ -107,13 +106,18 @@ pub fn init_world(testbed: &mut Testbed) {
     // enable the testbed's feature that lets us grab an object with the mouse.
     let ground_handle = bodies.insert(Ground::new());
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Plasticity", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Plasticity", init_world)]);
     testbed.run()
 }

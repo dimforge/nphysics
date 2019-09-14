@@ -1,14 +1,15 @@
 extern crate nalgebra as na;
 
 use na::{Point3, Vector3};
-use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
 use ncollide3d::query::Proximity;
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -25,8 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let ground_thickness = 0.2;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -95,7 +95,6 @@ pub fn init_world(testbed: &mut Testbed) {
 
     testbed.set_body_color(sensor_handle, Point3::new(0.5, 1.0, 1.0));
 
-
     // Callback that will be executed on the main loop to handle proximities.
     testbed.add_callback(move |_, geometrical_world, _, colliders, graphics, _| {
         for prox in geometrical_world.proximity_events() {
@@ -120,14 +119,19 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(-6.0, 4.0, -6.0), Point3::new(0.0, 1.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Boxes", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Boxes", init_world)]);
 
     testbed.run()
 }

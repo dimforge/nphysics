@@ -1,15 +1,16 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2, DVector};
-use ncollide2d::shape::{HeightField, Cuboid, ShapeHandle};
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use na::{DVector, Point2, Vector2};
+use ncollide2d::shape::{Cuboid, HeightField, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics2d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
 
-use rand::{Rng, SeedableRng, rngs::StdRng};
-
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -35,8 +36,8 @@ pub fn init_world(testbed: &mut Testbed) {
     heightfield.set_segment_removed(13, true);
 
     let ground_handle = bodies.insert(Ground::new());
-    let co = ColliderDesc::new(ShapeHandle::new(heightfield))
-        .build(BodyPartHandle(ground_handle, 0));
+    let co =
+        ColliderDesc::new(ShapeHandle::new(heightfield)).build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     /*
@@ -59,9 +60,7 @@ pub fn init_world(testbed: &mut Testbed) {
             let y = fi * shift + 1.0;
 
             // Build the rigid body.
-            let rb = RigidBodyDesc::new()
-                .translation(Vector2::new(x, y))
-                .build();
+            let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
             let rb_handle = bodies.insert(rb);
 
             // Build the collider.
@@ -76,14 +75,18 @@ pub fn init_world(testbed: &mut Testbed) {
      * Run the simulation.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point2::origin(), 75.0);
 }
 
-
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Heightfield", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Heightfield", init_world)]);
     testbed.run()
 }

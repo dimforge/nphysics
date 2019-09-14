@@ -1,10 +1,8 @@
 use na::RealField;
 
-
-use crate::material::{Material, MaterialCombineMode, MaterialContext, LocalMaterialProperties};
+use crate::material::{LocalMaterialProperties, Material, MaterialCombineMode, MaterialContext};
 
 use crate::math::Vector;
-
 
 /// Description of the state of surface of a solid.
 ///
@@ -39,7 +37,7 @@ impl<N: RealField> BasicMaterial<N> {
             friction,
             surface_velocity: None,
             restitution_combine_mode: MaterialCombineMode::Average,
-            friction_combine_mode: MaterialCombineMode::Average
+            friction_combine_mode: MaterialCombineMode::Average,
         }
     }
 }
@@ -50,7 +48,10 @@ impl<N: RealField> Material<N> for BasicMaterial<N> {
             id: self.id,
             restitution: (self.restitution, self.restitution_combine_mode),
             friction: (self.friction, self.friction_combine_mode),
-            surface_velocity: self.surface_velocity.map(|v| context.position * v).unwrap_or(Vector::zeros()),
+            surface_velocity: self
+                .surface_velocity
+                .map(|v| context.position * v)
+                .unwrap_or(Vector::zeros()),
         }
     }
 }

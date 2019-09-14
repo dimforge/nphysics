@@ -1,15 +1,16 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3, DMatrix};
-use ncollide3d::shape::{Cuboid, ShapeHandle, HeightField, HeightFieldCellStatus};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use na::{DMatrix, Point3, Vector3};
+use ncollide3d::shape::{Cuboid, HeightField, HeightFieldCellStatus, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-use rand::{Rng, SeedableRng, rngs::StdRng};
-
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -28,7 +29,8 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut rng = StdRng::from_seed([0; 32]);
     let heights = DMatrix::from_fn(10, 15, |_, _| rng.gen::<f32>());
 
-    let mut heightfield: HeightField<f32> = HeightField::new(heights, Vector3::new(10.0, 1.5, 10.0));
+    let mut heightfield: HeightField<f32> =
+        HeightField::new(heights, Vector3::new(10.0, 1.5, 10.0));
     let statuses = heightfield.cells_statuses_mut();
 
     // It is possible to customize the way the triangles
@@ -40,13 +42,19 @@ pub fn init_world(testbed: &mut Testbed) {
     }
 
     // It is possible to remove some triangles from the heightfield.
-    statuses.column_mut(9).apply(|status| status | HeightFieldCellStatus::RIGHT_TRIANGLE_REMOVED);
-    statuses.column_mut(10).apply(|status| status | HeightFieldCellStatus::LEFT_TRIANGLE_REMOVED);
-    statuses.row_mut(5).apply(|status| status | HeightFieldCellStatus::CELL_REMOVED);
+    statuses
+        .column_mut(9)
+        .apply(|status| status | HeightFieldCellStatus::RIGHT_TRIANGLE_REMOVED);
+    statuses
+        .column_mut(10)
+        .apply(|status| status | HeightFieldCellStatus::LEFT_TRIANGLE_REMOVED);
+    statuses
+        .row_mut(5)
+        .apply(|status| status | HeightFieldCellStatus::CELL_REMOVED);
 
     let ground_handle = bodies.insert(Ground::new());
-    let co = ColliderDesc::new(ShapeHandle::new(heightfield))
-        .build(BodyPartHandle(ground_handle, 0));
+    let co =
+        ColliderDesc::new(ShapeHandle::new(heightfield)).build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     /*
@@ -88,14 +96,19 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(-6.0, 6.0, -6.0), Point3::new(0.0, 1.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Heightfield", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Heightfield", init_world)]);
 
     testbed.run()
 }

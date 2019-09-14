@@ -1,21 +1,19 @@
-use std::sync::Arc;
 use std::f64;
+use std::sync::Arc;
 
-use std::any::Any;
 use na::RealField;
 use ncollide::pipeline::{
-    CollisionObject, CollisionGroups, CollisionObjectUpdateFlags,  GeometricQueryType, CollisionObjectRef,
-    CollisionObjectGraphIndex, BroadPhaseProxyHandle
+    BroadPhaseProxyHandle, CollisionGroups, CollisionObject, CollisionObjectGraphIndex,
+    CollisionObjectRef, CollisionObjectUpdateFlags, GeometricQueryType,
 };
-use ncollide::shape::{ShapeHandle, Shape};
+use ncollide::shape::{Shape, ShapeHandle};
+use std::any::Any;
 
-use crate::math::{Isometry, Vector, Rotation};
-use crate::object::{BodyPartHandle, BodyHandle};
-use crate::material::{Material, MaterialHandle, BasicMaterial};
-
+use crate::material::{BasicMaterial, Material, MaterialHandle};
+use crate::math::{Isometry, Rotation, Vector};
+use crate::object::{BodyHandle, BodyPartHandle};
 
 use crate::utils::{UserData, UserDataBox};
-
 
 /// Description of the way a collider is attached to a body.
 #[derive(Clone)]
@@ -45,7 +43,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderAnchor<N, Handle> {
     pub fn body(&self) -> Handle {
         match self {
             ColliderAnchor::OnBodyPart { body_part, .. } => body_part.0,
-            ColliderAnchor::OnDeformableBody { body, .. } => *body
+            ColliderAnchor::OnDeformableBody { body, .. } => *body,
         }
     }
 }
@@ -58,7 +56,6 @@ pub struct ColliderRemovalData<N: RealField, Handle: BodyHandle> {
     pub(crate) proxy_handle: BroadPhaseProxyHandle,
     pub(crate) graph_index: CollisionObjectGraphIndex,
 }
-
 
 /// Data stored into each collider.
 ///
@@ -82,7 +79,8 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
         anchor: ColliderAnchor<N, Handle>,
         body_status_dependent_ndofs: usize,
         material: MaterialHandle<N>,
-    ) -> Self {
+    ) -> Self
+    {
         ColliderData {
             margin,
             density,
@@ -90,7 +88,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
             body_status_dependent_ndofs,
             material,
             ccd_enabled: false,
-            user_data: None
+            user_data: None,
         }
     }
 
@@ -119,7 +117,11 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
 
     /// The position of this collider geometry wrt. the body it is attached to.
     pub fn position_wrt_body(&self) -> Isometry<N> {
-        if let ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } = self.anchor {
+        if let ColliderAnchor::OnBodyPart {
+            position_wrt_body_part,
+            ..
+        } = self.anchor
+        {
             position_wrt_body_part
         } else {
             Isometry::identity()
@@ -130,7 +132,9 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
     pub fn body_part(&self, subshape_id: usize) -> BodyPartHandle<Handle> {
         match &self.anchor {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
-            ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
+            ColliderAnchor::OnDeformableBody {
+                body, body_parts, ..
+            } => {
                 if let Some(body_parts) = body_parts {
                     BodyPartHandle(*body, body_parts[subshape_id])
                 } else {
@@ -159,7 +163,9 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
 
 /// A geometric entity that can be attached to a body so it can be affected by contacts and proximity queries.
 #[repr(transparent)]
-pub struct Collider<N: RealField, Handle: BodyHandle>(pub(crate) CollisionObject<N, ColliderData<N, Handle>>); // FIXME: keep this pub(crate) or private?
+pub struct Collider<N: RealField, Handle: BodyHandle>(
+    pub(crate) CollisionObject<N, ColliderData<N, Handle>>,
+); // FIXME: keep this pub(crate) or private?
 
 impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     /// Computes the data that needs to be returned once this collider has been removed from a collider set.
@@ -190,7 +196,11 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
 
     /// Sets the user-data attached to this collider.
     #[inline]
-    pub fn set_user_data(&mut self, data: Option<Box<dyn Any + Send + Sync>>) -> Option<Box<dyn Any + Send + Sync>> {
+    pub fn set_user_data(
+        &mut self,
+        data: Option<Box<dyn Any + Send + Sync>>,
+    ) -> Option<Box<dyn Any + Send + Sync>>
+    {
         std::mem::replace(&mut self.0.data_mut().user_data, data)
     }
 
@@ -464,14 +474,17 @@ impl<N: RealField> ColliderDesc<N> {
 
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
-        self.rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
+        self.rotation,
+        set_rotation,
+        axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
-        self.rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
+        self.rotation,
+        set_rotation,
+        angle: N | { self.position.rotation = Rotation::new(angle) }
     );
-
 
     desc_custom_setters!(
         self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
@@ -491,14 +504,10 @@ impl<N: RealField> ColliderDesc<N> {
     );
 
     #[cfg(feature = "dim3")]
-    desc_custom_getters!(
-        self.get_rotation: Vector<N> | { self.position.rotation.scaled_axis() }
-    );
+    desc_custom_getters!(self.get_rotation: Vector<N> | { self.position.rotation.scaled_axis() });
 
     #[cfg(feature = "dim2")]
-    desc_custom_getters!(
-        self.get_rotation: N | { self.position.rotation.angle() }
-    );
+    desc_custom_getters!(self.get_rotation: N | { self.position.rotation.angle() });
 
     desc_custom_getters!(
         self.get_shape: &dyn Shape<N> | { &*self.shape }
@@ -518,7 +527,11 @@ impl<N: RealField> ColliderDesc<N> {
     );
 
     /// Build a collider and configure it to be attached to the given parent body part.
-    pub fn build<Handle: BodyHandle>(&self, parent_handle: BodyPartHandle<Handle>) -> Collider<N, Handle> {
+    pub fn build<Handle: BodyHandle>(
+        &self,
+        parent_handle: BodyPartHandle<Handle>,
+    ) -> Collider<N, Handle>
+    {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction)
         } else {
@@ -528,17 +541,29 @@ impl<N: RealField> ColliderDesc<N> {
             )
         };
 
-        let anchor = ColliderAnchor::OnBodyPart { body_part: parent_handle, position_wrt_body_part: self.position };
-        let material = self.material.clone().unwrap_or_else(|| MaterialHandle::new(BasicMaterial::default()));
+        let anchor = ColliderAnchor::OnBodyPart {
+            body_part: parent_handle,
+            position_wrt_body_part: self.position,
+        };
+        let material = self
+            .material
+            .clone()
+            .unwrap_or_else(|| MaterialHandle::new(BasicMaterial::default()));
         let mut data = ColliderData::new(self.margin, self.density, anchor, 0, material);
         data.ccd_enabled = self.ccd_enabled;
         data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
-        let co = CollisionObject::new(None, None, self.position, self.shape.clone(), self.collision_groups, query, data);
+        let co = CollisionObject::new(
+            None,
+            None,
+            self.position,
+            self.shape.clone(),
+            self.collision_groups,
+            query,
+            data,
+        );
         Collider(co)
     }
 }
-
-
 
 /// A deformable collider builder.
 pub struct DeformableColliderDesc<N: RealField> {
@@ -551,16 +576,18 @@ pub struct DeformableColliderDesc<N: RealField> {
     angular_prediction: N,
     is_sensor: bool,
     ccd_enabled: bool,
-    body_parts_mapping: Option<Arc<Vec<usize>>>
+    body_parts_mapping: Option<Arc<Vec<usize>>>,
 }
-
 
 impl<N: RealField> DeformableColliderDesc<N> {
     /// Creates a deformable collider from the given shape.
     ///
     /// Panics if the shape is not deformable.
     pub fn new(shape: ShapeHandle<N>) -> Self {
-        assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
+        assert!(
+            shape.is_deformable_shape(),
+            "The the shape of a deformable collider must be deformable."
+        );
         let linear_prediction = na::convert(0.002);
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
 
@@ -574,7 +601,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
             angular_prediction,
             is_sensor: false,
             ccd_enabled: false,
-            body_parts_mapping: None
+            body_parts_mapping: None,
         }
     }
 }
@@ -586,7 +613,10 @@ impl<N: RealField> DeformableColliderDesc<N> {
     ///
     /// Panics if the shape is not deformable.
     pub fn shape(mut self, shape: ShapeHandle<N>) -> Self {
-        assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
+        assert!(
+            shape.is_deformable_shape(),
+            "The the shape of a deformable collider must be deformable."
+        );
         self.shape = shape;
         self
     }
@@ -595,13 +625,18 @@ impl<N: RealField> DeformableColliderDesc<N> {
     ///
     /// Panics if the shape is not deformable.
     pub fn set_shape(&mut self, shape: ShapeHandle<N>) -> &mut Self {
-        assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
+        assert!(
+            shape.is_deformable_shape(),
+            "The the shape of a deformable collider must be deformable."
+        );
         self.shape = shape;
         self
     }
 
     desc_custom_setters!(
-        self.material, set_material, material: MaterialHandle<N> | { self.material = Some(material) }
+        self.material,
+        set_material,
+        material: MaterialHandle<N> | { self.material = Some(material) }
     );
 
     desc_setters!(
@@ -641,13 +676,27 @@ impl<N: RealField> DeformableColliderDesc<N> {
         };
 
         let body_parts = self.body_parts_mapping.clone();
-        let anchor = ColliderAnchor::OnDeformableBody { body: parent_handle, body_parts };
-        let material = self.material.clone().unwrap_or_else(|| MaterialHandle::new(BasicMaterial::default()));
+        let anchor = ColliderAnchor::OnDeformableBody {
+            body: parent_handle,
+            body_parts,
+        };
+        let material = self
+            .material
+            .clone()
+            .unwrap_or_else(|| MaterialHandle::new(BasicMaterial::default()));
         let mut data = ColliderData::new(self.margin, N::zero(), anchor, 0, material);
         data.ccd_enabled = data.ccd_enabled;
         data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
 
-        let co = CollisionObject::new(None, None, Isometry::identity(), self.shape.clone(), self.collision_groups, query, data);
+        let co = CollisionObject::new(
+            None,
+            None,
+            Isometry::identity(),
+            self.shape.clone(),
+            self.collision_groups,
+            query,
+            data,
+        );
         Collider(co)
     }
 }

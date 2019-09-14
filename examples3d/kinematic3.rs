@@ -2,11 +2,13 @@ extern crate nalgebra as na;
 
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics3d::object::{Body, BodyStatus, ColliderDesc, MultibodyDesc, RigidBodyDesc,
-                         DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::{DefaultJointConstraintSet, RevoluteJoint};
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    Body, BodyPartHandle, BodyStatus, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground,
+    MultibodyDesc, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
 pub fn init_world(testbed: &mut Testbed) {
@@ -24,8 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let ground_thickness = 0.2;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(10.0, ground_thickness, 10.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(10.0, ground_thickness, 10.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -40,8 +41,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let rad = 0.2;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
-    let cuboid_collider_desc = ColliderDesc::new(cuboid)
-        .density(1.0);
+    let cuboid_collider_desc = ColliderDesc::new(cuboid).density(1.0);
 
     let shift = (rad + cuboid_collider_desc.get_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
@@ -144,13 +144,18 @@ pub fn init_world(testbed: &mut Testbed) {
      * Run the simulation.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(-10.0, 5.0, -10.0), Point3::new(0.0, 0.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Kinematic body", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Kinematic body", init_world)]);
     testbed.run()
 }

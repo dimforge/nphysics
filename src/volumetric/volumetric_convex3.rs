@@ -1,14 +1,14 @@
 use num::Zero;
 
+use crate::math::{AngularInertia, Point};
+use crate::volumetric::Volumetric;
+use na;
 use na::RealField;
 use na::{Matrix3, Point3};
-use na;
-use ncollide::utils;
 use ncollide::procedural::{IndexBuffer, TriMesh};
-use ncollide::transformation;
 use ncollide::shape::ConvexHull;
-use crate::volumetric::Volumetric;
-use crate::math::{AngularInertia, Point};
+use ncollide::transformation;
+use ncollide::utils;
 
 fn tetrahedron_unit_inertia_tensor_wrt_point<N: RealField>(
     point: &Point<N>,
@@ -16,7 +16,8 @@ fn tetrahedron_unit_inertia_tensor_wrt_point<N: RealField>(
     p2: &Point<N>,
     p3: &Point<N>,
     p4: &Point<N>,
-) -> AngularInertia<N> {
+) -> AngularInertia<N>
+{
     let p1 = *p1 - *point;
     let p2 = *p2 - *point;
     let p3 = *p3 - *point;
@@ -183,7 +184,8 @@ pub fn convex_mesh_volume_and_center_of_mass_unchecked<N: RealField>(
 pub fn convex_mesh_mass_properties_unchecked<N: RealField>(
     convex_mesh: &TriMesh<N>,
     density: N,
-) -> (N, Point<N>, AngularInertia<N>) {
+) -> (N, Point<N>, AngularInertia<N>)
+{
     let (volume, com) = convex_mesh_volume_and_center_of_mass_unchecked(convex_mesh);
 
     if volume.is_zero() {
@@ -284,10 +286,10 @@ impl<N: RealField> Volumetric<N> for ConvexHull<N> {
 
 #[cfg(test)]
 mod test {
-    use na::Vector3;
-    use ncollide::shape::{ConvexHull, Cuboid};
-    use ncollide::procedural;
     use crate::volumetric::Volumetric;
+    use na::Vector3;
+    use ncollide::procedural;
+    use ncollide::shape::{ConvexHull, Cuboid};
 
     #[test]
     fn test_inertia_tensor3() {

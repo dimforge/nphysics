@@ -2,14 +2,15 @@ extern crate nalgebra as na;
 
 use na::{Point2, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics2d::object::{Body, BodyStatus, ColliderDesc, MultibodyDesc, RigidBodyDesc,
-                         DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::{DefaultJointConstraintSet, RevoluteJoint};
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics2d::math::Velocity;
+use nphysics2d::object::{
+    Body, BodyPartHandle, BodyStatus, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground,
+    MultibodyDesc, RigidBodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -26,8 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground
      */
     let ground_size = 25.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -42,8 +42,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let rad = 0.2;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let collider_desc = ColliderDesc::new(cuboid.clone())
-        .density(1.0);
+    let collider_desc = ColliderDesc::new(cuboid.clone()).density(1.0);
 
     let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
@@ -55,9 +54,7 @@ pub fn init_world(testbed: &mut Testbed) {
             let y = j as f32 * shift + centery;
 
             // Build the rigid body.
-            let rb = RigidBodyDesc::new()
-                .translation(Vector2::new(x, y))
-                .build();
+            let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
             let rb_handle = bodies.insert(rb);
 
             // Build the collider.
@@ -118,8 +115,6 @@ pub fn init_world(testbed: &mut Testbed) {
     let mb_collider = ball_collider_desc.build(BodyPartHandle(mb_handle, 0));
     colliders.insert(mb_collider);
 
-
-
     /*
      * Setup a callback to control the platform.
      */
@@ -145,14 +140,18 @@ pub fn init_world(testbed: &mut Testbed) {
      * Run the simulation.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point2::new(0.0, -5.0), 60.0);
 }
 
-
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Kinematic body", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Kinematic body", init_world)]);
     testbed.run()
 }

@@ -1,21 +1,27 @@
-use std::ops::AddAssign;
-use std::iter;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::any::Any;
 use either::Either;
+use std::any::Any;
+use std::collections::HashMap;
+use std::iter;
+use std::ops::AddAssign;
+use std::sync::Arc;
 
-use na::{self, RealField, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix,
-         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Vector2, Unit};
+use na::{
+    self, Cholesky, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, Matrix2, Matrix2x3,
+    Point2, Point3, RealField, Unit, Vector2, Vector3,
+};
+use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
 use ncollide::utils::{self, DeterministicState};
-use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
 
-use crate::object::{Body, BodyPart, BodyStatus, ActivationStatus,
-                    FiniteElementIndices, DeformableColliderDesc, BodyUpdateStatus};
-use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::math::{Force, ForceType, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry,
-                  SpatialVector, RotationMatrix, Vector, Translation};
+use crate::math::{
+    Dim, Force, ForceType, Inertia, Isometry, Matrix, Point, RotationMatrix, SpatialVector,
+    Translation, Vector, Velocity, DIM,
+};
 use crate::object::fem_helper;
+use crate::object::{
+    ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus, DeformableColliderDesc,
+    FiniteElementIndices,
+};
+use crate::solver::{ForceDirection, IntegrationParameters};
 
 use crate::utils::{UserData, UserDataBox};
 
@@ -70,54 +76,69 @@ pub struct FEMSurface<N: RealField> {
     status: BodyStatus,
     update_status: BodyUpdateStatus,
 
-
     user_data: Option<Box<dyn Any + Send + Sync>>,
 }
 
 impl<N: RealField> FEMSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
-    fn new(vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
-           scale: &Vector<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    fn new(
+        vertices: &[Point<N>],
+        triangles: &[Point3<usize>],
+        pos: &Isometry<N>,
+        scale: &Vector<N>,
+        density: N,
+        young_modulus: N,
+        poisson_ratio: N,
+        damping_coeffs: (N, N),
+    ) -> Self
+    {
         let ndofs = vertices.len() * DIM;
         let mut rest_positions = DVector::zeros(ndofs);
 
-        for (i, pt)  in vertices.iter().enumerate() {
+        for (i, pt) in vertices.iter().enumerate() {
             let pt = pos * Point::from(pt.coords.component_mul(&scale));
-            rest_positions.fixed_rows_mut::<Dim>(i * DIM).copy_from(&pt.coords);
+            rest_positions
+                .fixed_rows_mut::<Dim>(i * DIM)
+                .copy_from(&pt.coords);
         }
 
-        let elements = triangles.iter().enumerate().map(|(_i, idx)| {
-            let rest_a = rest_positions.fixed_rows::<Dim>(idx.x * 2);
-            let rest_b = rest_positions.fixed_rows::<Dim>(idx.y * 2);
-            let rest_c = rest_positions.fixed_rows::<Dim>(idx.z * 2);
+        let elements = triangles
+            .iter()
+            .enumerate()
+            .map(|(_i, idx)| {
+                let rest_a = rest_positions.fixed_rows::<Dim>(idx.x * 2);
+                let rest_b = rest_positions.fixed_rows::<Dim>(idx.y * 2);
+                let rest_c = rest_positions.fixed_rows::<Dim>(idx.z * 2);
 
-            let rest_ab = rest_b - rest_a;
-            let rest_ac = rest_c - rest_a;
+                let rest_ab = rest_b - rest_a;
+                let rest_ac = rest_c - rest_a;
 
-            let local_j = Matrix2::new(
-                rest_ab.x, rest_ab.y,
-                rest_ac.x, rest_ac.y,
-            );
+                let local_j = Matrix2::new(rest_ab.x, rest_ab.y, rest_ac.x, rest_ac.y);
 
-            let local_j_inv = local_j.try_inverse().unwrap_or(Matrix2::identity());
-            let local_j_inv = Matrix2x3::new(
-                -local_j_inv.m11 - local_j_inv.m12, local_j_inv.m11, local_j_inv.m12,
-                -local_j_inv.m21 - local_j_inv.m22, local_j_inv.m21, local_j_inv.m22,
-            );
+                let local_j_inv = local_j.try_inverse().unwrap_or(Matrix2::identity());
+                let local_j_inv = Matrix2x3::new(
+                    -local_j_inv.m11 - local_j_inv.m12,
+                    local_j_inv.m11,
+                    local_j_inv.m12,
+                    -local_j_inv.m21 - local_j_inv.m22,
+                    local_j_inv.m21,
+                    local_j_inv.m22,
+                );
 
-            TriangularElement {
-                indices: idx * DIM,
-                com: Point::origin(),
-                rot: RotationMatrix::identity(),
-                inv_rot: RotationMatrix::identity(),
-                j: local_j,
-                local_j_inv,
-                total_strain: SpatialVector::zeros(),
-                plastic_strain: SpatialVector::zeros(),
-                surface: local_j.determinant() / na::convert(2.0),
-                density,
-            }
-        }).collect();
+                TriangularElement {
+                    indices: idx * DIM,
+                    com: Point::origin(),
+                    rot: RotationMatrix::identity(),
+                    inv_rot: RotationMatrix::identity(),
+                    j: local_j,
+                    local_j_inv,
+                    total_strain: SpatialVector::zeros(),
+                    plastic_strain: SpatialVector::zeros(),
+                    surface: local_j.determinant() / na::convert(2.0),
+                    density,
+                }
+            })
+            .collect();
 
         let (d0, d1, d2) = fem_helper::elasticity_coefficients(young_modulus, poisson_ratio);
 
@@ -140,11 +161,13 @@ impl<N: RealField> FEMSurface<N> {
             plasticity_max_force: N::zero(),
             plasticity_creep: N::zero(),
             gravity_enabled: true,
-            d0, d1, d2,
+            d0,
+            d1,
+            d2,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
             update_status: BodyUpdateStatus::all(),
-            user_data: None
+            user_data: None,
         }
     }
 
@@ -175,7 +198,6 @@ impl<N: RealField> FEMSurface<N> {
         &mut self.velocities
     }
 
-
     /// Sets the plastic properties of this deformable surface.
     ///
     /// Note that large plasticity creep coefficient can yield to significant instability.
@@ -190,7 +212,8 @@ impl<N: RealField> FEMSurface<N> {
         self.update_status.set_local_inertia_changed(true);
         self.young_modulus = young_modulus;
 
-        let (d0, d1, d2) = fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
+        let (d0, d1, d2) =
+            fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
         self.d0 = d0;
         self.d1 = d1;
         self.d2 = d2;
@@ -201,7 +224,8 @@ impl<N: RealField> FEMSurface<N> {
         self.update_status.set_local_inertia_changed(true);
         self.poisson_ratio = poisson_ratio;
 
-        let (d0, d1, d2) = fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
+        let (d0, d1, d2) =
+            fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
         self.d0 = d0;
         self.d1 = d1;
         self.d2 = d2;
@@ -211,7 +235,8 @@ impl<N: RealField> FEMSurface<N> {
         let mass_damping = dt * self.damping_coeffs.0;
 
         for elt in self.elements.iter() {
-            let coeff_mass = elt.density * elt.surface / na::convert::<_, N>(12.0f64) * (N::one() + mass_damping);
+            let coeff_mass = elt.density * elt.surface / na::convert::<_, N>(12.0f64)
+                * (N::one() + mass_damping);
 
             for a in 0..3 {
                 let ia = elt.indices[a];
@@ -227,7 +252,8 @@ impl<N: RealField> FEMSurface<N> {
                                 coeff_mass
                             };
 
-                            let mut node_mass = self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
+                            let mut node_mass =
+                                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
                             for i in 0..DIM {
                                 node_mass[(i, i)] += mass_contribution;
                             }
@@ -240,11 +266,12 @@ impl<N: RealField> FEMSurface<N> {
         // Set the identity for kinematic nodes.
         for i in 0..self.kinematic_nodes.len() {
             if self.kinematic_nodes[i] {
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(i * DIM, i * DIM).fill_diagonal(N::one());
+                self.augmented_mass
+                    .fixed_slice_mut::<Dim, Dim>(i * DIM, i * DIM)
+                    .fill_diagonal(N::one());
             }
         }
     }
-
 
     fn assemble_stiffness(&mut self, dt: N) {
         let _1: N = na::one();
@@ -283,21 +310,28 @@ impl<N: RealField> FEMSurface<N> {
                         let bm = elt.local_j_inv[(0, b)];
                         let cm = elt.local_j_inv[(1, b)];
 
-
                         // NOTE: this could be precomputed as this is constant.
                         // however we don't because this has a significant memory
                         // cost (Matrix2 * 3 * 3 for each element).
                         let node_stiffness = Matrix2::new(
-                            bn0 * bm + cn2 * cm, bn1 * cm + cn2 * bm,
-                            cn1 * bm + bn2 * cm, cn0 * cm + bn2 * bm,
+                            bn0 * bm + cn2 * cm,
+                            bn1 * cm + cn2 * bm,
+                            cn1 * bm + bn2 * cm,
+                            cn0 * cm + bn2 * bm,
                         );
 
                         let rot_stiffness = elt.rot * node_stiffness;
                         let ib = elt.indices[b];
 
                         if !self.kinematic_nodes[ib / DIM] {
-                            let mut mass_part = self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
-                            mass_part.gemm(stiffness_coeff, &rot_stiffness, elt.inv_rot.matrix(), N::one());
+                            let mut mass_part =
+                                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
+                            mass_part.gemm(
+                                stiffness_coeff,
+                                &rot_stiffness,
+                                elt.inv_rot.matrix(),
+                                N::one(),
+                            );
                         }
                     }
                 }
@@ -315,7 +349,8 @@ impl<N: RealField> FEMSurface<N> {
         // Gravity
         if self.gravity_enabled {
             for elt in self.elements.iter() {
-                let contribution = gravity * (elt.density * elt.surface * na::convert::<_, N>(1.0 / 3.0));
+                let contribution =
+                    gravity * (elt.density * elt.surface * na::convert::<_, N>(1.0 / 3.0));
 
                 for k in 0..3 {
                     let ie = elt.indices[k];
@@ -329,7 +364,6 @@ impl<N: RealField> FEMSurface<N> {
         }
 
         for elt in self.elements.iter_mut() {
-
             let d0_surf = self.d0 * elt.surface;
             let d1_surf = self.d1 * elt.surface;
             let d2_surf = self.d2 * elt.surface;
@@ -352,11 +386,8 @@ impl<N: RealField> FEMSurface<N> {
                 let ref_pos_part = self.rest_positions.fixed_rows::<Dim>(ia);
                 let dpos = elt.inv_rot * (vel_part * dt + pos_part) - ref_pos_part;
                 // total_strain += B_n * dpos
-                elt.total_strain += Vector3::new(
-                    bn * dpos.x,
-                    cn * dpos.y,
-                    cn * dpos.x + bn * dpos.y,
-                );
+                elt.total_strain +=
+                    Vector3::new(bn * dpos.x, cn * dpos.y, cn * dpos.x + bn * dpos.y);
             }
 
             let strain = elt.total_strain - elt.plastic_strain;
@@ -427,32 +458,47 @@ impl<N: RealField> FEMSurface<N> {
             let k2 = key(elt.indices.y, elt.indices.z);
             let k3 = key(elt.indices.z, elt.indices.x);
 
-            faces.entry(k1).or_insert((0, elt.indices.z, i)).0.add_assign(1);
-            faces.entry(k2).or_insert((0, elt.indices.x, i)).0.add_assign(1);
-            faces.entry(k3).or_insert((0, elt.indices.y, i)).0.add_assign(1);
+            faces
+                .entry(k1)
+                .or_insert((0, elt.indices.z, i))
+                .0
+                .add_assign(1);
+            faces
+                .entry(k2)
+                .or_insert((0, elt.indices.x, i))
+                .0
+                .add_assign(1);
+            faces
+                .entry(k3)
+                .or_insert((0, elt.indices.y, i))
+                .0
+                .add_assign(1);
         }
 
-        let boundary = faces.iter().filter_map(|(k, n)| {
-            if n.0 == 1 {
-                // Ensure the triangle has an outward normal.
-                // FIXME: there is a much more efficient way of doing this, given the
-                // triangles orientations and the face.
-                let a = self.positions.fixed_rows::<Dim>(k.0);
-                let b = self.positions.fixed_rows::<Dim>(k.1);
-                let c = self.positions.fixed_rows::<Dim>(n.1);
+        let boundary = faces
+            .iter()
+            .filter_map(|(k, n)| {
+                if n.0 == 1 {
+                    // Ensure the triangle has an outward normal.
+                    // FIXME: there is a much more efficient way of doing this, given the
+                    // triangles orientations and the face.
+                    let a = self.positions.fixed_rows::<Dim>(k.0);
+                    let b = self.positions.fixed_rows::<Dim>(k.1);
+                    let c = self.positions.fixed_rows::<Dim>(n.1);
 
-                let ab = b - a;
-                let ac = c - a;
+                    let ab = b - a;
+                    let ac = c - a;
 
-                if ab.perp(&ac) < N::zero() {
-                    Some((Point2::new(k.0, k.1), n.2))
+                    if ab.perp(&ac) < N::zero() {
+                        Some((Point2::new(k.0, k.1), n.2))
+                    } else {
+                        Some((Point2::new(k.1, k.0), n.2))
+                    }
                 } else {
-                    Some((Point2::new(k.1, k.0), n.2))
+                    None
                 }
-            } else {
-                None
-            }
-        }).collect();
+            })
+            .collect();
 
         boundary
     }
@@ -467,7 +513,9 @@ impl<N: RealField> FEMSurface<N> {
         const INVALID: usize = usize::max_value();
         let mut deformation_indices = Vec::new();
         let mut indices = self.boundary();
-        let mut idx_remap: Vec<usize> = iter::repeat(INVALID).take(self.positions.len() / 2).collect();
+        let mut idx_remap: Vec<usize> = iter::repeat(INVALID)
+            .take(self.positions.len() / 2)
+            .collect();
         let mut vertices = Vec::new();
 
         for (idx, _) in &mut indices {
@@ -477,8 +525,8 @@ impl<N: RealField> FEMSurface<N> {
                     let new_id = vertices.len();
                     vertices.push(Point2::new(
                         self.positions[*idx_i + 0],
-                        self.positions[*idx_i + 1])
-                    );
+                        self.positions[*idx_i + 1],
+                    ));
                     deformation_indices.push(*idx_i);
                     idx_remap[*idx_i / 2] = new_id;
                     *idx_i = new_id;
@@ -491,7 +539,11 @@ impl<N: RealField> FEMSurface<N> {
         let body_parts = indices.iter().map(|i| i.1).collect();
         let indices = indices.into_iter().map(|i| i.0).collect();
 
-        (Polyline::new(vertices, Some(indices)), deformation_indices, body_parts)
+        (
+            Polyline::new(vertices, Some(indices)),
+            deformation_indices,
+            body_parts,
+        )
     }
 
     /// Computes the `DeformableColliderDesc` that can generate a collider covering the boundary polyline of this FEM surface.
@@ -517,8 +569,12 @@ impl<N: RealField> FEMSurface<N> {
         for (target_i, orig_i) in deformation_indices.iter().cloned().enumerate() {
             assert!(!remapped[orig_i], "Duplicate DOF remapping found.");
             let target_i = target_i * 2;
-            new_positions.fixed_rows_mut::<Dim>(target_i).copy_from(&self.positions.fixed_rows::<Dim>(orig_i));
-            new_rest_positions.fixed_rows_mut::<Dim>(target_i).copy_from(&self.rest_positions.fixed_rows::<Dim>(orig_i));
+            new_positions
+                .fixed_rows_mut::<Dim>(target_i)
+                .copy_from(&self.positions.fixed_rows::<Dim>(orig_i));
+            new_rest_positions
+                .fixed_rows_mut::<Dim>(target_i)
+                .copy_from(&self.rest_positions.fixed_rows::<Dim>(orig_i));
             dof_map[orig_i] = target_i;
             remapped[orig_i] = true;
         }
@@ -527,8 +583,12 @@ impl<N: RealField> FEMSurface<N> {
 
         for orig_i in (0..self.positions.len()).step_by(2) {
             if !remapped[orig_i] {
-                new_positions.fixed_rows_mut::<Dim>(curr_target).copy_from(&self.positions.fixed_rows::<Dim>(orig_i));
-                new_rest_positions.fixed_rows_mut::<Dim>(curr_target).copy_from(&self.rest_positions.fixed_rows::<Dim>(orig_i));
+                new_positions
+                    .fixed_rows_mut::<Dim>(curr_target)
+                    .copy_from(&self.positions.fixed_rows::<Dim>(orig_i));
+                new_rest_positions
+                    .fixed_rows_mut::<Dim>(curr_target)
+                    .copy_from(&self.rest_positions.fixed_rows::<Dim>(orig_i));
                 dof_map[orig_i] = curr_target;
                 curr_target += 2;
             }
@@ -542,13 +602,23 @@ impl<N: RealField> FEMSurface<N> {
         self.rest_positions = new_rest_positions;
     }
 
-// FIXME: add a method to apply a transformation to the whole surface.
+    // FIXME: add a method to apply a transformation to the whole surface.
 
     /// Constructs an axis-aligned cube with regular subdivisions along each axis.
     ///
     /// The cube is subdivided `nx` (resp. `ny`) times along
     /// the `x` (resp. `y`) axis.
-    fn quad(pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    fn quad(
+        pos: &Isometry<N>,
+        extents: &Vector2<N>,
+        nx: usize,
+        ny: usize,
+        density: N,
+        young_modulus: N,
+        poisson_ratio: N,
+        damping_coeffs: (N, N),
+    ) -> Self
+    {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -595,7 +665,16 @@ impl<N: RealField> FEMSurface<N> {
             }
         }
 
-        Self::new(&vertices, &indices, pos, extents, density, young_modulus, poisson_ratio, damping_coeffs)
+        Self::new(
+            &vertices,
+            &indices,
+            pos,
+            extents,
+            density,
+            young_modulus,
+            poisson_ratio,
+            damping_coeffs,
+        )
     }
 
     /// Restrict the specified node acceleration to always be zero so
@@ -650,10 +729,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
             let ab = b - a;
             let ac = c - a;
 
-            elt.j = Matrix::new(
-                ab.x, ab.y,
-                ac.x, ac.y,
-            );
+            elt.j = Matrix::new(ab.x, ab.y, ac.x, ac.y);
 
             let g = (elt.local_j_inv.fixed_slice::<Dim, Dim>(0, 1) * elt.j).transpose();
             elt.rot = RotationMatrix::from_matrix_eps(&g, N::default_epsilon(), 20, elt.rot);
@@ -677,14 +753,13 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
             // FIXME: if Cholesky fails fallback to some sort of mass-spring formulation?
             //        If we do so we should add a bool to let give the user the ability to check which
             //        model has been used during the last timestep.
-            self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).expect("Singular system found.");
+            self.inv_augmented_mass =
+                Cholesky::new(self.augmented_mass.clone()).expect("Singular system found.");
         }
     }
 
     /// Update the dynamics property of this deformable surface.
-    fn update_acceleration(&mut self,
-                           gravity: &Vector<N>,
-                           parameters: &IntegrationParameters<N>) {
+    fn update_acceleration(&mut self, gravity: &Vector<N>, parameters: &IntegrationParameters<N>) {
         self.assemble_forces(gravity, parameters);
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
     }
@@ -748,7 +823,8 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
 
     fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(parameters.dt(), &self.velocities, N::one())
+        self.positions
+            .axpy(parameters.dt(), &self.velocities, N::one())
     }
 
     fn activate_with_energy(&mut self, energy: N) {
@@ -770,19 +846,37 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
     }
 
     fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
-        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
-        fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
+        let elt = part
+            .downcast_ref::<TriangularElement<N>>()
+            .expect("The provided body part must be a triangular element");
+        fem_helper::world_point_at_material_point(
+            FiniteElementIndices::Triangle(elt.indices),
+            &self.positions,
+            point,
+        )
     }
 
     fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
-        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
-        let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point);
+        let elt = part
+            .downcast_ref::<TriangularElement<N>>()
+            .expect("The provided body part must be a triangular element");
+        let pt = fem_helper::world_point_at_material_point(
+            FiniteElementIndices::Triangle(elt.indices),
+            &self.positions,
+            point,
+        );
         Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
     fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
-        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
-        fem_helper::material_point_at_world_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
+        let elt = part
+            .downcast_ref::<TriangularElement<N>>()
+            .expect("The provided body part must be a triangular element");
+        fem_helper::material_point_at_world_point(
+            FiniteElementIndices::Triangle(elt.indices),
+            &self.positions,
+            point,
+        )
     }
 
     fn fill_constraint_geometry(
@@ -796,9 +890,12 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         jacobians: &mut [N],
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
-        out_vel: Option<&mut N>
-    ) {
-        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
+        out_vel: Option<&mut N>,
+    )
+    {
+        let elt = part
+            .downcast_ref::<TriangularElement<N>>()
+            .expect("The provided body part must be a triangular element");
         fem_helper::fill_contact_geometry_fem(
             self.ndofs(),
             self.status,
@@ -814,7 +911,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
             jacobians,
             inv_r,
             ext_vels,
-            out_vel
+            out_vel,
         );
     }
 
@@ -824,7 +921,13 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &DVectorSlice<N>, _: &IntegrationParameters<N>) {}
+    fn setup_internal_velocity_constraints(
+        &mut self,
+        _: &DVectorSlice<N>,
+        _: &IntegrationParameters<N>,
+    )
+    {
+    }
 
     #[inline]
     fn warmstart_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
@@ -835,7 +938,15 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 
-    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -855,7 +966,9 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
             ForceType::Force => {
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        self.forces.fixed_rows_mut::<Dim>(element.indices[i]).add_assign(forces[i]);
+                        self.forces
+                            .fixed_rows_mut::<Dim>(element.indices[i])
+                            .add_assign(forces[i]);
                     }
                 }
             }
@@ -864,7 +977,8 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
                 dvel.fill(N::zero());
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        dvel.fixed_rows_mut::<Dim>(element.indices[i]).copy_from(&forces[i]);
+                        dvel.fixed_rows_mut::<Dim>(element.indices[i])
+                            .copy_from(&forces[i]);
                     }
                 }
                 self.inv_augmented_mass.solve_mut(dvel);
@@ -875,49 +989,101 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
 
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        self.forces.fixed_rows_mut::<Dim>(element.indices[i]).add_assign(forces[i] * mass);
+                        self.forces
+                            .fixed_rows_mut::<Dim>(element.indices[i])
+                            .add_assign(forces[i] * mass);
                     }
                 }
             }
             ForceType::VelocityChange => {
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        self.velocities.fixed_rows_mut::<Dim>(element.indices[i]).add_assign(forces[i]);
+                        self.velocities
+                            .fixed_rows_mut::<Dim>(element.indices[i])
+                            .add_assign(forces[i]);
                     }
                 }
             }
         }
     }
 
-    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let _1_3: N = na::convert(1.0 / 3.0);
         let barycenter = Point::new(_1_3, _1_3);
-        self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
+        self.apply_force_at_local_point(
+            part_id,
+            &force.linear,
+            &barycenter,
+            force_type,
+            auto_wake_up,
+        )
     }
 
-    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let world_force = Force::new(self.elements[part_id].rot * force.linear, force.angular);
         self.apply_force(part_id, &world_force, force_type, auto_wake_up);
     }
 
-    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
     }
 
-    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let world_force = self.elements[part_id].rot * force;
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
-        self.apply_force_at_local_point(part_id, &world_force, &local_point, force_type, auto_wake_up);
+        self.apply_force_at_local_point(
+            part_id,
+            &world_force,
+            &local_point,
+            force_type,
+            auto_wake_up,
+        );
     }
 
-
-    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let world_force = self.elements[part_id].rot * force;
         self.apply_force_at_local_point(part_id, &world_force, &point, force_type, auto_wake_up);
     }
 }
-
 
 impl<N: RealField> BodyPart<N> for TriangularElement<N> {
     fn center_of_mass(&self) -> Point<N> {
@@ -944,10 +1110,9 @@ impl<N: RealField> BodyPart<N> for TriangularElement<N> {
     }
 }
 
-
 enum FEMSurfaceDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
-    Triangles(&'a [Point<N>], &'a [Point3<usize>])
+    Triangles(&'a [Point<N>], &'a [Point3<usize>]),
 }
 
 /// A builder for FEMSurface bodies.
@@ -968,7 +1133,6 @@ pub struct FEMSurfaceDesc<'a, N: RealField> {
     gravity_enabled: bool,
 }
 
-
 impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
     fn with_geometry(geom: FEMSurfaceDescGeometry<'a, N>) -> Self {
         FEMSurfaceDesc {
@@ -985,7 +1149,7 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
             density: N::one(),
             plasticity: (N::zero(), N::zero(), N::zero()),
             kinematic_nodes: Vec::new(),
-            status: BodyStatus::Dynamic
+            status: BodyStatus::Dynamic,
         }
     }
 
@@ -1050,15 +1214,26 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
     /// Builds a finite-element based deformable body from this description.
     pub fn build(&self) -> FEMSurface<N> {
         let mut vol = match self.geom {
-            FEMSurfaceDescGeometry::Quad(nx, ny) =>
-                FEMSurface::quad(&self.position, &self.scale,
-                                 nx, ny, self.density, self.young_modulus,
-                                 self.poisson_ratio,
-                                 (self.mass_damping, self.stiffness_damping)),
-            FEMSurfaceDescGeometry::Triangles(pts, idx) =>
-                FEMSurface::new(pts, idx, &self.position, &self.scale,
-                                self.density, self.young_modulus, self.poisson_ratio,
-                                (self.mass_damping, self.stiffness_damping))
+            FEMSurfaceDescGeometry::Quad(nx, ny) => FEMSurface::quad(
+                &self.position,
+                &self.scale,
+                nx,
+                ny,
+                self.density,
+                self.young_modulus,
+                self.poisson_ratio,
+                (self.mass_damping, self.stiffness_damping),
+            ),
+            FEMSurfaceDescGeometry::Triangles(pts, idx) => FEMSurface::new(
+                pts,
+                idx,
+                &self.position,
+                &self.scale,
+                self.density,
+                self.young_modulus,
+                self.poisson_ratio,
+                (self.mass_damping, self.stiffness_damping),
+            ),
         };
 
         vol.set_deactivation_threshold(self.sleep_threshold);

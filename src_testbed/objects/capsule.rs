@@ -1,8 +1,8 @@
+use crate::objects::node::{self, GraphicsNode};
 use kiss3d::window;
 use na::Point3;
-use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-use crate::objects::node::{self, GraphicsNode};
 use nphysics::math::Isometry;
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 
 pub struct Capsule {
     color: Point3<f32>,
@@ -21,12 +21,12 @@ impl Capsule {
         h: f32,
         color: Point3<f32>,
         window: &mut window::Window,
-    ) -> Capsule {
+    ) -> Capsule
+    {
         #[cfg(feature = "dim2")]
-            let node = window.add_planar_capsule(r, h);
+        let node = window.add_planar_capsule(r, h);
         #[cfg(feature = "dim3")]
-            let node = window.add_capsule(r, h);
-
+        let node = window.add_capsule(r, h);
 
         let mut res = Capsule {
             color,

@@ -1,10 +1,10 @@
+use crate::objects::node;
 use kiss3d::resource;
 use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 use na::{self, Isometry3, Point3, Vector3};
 use ncollide::shape::TriMesh;
-use nphysics::object::{DefaultColliderHandle, ColliderAnchor, DefaultColliderSet};
-use crate::objects::node;
+use nphysics::object::{ColliderAnchor, DefaultColliderHandle, DefaultColliderSet};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -25,7 +25,8 @@ impl Mesh {
         indices: Vec<Point3<u32>>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Mesh {
+    ) -> Mesh
+    {
         let vs = vertices;
         let is = indices.into_iter().map(na::convert).collect();
 
@@ -44,10 +45,10 @@ impl Mesh {
             .unwrap()
             .query_type()
             .is_proximity_query()
-            {
-                res.gfx.set_surface_rendering_activation(false);
-                res.gfx.set_lines_width(1.0);
-            }
+        {
+            res.gfx.set_surface_rendering_activation(false);
+            res.gfx.set_lines_width(1.0);
+        }
 
         res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);

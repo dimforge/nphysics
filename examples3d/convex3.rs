@@ -2,15 +2,16 @@ extern crate nalgebra as na;
 
 use na::{Point3, Vector3};
 use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-use rand::distributions::{Standard, Distribution};
-use rand::{SeedableRng, rngs::StdRng};
-
+use rand::distributions::{Distribution, Standard};
+use rand::{rngs::StdRng, SeedableRng};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -23,13 +24,11 @@ pub fn init_world(testbed: &mut Testbed) {
     let joint_constraints = DefaultJointConstraintSet::new();
     let force_generators = DefaultForceGeneratorSet::new();
 
-
     /*
      * Ground
      */
     let ground_thickness = 0.2;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -63,7 +62,6 @@ pub fn init_world(testbed: &mut Testbed) {
                     pts.push(pt * 0.4);
                 }
 
-
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
                     .translation(Vector3::new(x, y, z))
@@ -84,14 +82,19 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Convex", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Convex", init_world)]);
 
     testbed.run()
 }

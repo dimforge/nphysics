@@ -3,10 +3,12 @@ use std::ops::Range;
 
 use crate::joint::{unit_constraint, JointConstraint};
 use crate::math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
-use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
+use crate::object::{Body, BodyHandle, BodyPartHandle, BodySet};
 use crate::solver::helper;
-use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
-             NonlinearConstraintGenerator};
+use crate::solver::{
+    GenericNonlinearConstraint, IntegrationParameters, LinearConstraints,
+    NonlinearConstraintGenerator,
+};
 
 /// A constraint that remove all be one translational degrees of freedom.
 pub struct PrismaticConstraint<N: RealField, Handle: BodyHandle> {
@@ -38,7 +40,8 @@ impl<N: RealField, Handle: BodyHandle> PrismaticConstraint<N, Handle> {
         anchor1: Point<N>,
         axis1: Unit<Vector<N>>,
         anchor2: Point<N>,
-    ) -> Self {
+    ) -> Self
+    {
         let min_offset = None;
         let max_offset = None;
 
@@ -112,7 +115,9 @@ impl<N: RealField, Handle: BodyHandle> PrismaticConstraint<N, Handle> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for PrismaticConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
+    JointConstraint<N, Bodies> for PrismaticConstraint<N, Handle>
+{
     fn is_broken(&self) -> bool {
         self.broken
     }
@@ -134,7 +139,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut LinearConstraints<N, usize>,
-    ) {
+    )
+    {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
@@ -228,8 +234,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
             constraints,
         );
 
-        self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_ground_rng = first_bilateral_ground..constraints.bilateral_ground.len();
         self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
@@ -256,14 +261,17 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
 
         let inv_dt2 = inv_dt * inv_dt;
 
-        if self.lin_impulses.norm_squared() * inv_dt2 > self.break_force_squared ||
-            self.ang_impulses.norm_squared() * inv_dt2 > self.break_torque_squared {
+        if self.lin_impulses.norm_squared() * inv_dt2 > self.break_force_squared
+            || self.ang_impulses.norm_squared() * inv_dt2 > self.break_torque_squared
+        {
             self.broken = true;
         }
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for PrismaticConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
+    NonlinearConstraintGenerator<N, Bodies> for PrismaticConstraint<N, Handle>
+{
     fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
@@ -283,7 +291,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>>
+    {
         let body1 = bodies.get(self.b1.0)?;
         let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
@@ -314,17 +323,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
             let axis = pos1 * self.axis1;
 
             return helper::project_anchor_to_axis(
-                parameters,
-                body1,
-                part1,
-                self.b1,
-                body2,
-                part2,
-                self.b2,
-                &anchor1,
-                &anchor2,
-                &axis,
-                jacobians,
+                parameters, body1, part1, self.b1, body2, part2, self.b2, &anchor1, &anchor2,
+                &axis, jacobians,
             );
         } else if i == 2 {
             let axis = pos1 * self.axis1;

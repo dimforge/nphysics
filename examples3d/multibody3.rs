@@ -1,19 +1,20 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3, Isometry3};
+use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{MultibodyDesc, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics3d::joint::{
     BallJoint, FixedJoint, HelicalJoint, PinSlotJoint, PlanarJoint, PrismaticJoint,
     RectangularJoint, RevoluteJoint, UniversalJoint,
 };
+use nphysics3d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, MultibodyDesc,
+};
+use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 
 use nphysics_testbed3d::Testbed;
 use std::f32::consts::PI;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -47,9 +48,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut curr = &mut multibody_desc;
 
     for _ in 0usize..num {
-        curr = curr
-            .add_child(revo)
-            .set_body_shift(body_shift);
+        curr = curr.add_child(revo).set_body_shift(body_shift);
     }
 
     let multibody = multibody_desc.build();
@@ -66,8 +65,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let mut prism = PrismaticJoint::new(Vector3::y_axis(), 0.0);
     prism.enable_min_offset(-rad * 2.0); // Limit the joint so it does not fall indefinitely.
-    let mut multibody_desc = MultibodyDesc::new(prism)
-        .parent_shift(Vector3::new(0.0, 5.0, 5.0));
+    let mut multibody_desc = MultibodyDesc::new(prism).parent_shift(Vector3::new(0.0, 5.0, 5.0));
 
     let mut curr = &mut multibody_desc;
 
@@ -86,13 +84,11 @@ pub fn init_world(testbed: &mut Testbed) {
         colliders.insert(co);
     }
 
-
     /*
      * Ball joint.
      */
     let spherical = BallJoint::new(na::zero());
-    let mut multibody_desc = MultibodyDesc::new(spherical)
-        .parent_shift(Vector3::y() * 5.0);
+    let mut multibody_desc = MultibodyDesc::new(spherical).parent_shift(Vector3::y() * 5.0);
     let mut curr = &mut multibody_desc;
 
     for i in 0usize..num {
@@ -130,11 +126,9 @@ pub fn init_world(testbed: &mut Testbed) {
     let parent_shift = Vector3::new(0.0, 3.0, -5.0);
     let body_shift = -Vector3::z();
 
-    let mut multibody_desc = MultibodyDesc::new(fixed)
-        .parent_shift(parent_shift);
+    let mut multibody_desc = MultibodyDesc::new(fixed).parent_shift(parent_shift);
 
-    multibody_desc.add_child(uni)
-        .set_body_shift(body_shift);
+    multibody_desc.add_child(uni).set_body_shift(body_shift);
 
     // Remove the default damping so that it balances indefinitely.
     let mut multibody = multibody_desc.build();
@@ -153,9 +147,7 @@ pub fn init_world(testbed: &mut Testbed) {
     hel.set_desired_angular_motor_velocity(4.0);
 
     let parent_shift = Vector3::new(0.0, -2.0, 10.0);
-    let helical_multibody = MultibodyDesc::new(hel)
-        .parent_shift(parent_shift)
-        .build();
+    let helical_multibody = MultibodyDesc::new(hel).parent_shift(parent_shift).build();
     let helical_handle = bodies.insert(helical_multibody);
     colliders.insert(collider_desc.build(BodyPartHandle(helical_handle, 0)));
 
@@ -180,9 +172,7 @@ pub fn init_world(testbed: &mut Testbed) {
             planar.enable_max_offset_1(width / 2.0);
             planar.enable_min_offset_2(-5.0);
 
-            let multibody = MultibodyDesc::new(planar)
-                .parent_shift(shift)
-                .build();
+            let multibody = MultibodyDesc::new(planar).parent_shift(shift).build();
             let multibody_handle = bodies.insert(multibody);
             colliders.insert(collider_desc.build(BodyPartHandle(multibody_handle, 0)));
         }
@@ -210,9 +200,7 @@ pub fn init_world(testbed: &mut Testbed) {
             rect.enable_max_offset_1(width / 2.0);
             rect.enable_min_offset_2(-5.0);
 
-            let multibody = MultibodyDesc::new(rect)
-                .parent_shift(shift)
-                .build();
+            let multibody = MultibodyDesc::new(rect).parent_shift(shift).build();
             let multibody_handle = bodies.insert(multibody);
             colliders.insert(collider_desc.build(BodyPartHandle(multibody_handle, 0)));
         }
@@ -230,12 +218,9 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut pin_slot = PinSlotJoint::new(axis_v, axis_w, -10.0, 0.0);
     pin_slot.set_desired_linear_motor_velocity(3.0);
 
-    let pin_slot_multibody = MultibodyDesc::new(pin_slot)
-        .parent_shift(shift)
-        .build();
+    let pin_slot_multibody = MultibodyDesc::new(pin_slot).parent_shift(shift).build();
     let pin_slot_handle = bodies.insert(pin_slot_multibody);
     colliders.insert(collider_desc.build(BodyPartHandle(pin_slot_handle, 0)));
-
 
     /*
      * Set up the testbed.
@@ -245,7 +230,9 @@ pub fn init_world(testbed: &mut Testbed) {
          * Activate the helical joint motor if it is to low.
          */
         // Might be None if the user interactively deleted the helical body.
-        let link = bodies.multibody_mut(helical_handle).and_then(|mb| mb.link_mut(0));
+        let link = bodies
+            .multibody_mut(helical_handle)
+            .and_then(|mb| mb.link_mut(0));
         if let Some(helical) = link {
             let dof = helical
                 .joint_mut()
@@ -265,7 +252,9 @@ pub fn init_world(testbed: &mut Testbed) {
          * Activate the pin-slot joint linear motor if it is to low.
          */
         // Might be None if the user interactively deleted the pin-slot body.
-        let link = bodies.multibody_mut(pin_slot_handle).and_then(|mb| mb.link_mut(0));
+        let link = bodies
+            .multibody_mut(pin_slot_handle)
+            .and_then(|mb| mb.link_mut(0));
         if let Some(pin_slot) = link {
             let dof = pin_slot
                 .joint_mut()
@@ -280,19 +269,23 @@ pub fn init_world(testbed: &mut Testbed) {
         }
     });
 
-
     // NOTE: we add another static body to the scene. It is not necessary for our simulation
     // but this is required so that we can call `testbed.set_ground_handle` which will
     // enable the testbed's feature that lets us grab an object with the mouse.
     let ground_handle = bodies.insert(Ground::new());
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
     testbed.look_at(Point3::new(30.0, -2.0, 0.0), Point3::new(0.0, -2.0, 0.0));
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("Multibody", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("Multibody", init_world)]);
     testbed.run()
 }

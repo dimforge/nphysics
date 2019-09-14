@@ -3,10 +3,12 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point};
-use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
+use crate::object::{Body, BodyHandle, BodyPartHandle, BodySet};
 use crate::solver::helper;
-use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
-             NonlinearConstraintGenerator};
+use crate::solver::{
+    GenericNonlinearConstraint, IntegrationParameters, LinearConstraints,
+    NonlinearConstraintGenerator,
+};
 
 /// A constraint that remove all relative rotations and one relative translation between two body parts.
 pub struct RectangularConstraint<N: RealField, Handle: BodyHandle> {
@@ -35,7 +37,8 @@ impl<N: RealField, Handle: BodyHandle> RectangularConstraint<N, Handle> {
         anchor1: Point<N>,
         axis1: Unit<AngularVector<N>>,
         anchor2: Point<N>,
-    ) -> Self {
+    ) -> Self
+    {
         RectangularConstraint {
             b1,
             b2,
@@ -63,7 +66,9 @@ impl<N: RealField, Handle: BodyHandle> RectangularConstraint<N, Handle> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for RectangularConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
+    JointConstraint<N, Bodies> for RectangularConstraint<N, Handle>
+{
     fn is_broken(&self) -> bool {
         self.broken
     }
@@ -85,7 +90,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut LinearConstraints<N, usize>,
-    ) {
+    )
+    {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
@@ -157,8 +163,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
          *
          */
 
-        self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_ground_rng = first_bilateral_ground..constraints.bilateral_ground.len();
         self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
@@ -181,14 +186,17 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
 
         let inv_dt2 = inv_dt * inv_dt;
 
-        if self.lin_impulse * self.lin_impulse * inv_dt2 > self.break_force_squared ||
-            self.ang_impulses.norm_squared() * inv_dt2 > self.break_torque_squared {
+        if self.lin_impulse * self.lin_impulse * inv_dt2 > self.break_force_squared
+            || self.ang_impulses.norm_squared() * inv_dt2 > self.break_torque_squared
+        {
             self.broken = true;
         }
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for RectangularConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
+    NonlinearConstraintGenerator<N, Bodies> for RectangularConstraint<N, Handle>
+{
     fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
@@ -204,7 +212,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>>
+    {
         let body1 = bodies.get(self.b1.0)?;
         let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
@@ -220,17 +229,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
         if i == 0 {
             return helper::cancel_relative_translation_wrt_axis(
-                parameters,
-                body1,
-                part1,
-                self.b1,
-                body2,
-                part2,
-                self.b2,
-                &anchor1,
-                &anchor2,
-                &axis1,
-                jacobians,
+                parameters, body1, part1, self.b1, body2, part2, self.b2, &anchor1, &anchor2,
+                &axis1, jacobians,
             );
         }
 

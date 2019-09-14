@@ -1,42 +1,42 @@
-#[cfg(feature = "dim2")]
-use kiss3d::planar_camera::Sidescroll as Camera;
 #[cfg(feature = "dim3")]
 use kiss3d::camera::ArcBall as Camera;
+#[cfg(feature = "dim2")]
+use kiss3d::planar_camera::Sidescroll as Camera;
 use kiss3d::window::Window;
 use na;
 use na::Point3;
-use ncollide::shape::{self, Compound, Cuboid, Shape};
 #[cfg(feature = "dim2")]
 use na::Translation2 as Translation;
 #[cfg(feature = "dim3")]
 use na::Translation3 as Translation;
+use ncollide::shape::{self, Compound, Cuboid, Shape};
 
+use crate::objects::ball::Ball;
+use crate::objects::box_node::Box;
+use crate::objects::capsule::Capsule;
+use crate::objects::convex::Convex;
+use crate::objects::heightfield::HeightField;
+#[cfg(feature = "dim3")]
+use crate::objects::mesh::Mesh;
+use crate::objects::node::{GraphicsNode, Node};
+use crate::objects::plane::Plane;
+#[cfg(feature = "dim2")]
+use crate::objects::polyline::Polyline;
+use ncollide::pipeline::CollisionGroups;
+use ncollide::query::Ray;
 #[cfg(feature = "dim2")]
 use ncollide::shape::ConvexPolygon;
 #[cfg(feature = "dim3")]
 use ncollide::shape::{ConvexHull, TriMesh};
 #[cfg(feature = "dim3")]
 use ncollide::transformation;
-use ncollide::query::Ray;
-use ncollide::pipeline::CollisionGroups;
+use nphysics::math::{Isometry, Point, Vector};
 use nphysics::object::{
-    DefaultBodyHandle, DefaultBodyPartHandle, DefaultColliderHandle,
-    ColliderAnchor, DefaultColliderSet
+    ColliderAnchor, DefaultBodyHandle, DefaultBodyPartHandle, DefaultColliderHandle,
+    DefaultColliderSet,
 };
 use nphysics::world::DefaultGeometricalWorld;
-use nphysics::math::{Isometry, Vector, Point};
-use crate::objects::ball::Ball;
-use crate::objects::box_node::Box;
-use crate::objects::convex::Convex;
-#[cfg(feature = "dim3")]
-use crate::objects::mesh::Mesh;
-#[cfg(feature = "dim2")]
-use crate::objects::polyline::Polyline;
-use crate::objects::node::{GraphicsNode, Node};
-use crate::objects::heightfield::HeightField;
-use crate::objects::plane::Plane;
-use crate::objects::capsule::Capsule;
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::collections::HashMap;
 
 pub trait GraphicsWindow {
@@ -47,18 +47,17 @@ pub trait GraphicsWindow {
 impl GraphicsWindow for Window {
     fn remove_graphics_node(&mut self, node: &mut GraphicsNode) {
         #[cfg(feature = "dim2")]
-            self.remove_planar_node(node);
+        self.remove_planar_node(node);
         #[cfg(feature = "dim3")]
-            self.remove_node(node);
+        self.remove_node(node);
     }
 
     fn draw_graphics_line(&mut self, p1: &Point<f32>, p2: &Point<f32>, color: &Point3<f32>) {
         #[cfg(feature = "dim2")]
-            self.draw_planar_line(p1, p2, color);
+        self.draw_planar_line(p1, p2, color);
         #[cfg(feature = "dim3")]
-            self.draw_line(p1, p2, color);
+        self.draw_line(p1, p2, color);
     }
-
 }
 
 pub struct GraphicsManager {
@@ -70,7 +69,7 @@ pub struct GraphicsManager {
     rays: Vec<Ray<f32>>,
     camera: Camera,
     aabbs: Vec<(DefaultColliderHandle, GraphicsNode)>,
-    ground_handle: Option<DefaultBodyHandle>
+    ground_handle: Option<DefaultBodyHandle>,
 }
 
 impl GraphicsManager {
@@ -78,16 +77,16 @@ impl GraphicsManager {
         let mut camera;
 
         #[cfg(feature = "dim3")]
-            {
-                camera = Camera::new(Point3::new(10.0, 10.0, 10.0), Point3::new(0.0, 0.0, 0.0));
-                camera.set_rotate_modifiers(Some(kiss3d::event::Modifiers::Control));
-            }
+        {
+            camera = Camera::new(Point3::new(10.0, 10.0, 10.0), Point3::new(0.0, 0.0, 0.0));
+            camera.set_rotate_modifiers(Some(kiss3d::event::Modifiers::Control));
+        }
 
         #[cfg(feature = "dim2")]
-            {
-                camera = Camera::new();
-                camera.set_zoom(50.0);
-            }
+        {
+            camera = Camera::new();
+            camera.set_zoom(50.0);
+        }
 
         GraphicsManager {
             camera,
@@ -145,25 +144,25 @@ impl GraphicsManager {
         colliders: &DefaultColliderSet<f32>,
         window: &mut Window,
         part: DefaultBodyPartHandle,
-    ) -> DefaultBodyPartHandle {
+    ) -> DefaultBodyPartHandle
+    {
         let mut delete_array = true;
 
         if let Some(sns) = self.b2sn.get_mut(&part.0) {
             sns.retain(|sn| {
-                if let ColliderAnchor::OnBodyPart {
-                    body_part, ..
-                } = colliders.get(sn.collider()).unwrap().anchor()
-                    {
-                        if *body_part == part {
-                            if let Some(node) = sn.scene_node() {
-                                window.remove_graphics_node(&mut node.clone());
-                            }
-                            false
-                        } else {
-                            delete_array = false;
-                            true
+                if let ColliderAnchor::OnBodyPart { body_part, .. } =
+                    colliders.get(sn.collider()).unwrap().anchor()
+                {
+                    if *body_part == part {
+                        if let Some(node) = sn.scene_node() {
+                            window.remove_graphics_node(&mut node.clone());
                         }
+                        false
                     } else {
+                        delete_array = false;
+                        true
+                    }
+                } else {
                     delete_array = false;
                     true
                 }
@@ -177,7 +176,12 @@ impl GraphicsManager {
         part
     }
 
-    pub fn update_after_body_key_change(&mut self, colliders: &DefaultColliderSet<f32>, body_key: DefaultBodyHandle) {
+    pub fn update_after_body_key_change(
+        &mut self,
+        colliders: &DefaultColliderSet<f32>,
+        body_key: DefaultBodyHandle,
+    )
+    {
         if let Some(color) = self.b2color.remove(&body_key) {
             if let Some(sns) = self.b2sn.remove(&body_key) {
                 for sn in sns {
@@ -245,7 +249,12 @@ impl GraphicsManager {
     pub fn toggle_wireframe_mode(&mut self, colliders: &DefaultColliderSet<f32>, enabled: bool) {
         for n in self.b2sn.values_mut().flat_map(|val| val.iter_mut()) {
             let force_wireframe = if let Some(collider) = colliders.get(n.collider()) {
-                collider.is_sensor() || self.b2wireframe.get(&collider.body()).cloned().unwrap_or(false)
+                collider.is_sensor()
+                    || self
+                        .b2wireframe
+                        .get(&collider.body())
+                        .cloned()
+                        .unwrap_or(false)
             } else {
                 false
             };
@@ -266,7 +275,13 @@ impl GraphicsManager {
         self.rays.push(ray)
     }
 
-    pub fn add(&mut self, window: &mut Window, id: DefaultColliderHandle, colliders: &DefaultColliderSet<f32>) {
+    pub fn add(
+        &mut self,
+        window: &mut Window,
+        id: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
+    )
+    {
         let collider = colliders.get(id).unwrap();
 
         let color = if let Some(c) = self.c2color.get(&id).cloned() {
@@ -286,18 +301,32 @@ impl GraphicsManager {
         id: DefaultColliderHandle,
         colliders: &DefaultColliderSet<f32>,
         color: Point3<f32>,
-    ) {
+    )
+    {
         let collider = colliders.get(id).unwrap();
         let key = collider.body();
         let shape = collider.shape();
 
         // NOTE: not optimal allocation-wise, but it is not critical here.
         let mut new_nodes = Vec::new();
-        self.add_shape(window, id, colliders, na::one(), shape, color, &mut new_nodes);
+        self.add_shape(
+            window,
+            id,
+            colliders,
+            na::one(),
+            shape,
+            color,
+            &mut new_nodes,
+        );
 
         {
             for node in new_nodes.iter_mut().filter_map(|n| n.scene_node_mut()) {
-                if self.b2wireframe.get(&collider.body()).cloned().unwrap_or(false) {
+                if self
+                    .b2wireframe
+                    .get(&collider.body())
+                    .cloned()
+                    .unwrap_or(false)
+                {
                     node.set_lines_width(1.0);
                     node.set_surface_rendering_activation(false);
                 } else {
@@ -320,7 +349,8 @@ impl GraphicsManager {
         shape: &dyn Shape<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         if let Some(s) = shape.as_shape::<shape::Plane<f32>>() {
             self.add_plane(window, object, colliders, s, color, out)
         } else if let Some(s) = shape.as_shape::<shape::Ball<f32>>() {
@@ -336,26 +366,26 @@ impl GraphicsManager {
         }
 
         #[cfg(feature = "dim2")]
-            {
-                if let Some(s) = shape.as_shape::<ConvexPolygon<f32>>() {
-                    self.add_convex(window, object, colliders, delta, s, color, out)
-                } else if let Some(s) = shape.as_shape::<shape::Polyline<f32>>() {
-                    self.add_polyline(window, object, colliders, delta, s, color, out);
-                } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
-                    self.add_heightfield(window, object, colliders, delta, s, color, out);
-                }
+        {
+            if let Some(s) = shape.as_shape::<ConvexPolygon<f32>>() {
+                self.add_convex(window, object, colliders, delta, s, color, out)
+            } else if let Some(s) = shape.as_shape::<shape::Polyline<f32>>() {
+                self.add_polyline(window, object, colliders, delta, s, color, out);
+            } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
+                self.add_heightfield(window, object, colliders, delta, s, color, out);
             }
+        }
 
         #[cfg(feature = "dim3")]
-            {
-                if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
-                    self.add_convex(window, object, colliders, delta, s, color, out)
-                } else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
-                    self.add_mesh(window, object, colliders, delta, s, color, out);
-                } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
-                    self.add_heightfield(window, object, colliders, delta, s, color, out);
-                }
+        {
+            if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
+                self.add_convex(window, object, colliders, delta, s, color, out)
+            } else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
+                self.add_mesh(window, object, colliders, delta, s, color, out);
+            } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
+                self.add_heightfield(window, object, colliders, delta, s, color, out);
             }
+        }
     }
 
     fn add_plane(
@@ -366,7 +396,8 @@ impl GraphicsManager {
         shape: &shape::Plane<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         let pos = colliders.get(object).unwrap().position();
         let position = Point::from(pos.translation.vector);
         let normal = pos * shape.normal();
@@ -386,18 +417,13 @@ impl GraphicsManager {
         shape: &shape::Polyline<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         let vertices = shape.points().to_vec();
         let indices = shape.edges().iter().map(|e| e.indices).collect();
 
         out.push(Node::Polyline(Polyline::new(
-            object,
-            colliders,
-            delta,
-            vertices,
-            indices,
-            color,
-            window,
+            object, colliders, delta, vertices, indices, color, window,
         )))
     }
 
@@ -411,7 +437,8 @@ impl GraphicsManager {
         shape: &TriMesh<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         let points = shape.points();
         let faces = shape.faces();
 
@@ -440,7 +467,8 @@ impl GraphicsManager {
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         out.push(Node::HeightField(HeightField::new(
             object,
             colliders,
@@ -460,7 +488,8 @@ impl GraphicsManager {
         shape: &shape::Capsule<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         let margin = colliders.get(object).unwrap().margin();
         out.push(Node::Capsule(Capsule::new(
             object,
@@ -482,7 +511,8 @@ impl GraphicsManager {
         shape: &shape::Ball<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         let margin = colliders.get(object).unwrap().margin();
         out.push(Node::Ball(Ball::new(
             object,
@@ -503,11 +533,17 @@ impl GraphicsManager {
         shape: &Cuboid<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         let margin = colliders.get(object).unwrap().margin();
 
         out.push(Node::Box(Box::new(
-            object, colliders, delta, shape.half_extents() + Vector::repeat(margin), color, window,
+            object,
+            colliders,
+            delta,
+            shape.half_extents() + Vector::repeat(margin),
+            color,
+            window,
         )))
     }
 
@@ -521,7 +557,8 @@ impl GraphicsManager {
         shape: &ConvexPolygon<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         let points = shape.points();
 
         out.push(Node::Convex(Convex::new(
@@ -544,7 +581,8 @@ impl GraphicsManager {
         shape: &ConvexHull<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
-    ) {
+    )
+    {
         let mut chull = transformation::convex_hull(shape.points());
         chull.replicate_vertices();
         chull.recompute_normals();
@@ -554,7 +592,13 @@ impl GraphicsManager {
         )))
     }
 
-    pub fn show_aabbs(&mut self, _geometrical_world: &DefaultGeometricalWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
+    pub fn show_aabbs(
+        &mut self,
+        _geometrical_world: &DefaultGeometricalWorld<f32>,
+        colliders: &DefaultColliderSet<f32>,
+        window: &mut Window,
+    )
+    {
         for (_, ns) in self.b2sn.iter() {
             for n in ns.iter() {
                 let handle = n.collider();
@@ -566,9 +610,9 @@ impl GraphicsManager {
                     };
 
                     #[cfg(feature = "dim2")]
-                        let mut cube = window.add_rectangle(1.0, 1.0);
+                    let mut cube = window.add_rectangle(1.0, 1.0);
                     #[cfg(feature = "dim3")]
-                        let mut cube = window.add_cube(1.0, 1.0, 1.0);
+                    let mut cube = window.add_cube(1.0, 1.0, 1.0);
                     cube.set_surface_rendering_activation(false);
                     cube.set_lines_width(5.0);
                     cube.set_color(color.x, color.y, color.z);
@@ -584,9 +628,15 @@ impl GraphicsManager {
         }
     }
 
-    pub fn draw(&mut self, geometrical_world: &DefaultGeometricalWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
-//        use crate::kiss3d::camera::Camera;
-//        println!("eye: {}, at: {}", self.camera.eye(), self.camera.at());
+    pub fn draw(
+        &mut self,
+        geometrical_world: &DefaultGeometricalWorld<f32>,
+        colliders: &DefaultColliderSet<f32>,
+        window: &mut Window,
+    )
+    {
+        //        use crate::kiss3d::camera::Camera;
+        //        println!("eye: {}, at: {}", self.camera.eye(), self.camera.at());
         for (_, ns) in self.b2sn.iter_mut() {
             for n in ns.iter_mut() {
                 n.update(colliders)
@@ -613,9 +663,9 @@ impl GraphicsManager {
                     node.set_local_translation(Translation::from(aabb.center().coords));
 
                     #[cfg(feature = "dim2")]
-                        node.set_local_scale(w.x, w.y);
+                    node.set_local_scale(w.x, w.y);
                     #[cfg(feature = "dim3")]
-                        node.set_local_scale(w.x, w.y, w.z);
+                    node.set_local_scale(w.x, w.y, w.z);
                 }
             }
         }
@@ -630,28 +680,28 @@ impl GraphicsManager {
         }
     }
 
-// pub fn draw_positions(&mut self, window: &mut Window, rbs: &RigidBodies<f32>) {
-//     for (_, ns) in self.b2sn.iter_mut() {
-//         for n in ns.iter_mut() {
-//             let object = n.object();
-//             let rb = rbs.get(object).expect("Rigid body not found.");
+    // pub fn draw_positions(&mut self, window: &mut Window, rbs: &RigidBodies<f32>) {
+    //     for (_, ns) in self.b2sn.iter_mut() {
+    //         for n in ns.iter_mut() {
+    //             let object = n.object();
+    //             let rb = rbs.get(object).expect("Rigid body not found.");
 
-//             // if let WorldObjectBorrowed::RigidBody(rb) = object {
-//                 let t      = rb.position();
-//                 let center = rb.center_of_mass();
+    //             // if let WorldObjectBorrowed::RigidBody(rb) = object {
+    //                 let t      = rb.position();
+    //                 let center = rb.center_of_mass();
 
-//                 let rotmat = t.rotation.to_rotation_matrix().unwrap();
-//                 let x = rotmat.column(0) * 0.25f32;
-//                 let y = rotmat.column(1) * 0.25f32;
-//                 let z = rotmat.column(2) * 0.25f32;
+    //                 let rotmat = t.rotation.to_rotation_matrix().unwrap();
+    //                 let x = rotmat.column(0) * 0.25f32;
+    //                 let y = rotmat.column(1) * 0.25f32;
+    //                 let z = rotmat.column(2) * 0.25f32;
 
-//                 window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
-//                 window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));
-//                 window.draw_line(center, &(*center + z), &Point3::new(0.0, 0.0, 1.0));
-//             // }
-//         }
-//     }
-// }
+    //                 window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
+    //                 window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));
+    //                 window.draw_line(center, &(*center + z), &Point3::new(0.0, 0.0, 1.0));
+    //             // }
+    //         }
+    //     }
+    // }
 
     pub fn camera(&self) -> &Camera {
         &self.camera
@@ -675,10 +725,7 @@ impl GraphicsManager {
         self.b2sn.get(&handle)
     }
 
-    pub fn body_nodes_mut(
-        &mut self,
-        handle: DefaultBodyHandle,
-    ) -> Option<&mut Vec<Node>> {
+    pub fn body_nodes_mut(&mut self, handle: DefaultBodyHandle) -> Option<&mut Vec<Node>> {
         self.b2sn.get_mut(&handle)
     }
 

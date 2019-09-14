@@ -2,7 +2,7 @@ use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector
 
 use crate::joint::{Joint, PrismaticJoint};
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::{Multibody, MultibodyLink, BodyPartHandle};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows two translational degrees of freedom.
@@ -31,7 +31,8 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
     }
 
     fn body_to_parent(&self, parent_shift: &Vector3<N>, body_shift: &Vector3<N>) -> Isometry3<N> {
-        let t = Translation3::from(parent_shift - body_shift) * self.prism1.translation()
+        let t = Translation3::from(parent_shift - body_shift)
+            * self.prism1.translation()
             * self.prism2.translation();
         Isometry3::from_parts(t, na::one())
     }
@@ -53,7 +54,9 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
         _: &Isometry3<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    ) {}
+    )
+    {
+    }
 
     fn jacobian_mul_coordinates(&self, vels: &[N]) -> Velocity<N> {
         self.prism1.jacobian_mul_coordinates(vels)
@@ -85,8 +88,7 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
     }
 
     fn num_velocity_constraints(&self) -> usize {
-        self.prism1.num_velocity_constraints() +
-            self.prism2.num_velocity_constraints()
+        self.prism1.num_velocity_constraints() + self.prism2.num_velocity_constraints()
     }
 
     fn velocity_constraints(
@@ -100,7 +102,8 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
         ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, (), (), usize>,
-    ) {
+    )
+    {
         self.prism1.velocity_constraints(
             parameters,
             multibody,
@@ -138,9 +141,11 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
         handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, ()>> {
+    ) -> Option<GenericNonlinearConstraint<N, ()>>
+    {
         if i == 0 {
-            self.prism1.position_constraint(0, multibody, link, handle, dof_id, jacobians)
+            self.prism1
+                .position_constraint(0, multibody, link, handle, dof_id, jacobians)
         } else {
             self.prism2
                 .position_constraint(0, multibody, link, handle, dof_id + 1, jacobians)

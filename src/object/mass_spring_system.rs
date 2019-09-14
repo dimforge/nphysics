@@ -1,25 +1,30 @@
-use std::ops::{AddAssign, SubAssign};
-use std::iter;
-use std::collections::{HashMap, HashSet};
-use std::marker::PhantomData;
-use std::any::Any;
 use either::Either;
+use std::any::Any;
+use std::collections::{HashMap, HashSet};
+use std::iter;
+use std::marker::PhantomData;
+use std::ops::{AddAssign, SubAssign};
 
-use na::{self, RealField, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Unit};
 #[cfg(feature = "dim3")]
 use na::Vector2;
-use ncollide::utils::DeterministicState;
+use na::{
+    self, Cholesky, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, RealField, Unit,
+};
 #[cfg(feature = "dim3")]
 use ncollide::procedural;
-use ncollide::shape::{DeformationsType, Polyline};
 #[cfg(feature = "dim3")]
 use ncollide::shape::TriMesh;
+use ncollide::shape::{DeformationsType, Polyline};
+use ncollide::utils::DeterministicState;
 
-use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
-                    ActivationStatus, FiniteElementIndices};
-use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
+use crate::math::{
+    Dim, Force, ForceType, Inertia, Isometry, Point, Translation, Vector, Velocity, DIM,
+};
 use crate::object::fem_helper;
+use crate::object::{
+    ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus, FiniteElementIndices,
+};
+use crate::solver::{ForceDirection, IntegrationParameters};
 
 use crate::utils::{UserData, UserDataBox};
 
@@ -27,7 +32,7 @@ use crate::utils::{UserData, UserDataBox};
 #[derive(Clone)]
 pub struct MassSpringElement<N: RealField> {
     indices: FiniteElementIndices,
-    phantom: PhantomData<N>
+    phantom: PhantomData<N>,
 }
 
 #[derive(Clone)]
@@ -43,7 +48,13 @@ struct Spring<N: RealField> {
 }
 
 impl<N: RealField> Spring<N> {
-    fn from_positions(nodes: (usize, usize), positions: &[N], stiffness: N, damping_ratio: N) -> Self {
+    fn from_positions(
+        nodes: (usize, usize),
+        positions: &[N],
+        stiffness: N,
+        damping_ratio: N,
+    ) -> Self
+    {
         let p0 = Point::from_slice(&positions[nodes.0..nodes.0 + DIM]);
         let p1 = Point::from_slice(&positions[nodes.1..nodes.1 + DIM]);
         let rest_length = na::distance(&p0, &p1);
@@ -55,7 +66,7 @@ impl<N: RealField> Spring<N> {
             rest_length,
             stiffness,
             damping_ratio,
-            plastic_strain: N::zero()
+            plastic_strain: N::zero(),
         }
     }
 }
@@ -116,19 +127,34 @@ impl<N: RealField> MassSpringSystem<N> {
             let idx = face.indices * DIM;
             let elt = MassSpringElement {
                 indices: FiniteElementIndices::Triangle(idx),
-                phantom: PhantomData
+                phantom: PhantomData,
             };
 
             elements.push(elt);
 
             let _ = springs.entry(key(idx.x, idx.y)).or_insert_with(|| {
-                Spring::from_positions((idx.x, idx.y), positions.as_slice(), stiffness, damping_ratio)
+                Spring::from_positions(
+                    (idx.x, idx.y),
+                    positions.as_slice(),
+                    stiffness,
+                    damping_ratio,
+                )
             });
             let _ = springs.entry(key(idx.y, idx.z)).or_insert_with(|| {
-                Spring::from_positions((idx.y, idx.z), positions.as_slice(), stiffness, damping_ratio)
+                Spring::from_positions(
+                    (idx.y, idx.z),
+                    positions.as_slice(),
+                    stiffness,
+                    damping_ratio,
+                )
             });
             let _ = springs.entry(key(idx.z, idx.x)).or_insert_with(|| {
-                Spring::from_positions((idx.z, idx.x), positions.as_slice(), stiffness, damping_ratio)
+                Spring::from_positions(
+                    (idx.z, idx.x),
+                    positions.as_slice(),
+                    stiffness,
+                    damping_ratio,
+                )
             });
         }
 
@@ -155,7 +181,7 @@ impl<N: RealField> MassSpringSystem<N> {
             plasticity_creep: N::zero(),
             plasticity_threshold: N::zero(),
             gravity_enabled: true,
-            user_data: None
+            user_data: None,
         }
     }
 
@@ -176,18 +202,23 @@ impl<N: RealField> MassSpringSystem<N> {
             let idx = edge.indices * DIM;
             let elt = MassSpringElement {
                 indices: FiniteElementIndices::Segment(idx),
-                phantom: PhantomData
+                phantom: PhantomData,
             };
 
             elements.push(elt);
 
             let _ = springs.entry(key(idx.x, idx.y)).or_insert_with(|| {
-                Spring::from_positions((idx.x, idx.y), positions.as_slice(), stiffness, damping_ratio)
+                Spring::from_positions(
+                    (idx.x, idx.y),
+                    positions.as_slice(),
+                    stiffness,
+                    damping_ratio,
+                )
             });
         }
 
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
-//        println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
+        //        println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
 
         MassSpringSystem {
             springs: springs.values().cloned().collect(),
@@ -210,16 +241,30 @@ impl<N: RealField> MassSpringSystem<N> {
             plasticity_max_force: N::zero(),
             plasticity_creep: N::zero(),
             plasticity_threshold: N::zero(),
-            user_data: None
+            user_data: None,
         }
     }
 
     /// Creates a rectangular quad.
     #[cfg(feature = "dim3")]
-    fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    fn quad(
+        transform: &Isometry<N>,
+        extents: &Vector2<N>,
+        nx: usize,
+        ny: usize,
+        mass: N,
+        stiffness: N,
+        damping_ratio: N,
+    ) -> Self
+    {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
-        let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
+        let indices = mesh
+            .indices
+            .unwrap_unified()
+            .into_iter()
+            .map(|tri| na::convert(tri))
+            .collect();
         let trimesh = TriMesh::new(vertices, indices, None);
         Self::from_trimesh(&trimesh, mass, stiffness, damping_ratio)
     }
@@ -241,7 +286,9 @@ impl<N: RealField> MassSpringSystem<N> {
     pub fn generate_neighbor_springs(&mut self, stiffness: N, damping_ratio: N) {
         self.update_status.set_local_inertia_changed(true);
 
-        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / DIM).collect();
+        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new())
+            .take(self.positions.len() / DIM)
+            .collect();
         let mut existing_springs = HashSet::with_hasher(DeterministicState::new());
 
         // Build neighborhood list.
@@ -258,8 +305,12 @@ impl<N: RealField> MassSpringSystem<N> {
                     let key = key(i * DIM, *transitive_nbh * DIM);
 
                     if existing_springs.insert(key) {
-                        let spring =
-                            Spring::from_positions(key, self.positions.as_slice(), stiffness, damping_ratio);
+                        let spring = Spring::from_positions(
+                            key,
+                            self.positions.as_slice(),
+                            stiffness,
+                            damping_ratio,
+                        );
                         self.springs.push(spring);
                     }
                 }
@@ -269,11 +320,18 @@ impl<N: RealField> MassSpringSystem<N> {
 
     /// Add one spring to this mass-spring system.
     pub fn add_spring(&mut self, node1: usize, node2: usize, stiffness: N, damping_ratio: N) {
-        assert!(node1 < self.positions.len() / DIM, "Node index out of bounds.");
-        assert!(node2 < self.positions.len() / DIM, "Node index out of bounds.");
+        assert!(
+            node1 < self.positions.len() / DIM,
+            "Node index out of bounds."
+        );
+        assert!(
+            node2 < self.positions.len() / DIM,
+            "Node index out of bounds."
+        );
         self.update_status.set_local_inertia_changed(true);
         let key = key(node1 * DIM, node2 * DIM);
-        let spring = Spring::from_positions(key, self.positions.as_slice(), stiffness, damping_ratio);
+        let spring =
+            Spring::from_positions(key, self.positions.as_slice(), stiffness, damping_ratio);
         self.springs.push(spring);
     }
 
@@ -315,7 +373,7 @@ impl<N: RealField> MassSpringSystem<N> {
             /*
              * Elastic strain.
              */
-//            let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
+            //            let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
             let l = *spring.dir;
 
             if spring.length != N::zero() {
@@ -349,15 +407,23 @@ impl<N: RealField> MassSpringSystem<N> {
                 let damping_stiffness = stiffness * (dt * dt);
 
                 if !kinematic1 {
-                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0).add_assign(&damping_stiffness);
+                    self.augmented_mass
+                        .fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0)
+                        .add_assign(&damping_stiffness);
                 }
                 if !kinematic2 {
-                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.1).add_assign(&damping_stiffness);
+                    self.augmented_mass
+                        .fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.1)
+                        .add_assign(&damping_stiffness);
                 }
                 if !kinematic1 && !kinematic2 {
                     // FIXME: we don't need to fill both because Cholesky won't read tho upper triangle.
-                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.1).sub_assign(&damping_stiffness);
-                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.0).sub_assign(&damping_stiffness);
+                    self.augmented_mass
+                        .fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.1)
+                        .sub_assign(&damping_stiffness);
+                    self.augmented_mass
+                        .fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.0)
+                        .sub_assign(&damping_stiffness);
                 }
             }
         }
@@ -368,7 +434,9 @@ impl<N: RealField> MassSpringSystem<N> {
         for i in 0..self.positions.len() / DIM {
             if self.kinematic_nodes[i] {
                 let idof = i * DIM;
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(idof, idof).fill_diagonal(N::one());
+                self.augmented_mass
+                    .fixed_slice_mut::<Dim, Dim>(idof, idof)
+                    .fill_diagonal(N::one());
             }
         }
 
@@ -408,7 +476,9 @@ impl<N: RealField> MassSpringSystem<N> {
              * Elastic strain.
              */
             // FIXME: precompute this and store it on the spring struct?
-            let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
+            let damping = spring.damping_ratio
+                * (spring.stiffness * self.node_mass).sqrt()
+                * na::convert(2.0);
             let v0 = self.velocities.fixed_rows::<Dim>(spring.nodes.0);
             let v1 = self.velocities.fixed_rows::<Dim>(spring.nodes.1);
 
@@ -416,17 +486,22 @@ impl<N: RealField> MassSpringSystem<N> {
             let l = *spring.dir;
 
             // Explicit elastic term - plastic term.
-            let coeff = spring.stiffness * (spring.length - spring.rest_length) + damping * l.dot(&ldot);
+            let coeff =
+                spring.stiffness * (spring.length - spring.rest_length) + damping * l.dot(&ldot);
             let f0 = l * (coeff - spring.plastic_strain);
 
             // NOTE: we don't add the additional terms due to the linearly-implicit
             // integration because they seem to introduce instabilities.
 
             if !kinematic1 {
-                self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&f0);
+                self.accelerations
+                    .fixed_rows_mut::<Dim>(spring.nodes.0)
+                    .add_assign(&f0);
             }
             if !kinematic2 {
-                self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&f0);
+                self.accelerations
+                    .fixed_rows_mut::<Dim>(spring.nodes.1)
+                    .sub_assign(&f0);
             }
         }
 
@@ -556,7 +631,8 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
 
     fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(parameters.dt(), &self.velocities, N::one());
+        self.positions
+            .axpy(parameters.dt(), &self.velocities, N::one());
     }
 
     fn activate_with_energy(&mut self, energy: N) {
@@ -583,18 +659,24 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
     }
 
     fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
-        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
+        let elt = part
+            .downcast_ref::<MassSpringElement<N>>()
+            .expect("The provided body part must be a mass-spring element");
         fem_helper::world_point_at_material_point(elt.indices, &self.positions, point)
     }
 
     fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
-        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
+        let elt = part
+            .downcast_ref::<MassSpringElement<N>>()
+            .expect("The provided body part must be a mass-spring element");
         let pt = fem_helper::world_point_at_material_point(elt.indices, &self.positions, point);
         Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
     fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
-        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
+        let elt = part
+            .downcast_ref::<MassSpringElement<N>>()
+            .expect("The provided body part must be a mass-spring element");
         fem_helper::material_point_at_world_point(elt.indices, &self.positions, point)
     }
 
@@ -609,9 +691,12 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         jacobians: &mut [N],
         inv_r: &mut N,
         ext_vels: Option<&DVectorSlice<N>>,
-        out_vel: Option<&mut N>
-    ) {
-        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
+        out_vel: Option<&mut N>,
+    )
+    {
+        let elt = part
+            .downcast_ref::<MassSpringElement<N>>()
+            .expect("The provided body part must be a mass-spring element");
         fem_helper::fill_contact_geometry_fem(
             self.ndofs(),
             self.status,
@@ -627,7 +712,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
             jacobians,
             inv_r,
             ext_vels,
-            out_vel
+            out_vel,
         );
     }
 
@@ -637,7 +722,13 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &DVectorSlice<N>, _: &IntegrationParameters<N>) {}
+    fn setup_internal_velocity_constraints(
+        &mut self,
+        _: &DVectorSlice<N>,
+        _: &IntegrationParameters<N>,
+    )
+    {
+    }
 
     #[inline]
     fn warmstart_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
@@ -648,8 +739,15 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 
-
-    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         if self.status != BodyStatus::Dynamic {
             return;
         }
@@ -679,7 +777,9 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
             ForceType::Force => {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        self.forces.fixed_rows_mut::<Dim>(indices[i]).add_assign(&forces[i]);
+                        self.forces
+                            .fixed_rows_mut::<Dim>(indices[i])
+                            .add_assign(&forces[i]);
                     }
                 }
             }
@@ -697,50 +797,96 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
             ForceType::AccelerationChange => {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        self.forces.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i] * self.node_mass);
+                        self.forces
+                            .fixed_rows_mut::<Dim>(indices[i])
+                            .add_assign(forces[i] * self.node_mass);
                     }
                 }
             }
             ForceType::VelocityChange => {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        self.velocities.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i]);
+                        self.velocities
+                            .fixed_rows_mut::<Dim>(indices[i])
+                            .add_assign(forces[i]);
                     }
                 }
             }
         }
     }
 
-    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let dim = self.elements[part_id].indices.as_slice().len();
         let inv_dim: N = na::convert(1.0 / dim as f64);
         let barycenter = Point::from(Vector::repeat(inv_dim));
-        self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
+        self.apply_force_at_local_point(
+            part_id,
+            &force.linear,
+            &barycenter,
+            force_type,
+            auto_wake_up,
+        )
     }
 
-    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force(
+        &mut self,
+        part_id: usize,
+        force: &Force<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force(part_id, &force, force_type, auto_wake_up);
     }
 
-    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
     }
 
-    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
         self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up);
     }
 
-
-    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+    fn apply_local_force_at_local_point(
+        &mut self,
+        part_id: usize,
+        force: &Vector<N>,
+        point: &Point<N>,
+        force_type: ForceType,
+        auto_wake_up: bool,
+    )
+    {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force_at_local_point(part_id, &force, &point, force_type, auto_wake_up);
     }
 }
-
 
 impl<N: RealField> BodyPart<N> for MassSpringElement<N> {
     fn center_of_mass(&self) -> Point<N> {
@@ -766,7 +912,6 @@ impl<N: RealField> BodyPart<N> for MassSpringElement<N> {
         unimplemented!()
     }
 }
-
 
 enum MassSpringSystemDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
@@ -864,15 +1009,26 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
         let mut vol = match self.geom {
             MassSpringSystemDescGeometry::Quad(nx, ny) => {
                 let polyline = Polyline::quad(nx, ny);
-                MassSpringSystem::from_polyline(&polyline, self.mass, self.stiffness, self.damping_ratio)
+                MassSpringSystem::from_polyline(
+                    &polyline,
+                    self.mass,
+                    self.stiffness,
+                    self.damping_ratio,
+                )
             }
-            MassSpringSystemDescGeometry::Polyline(polyline) => {
-                MassSpringSystem::from_polyline(polyline, self.mass, self.stiffness, self.damping_ratio)
-            }
+            MassSpringSystemDescGeometry::Polyline(polyline) => MassSpringSystem::from_polyline(
+                polyline,
+                self.mass,
+                self.stiffness,
+                self.damping_ratio,
+            ),
             #[cfg(feature = "dim3")]
-            MassSpringSystemDescGeometry::TriMesh(trimesh) => {
-                MassSpringSystem::from_trimesh(trimesh, self.mass, self.stiffness, self.damping_ratio)
-            }
+            MassSpringSystemDescGeometry::TriMesh(trimesh) => MassSpringSystem::from_trimesh(
+                trimesh,
+                self.mass,
+                self.stiffness,
+                self.damping_ratio,
+            ),
         };
 
         vol.set_deactivation_threshold(self.sleep_threshold);

@@ -1,14 +1,13 @@
 use downcast_rs::Downcast;
-use std::sync::Arc;
-use std::ops::Deref;
 use na::{self, RealField};
+use std::ops::Deref;
+use std::sync::Arc;
 
 use ncollide::query::TrackedContact;
 use ncollide::shape::Shape;
 
 use crate::material::MaterialsCoefficientsTable;
 use crate::math::{Isometry, Vector};
-
 
 /// The context for determining the local material properties at a contact.
 #[derive(Copy, Clone)]
@@ -27,12 +26,18 @@ pub struct MaterialContext<'a, N: RealField> {
 }
 
 impl<'a, N: RealField> MaterialContext<'a, N> {
-    pub(crate) fn new(shape: &'a dyn Shape<N>, position: &'a Isometry<N>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
+    pub(crate) fn new(
+        shape: &'a dyn Shape<N>,
+        position: &'a Isometry<N>,
+        contact: &'a TrackedContact<N>,
+        is_first: bool,
+    ) -> Self
+    {
         MaterialContext {
             shape,
             position,
             contact,
-            is_first
+            is_first,
         }
     }
 }
@@ -56,7 +61,7 @@ pub enum MaterialCombineMode {
     Max,
     /// Should not be used directly. This is set as a result of the `combine` method
     /// if the combination was performed by a lookup on the `MaterialsCoefficientsTable`.
-    Lookup // Same as Average if specified by the user.
+    Lookup, // Same as Average if specified by the user.
 }
 
 impl MaterialCombineMode {
@@ -67,11 +72,17 @@ impl MaterialCombineMode {
     #[inline]
     pub fn combine<N: RealField>(a: (N, Self), b: (N, Self)) -> (N, MaterialCombineMode) {
         match (a.1, b.1) {
-            (MaterialCombineMode::Max, _) | (_, MaterialCombineMode::Max) => (a.0.max(b.0), MaterialCombineMode::Max),
-            (MaterialCombineMode::Multiply, _) | (_, MaterialCombineMode::Multiply) => (a.0 * b.0, MaterialCombineMode::Multiply),
-            (MaterialCombineMode::Min, _) | (_, MaterialCombineMode::Min) => (a.0.min(b.0), MaterialCombineMode::Min),
+            (MaterialCombineMode::Max, _) | (_, MaterialCombineMode::Max) => {
+                (a.0.max(b.0), MaterialCombineMode::Max)
+            }
+            (MaterialCombineMode::Multiply, _) | (_, MaterialCombineMode::Multiply) => {
+                (a.0 * b.0, MaterialCombineMode::Multiply)
+            }
+            (MaterialCombineMode::Min, _) | (_, MaterialCombineMode::Min) => {
+                (a.0.min(b.0), MaterialCombineMode::Min)
+            }
             // Average
-            _ => ((a.0 + b.0) * na::convert(0.5), MaterialCombineMode::Average)
+            _ => ((a.0 + b.0) * na::convert(0.5), MaterialCombineMode::Average),
         }
     }
 }
@@ -126,10 +137,12 @@ impl<N: RealField> dyn Material<N> {
         material1: &M1,
         context1: MaterialContext<N>,
         material2: &M2,
-        context2: MaterialContext<N>)
-        -> LocalMaterialProperties<N>
-        where M1: ?Sized + Material<N>,
-              M2: ?Sized + Material<N> {
+        context2: MaterialContext<N>,
+    ) -> LocalMaterialProperties<N>
+    where
+        M1: ?Sized + Material<N>,
+        M2: ?Sized + Material<N>,
+    {
         let props1 = material1.local_properties(context1);
         let props2 = material2.local_properties(context2);
         let restitution;
@@ -137,17 +150,19 @@ impl<N: RealField> dyn Material<N> {
 
         match (props1.id, props2.id) {
             (Some(id1), Some(id2)) => {
-                restitution = table.restitution_coefficient(id1, id2)
+                restitution = table
+                    .restitution_coefficient(id1, id2)
                     .map(|coeff| (coeff, MaterialCombineMode::Lookup))
                     .unwrap_or_else(|| {
-                    MaterialCombineMode::combine(props1.restitution, props2.restitution)
-                });
-                friction = table.friction_coefficient(id1, id2)
+                        MaterialCombineMode::combine(props1.restitution, props2.restitution)
+                    });
+                friction = table
+                    .friction_coefficient(id1, id2)
                     .map(|coeff| (coeff, MaterialCombineMode::Lookup))
                     .unwrap_or_else(|| {
-                    MaterialCombineMode::combine(props1.friction, props2.friction)
-                });
-            },
+                        MaterialCombineMode::combine(props1.friction, props2.friction)
+                    });
+            }
             _ => {
                 restitution = MaterialCombineMode::combine(props1.restitution, props2.restitution);
                 friction = MaterialCombineMode::combine(props1.friction, props2.friction);
