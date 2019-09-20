@@ -104,6 +104,12 @@ extern crate stdweb;
 ))]
 extern crate wasm_bindgen;
 
+#[cfg(all(
+    any(target_arch = "wasm32", target_arch = "asmjs"),
+    feature = "use-wasm-bindgen",
+))]
+extern crate web_sys;
+
 //#[cfg(test)]
 //extern crate test;
 

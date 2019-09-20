@@ -60,25 +60,18 @@ fn now() -> f64 {
     let v = js! { return performance.now() / 1000.0; };
     v.try_into().unwrap()
 }
-#[cfg(all(
-    any(target_arch = "wasm32", target_arch = "asmjs"),
-    feature = "use-wasm-bindgen",
-))]
-mod performance {
-    use wasm_bindgen::prelude::*;
-    #[wasm_bindgen]
-    extern "C" {
-        #[wasm_bindgen(js_namespace = performance)]
-        pub fn now() -> f64;
-    }
-}
 
 #[cfg(all(
     any(target_arch = "wasm32", target_arch = "asmjs"),
     feature = "use-wasm-bindgen",
 ))]
 fn now() -> f64 {
-    performance::now() / 1000.0
+    let window = web_sys::window().expect("should have a window in this context");
+    let performance = window
+        .performance()
+        .expect("performance should be available");
+
+    performance.now() / 1000.0
 }
 
 impl Display for Timer {
