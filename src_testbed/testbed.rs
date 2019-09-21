@@ -33,6 +33,8 @@ use nphysics::object::{
     DefaultColliderHandle, DefaultColliderSet,
 };
 use nphysics::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
+#[cfg(feature = "fluids")]
+use salva::LiquidWorld;
 
 #[cfg(feature = "box2d-backend")]
 use crate::box2d_world::Box2dWorld;
@@ -113,6 +115,8 @@ pub struct TestbedState {
 
 pub struct Testbed {
     builders: Vec<(&'static str, fn(&mut Testbed))>,
+    #[cfg(feature = "fluids")]
+    liquid_world: Option<LiquidWorld<f32>>,
     mechanical_world: DefaultMechanicalWorld<f32>,
     geometrical_world: DefaultGeometricalWorld<f32>,
     bodies: DefaultBodySet<f32>,
@@ -194,6 +198,8 @@ impl Testbed {
 
         Testbed {
             builders: Vec::new(),
+            #[cfg(feature = "fluids")]
+            liquid_world: None,
             mechanical_world,
             geometrical_world,
             bodies,
@@ -306,6 +312,11 @@ impl Testbed {
                 ));
             }
         }
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn set_liquid_world(&mut self, liquid_world: LiquidWorld<f32>) {
+        self.liquid_world = Some(liquid_world);
     }
 
     pub fn set_builders(&mut self, builders: Vec<(&'static str, fn(&mut Self))>) {
@@ -856,6 +867,15 @@ impl State for Testbed {
                     .set(TestbedActionFlags::RESET_WORLD_GRAPHICS, false);
                 for (handle, _) in self.colliders.iter() {
                     self.graphics.add(window, handle, &self.colliders);
+                }
+
+                #[cfg(feature = "fluids")]
+                {
+                    if let Some(liquid_world) = &self.liquid_world {
+                        for (handle, fluid) in liquid_world.fluids().iter().enumerate() {
+                            self.graphics.add_fluid(window, handle, fluid);
+                        }
+                    }
                 }
             }
 

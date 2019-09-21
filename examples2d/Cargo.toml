@@ -5,6 +5,7 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 edition = "2018"
 
 [features]
+fluids = [ "salva2d", "nphysics_testbed2d/fluids" ]
 box2d-backend = [ "nphysics_testbed2d/box2d-backend" ]
 
 [dependencies]
@@ -12,6 +13,7 @@ rand       = "0.6"
 alga       = "0.9"
 nalgebra   = "0.18"
 ncollide2d = "0.20"
+salva2d    = { version = "0.0", optional = true }
 
 [dependencies.nphysics_testbed2d]
 path = "../build/nphysics_testbed2d"

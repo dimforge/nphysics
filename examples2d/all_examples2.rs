@@ -1,9 +1,6 @@
 #![allow(dead_code)]
 
 extern crate nalgebra as na;
-extern crate ncollide2d;
-extern crate nphysics2d;
-extern crate nphysics_testbed2d;
 
 use nphysics_testbed2d::Testbed;
 
@@ -20,6 +17,7 @@ mod conveyor_belt2;
 mod cross2;
 mod damping2;
 mod fem_surface2;
+mod fluids2;
 mod force_generator2;
 mod heightfield2;
 mod kinematic2;
@@ -59,6 +57,7 @@ fn main() {
         ("Conveyor Belt", conveyor_belt2::init_world),
         ("Damping", damping2::init_world),
         ("FEM Surface", fem_surface2::init_world),
+        ("Fluids", fluids2::init_world),
         ("Force Generator", force_generator2::init_world),
         ("Heightfield", heightfield2::init_world),
         ("Kinematic body", kinematic2::init_world),
