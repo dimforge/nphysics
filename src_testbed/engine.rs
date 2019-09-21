@@ -37,6 +37,8 @@ use nphysics::object::{
 };
 use nphysics::world::DefaultGeometricalWorld;
 use rand::{rngs::StdRng, Rng, SeedableRng};
+#[cfg(feature = "fluids")]
+use salva::fluid::Fluid;
 use std::collections::HashMap;
 
 pub trait GraphicsWindow {
@@ -66,6 +68,7 @@ pub struct GraphicsManager {
     b2color: HashMap<DefaultBodyHandle, Point3<f32>>,
     c2color: HashMap<DefaultColliderHandle, Point3<f32>>,
     b2wireframe: HashMap<DefaultBodyHandle, bool>,
+    f2color: HashMap<usize, Point3<f32>>,
     rays: Vec<Ray<f32>>,
     camera: Camera,
     aabbs: Vec<(DefaultColliderHandle, GraphicsNode)>,
@@ -94,6 +97,7 @@ impl GraphicsManager {
             b2sn: HashMap::new(),
             b2color: HashMap::new(),
             c2color: HashMap::new(),
+            f2color: HashMap::new(),
             b2wireframe: HashMap::new(),
             rays: Vec::new(),
             aabbs: Vec::new(),
@@ -223,18 +227,23 @@ impl GraphicsManager {
         self.c2color.insert(handle, color);
     }
 
+    fn gen_color(rng: &mut StdRng) -> Point3<f32> {
+        let mut color: Point3<f32> = rng.gen();
+        color *= 1.5;
+        color.x = color.x.min(1.0);
+        color.y = color.y.min(1.0);
+        color.z = color.z.min(1.0);
+        color
+    }
+
     fn alloc_color(&mut self, handle: DefaultBodyHandle) -> Point3<f32> {
         let mut color = Point3::new(0.5, 0.5, 0.5);
 
-        match self.b2color.get(&handle) {
-            Some(c) => color = *c,
+        match self.b2color.get(&handle).cloned() {
+            Some(c) => color = c,
             None => {
                 if Some(handle) != self.ground_handle {
-                    color = self.rand.gen();
-                    color *= 1.5;
-                    color.x = color.x.min(1.0);
-                    color.y = color.y.min(1.0);
-                    color.z = color.z.min(1.0);
+                    color = Self::gen_color(&mut self.rand)
                 }
             }
         }
@@ -271,6 +280,27 @@ impl GraphicsManager {
 
     pub fn add_ray(&mut self, ray: Ray<f32>) {
         self.rays.push(ray)
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn add_fluid(&mut self, window: &mut Window, handle: usize, fluid: &Fluid<f32>) {
+        let rand = &mut self.rand;
+        let color = *self
+            .f2color
+            .entry(handle)
+            .or_insert_with(|| Self::gen_color(rand));
+
+        self.add_fluid_with_color(window, handle, fluid, color);
+    }
+
+    pub fn add_fluid_with_color(
+        &mut self,
+        window: &mut Window,
+        handle: usize,
+        fluid: &Fluid<f32>,
+        color: Point3<f32>,
+    ) {
+        unimplemented!()
     }
 
     pub fn add(
