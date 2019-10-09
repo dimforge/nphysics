@@ -544,14 +544,16 @@ impl Testbed {
 
                 let attach2 = self.cursor_pos;
                 if self.state.grabbed_object.is_some() {
-                    let joint = self.state.grabbed_object_constraint.unwrap();
-                    let joint = self
-                        .constraints
-                        .get_mut(joint)
-                        .unwrap()
-                        .downcast_mut::<MouseConstraint<f32, DefaultBodyHandle>>()
-                        .unwrap();
-                    joint.set_anchor_1(attach2);
+                    if let Some(constraint) = self
+                        .state
+                        .grabbed_object_constraint
+                        .and_then(|joint| self.constraints.get_mut(joint))
+                        .and_then(|joint| {
+                            joint.downcast_mut::<MouseConstraint<f32, DefaultBodyHandle>>()
+                        })
+                    {
+                        constraint.set_anchor_1(attach2);
+                    }
                 }
 
                 event.inhibited =
