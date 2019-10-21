@@ -44,6 +44,14 @@ impl<N: RealField> Force3<N> {
         )
     }
 
+    /// Creates a force from its linear and angular components, both in vector form.
+    ///
+    /// This is the same as `Self::new`. This exists for API parity with the 2D code.
+    #[inline]
+    pub fn from_vectors(linear: Vector3<N>, angular: Vector3<N>) -> Self {
+        Self::new(linear, angular)
+    }
+
     /// Create a pure torque.
     #[inline]
     pub fn torque(torque: Vector3<N>) -> Self {

@@ -29,6 +29,17 @@ impl<N: RealField> Inertia2<N> {
         self.linear
     }
 
+    /// Get the inverse mass.
+    ///
+    /// Returns 0.0 if the mass is 0.0.
+    pub fn inv_mass(&self) -> N {
+        if self.linear.is_zero() {
+            N::zero()
+        } else {
+            self.linear
+        }
+    }
+
     /// Create a zero inertia.
     pub fn zero() -> Self {
         Inertia2::new(na::zero(), na::zero())

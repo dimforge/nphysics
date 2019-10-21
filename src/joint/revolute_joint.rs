@@ -200,8 +200,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         let shift = self.rot * -body_shift;
         let shift_dot_veldiff = self.axis.gcross(&shift);
 
-        self.jacobian =
-            Velocity::new_with_vectors(self.axis.gcross(&shift), self.axis.into_inner());
+        self.jacobian = Velocity::from_vectors(self.axis.gcross(&shift), self.axis.into_inner());
         self.jacobian_dot_veldiff.linear = self.axis.gcross(&shift_dot_veldiff);
         self.jacobian_dot.linear = self.jacobian_dot_veldiff.linear * vels[0];
     }

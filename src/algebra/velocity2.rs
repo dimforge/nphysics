@@ -22,7 +22,7 @@ impl<N: RealField> Velocity2<N> {
 
     /// Create velocity from its linear and angular parts.
     #[inline]
-    pub fn new_with_vectors(linear: Vector2<N>, angular: Vector1<N>) -> Self {
+    pub fn from_vectors(linear: Vector2<N>, angular: Vector1<N>) -> Self {
         Self::new(linear, angular.x)
     }
 
@@ -121,7 +121,10 @@ impl<N: RealField> Velocity2<N> {
     /// Compute the velocity of a point that is located at the coordinates `shift` relative to the point having `self` as velocity.
     #[inline]
     pub fn shift(&self, shift: &Vector2<N>) -> Self {
-        Self::new(self.linear + shift * self.angular, self.angular)
+        Self::new(
+            self.linear + Vector2::new(-shift.y, shift.x) * self.angular,
+            self.angular,
+        )
     }
 
     /// Rotate each component of `self` by `rot`.
