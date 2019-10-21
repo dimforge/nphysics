@@ -20,6 +20,7 @@ default = [ "dim2" ]
 dim2 = [ ]
 box2d-backend = [ "wrapped2d" ]
 fluids = [ "salva2d" ]
+parallel = [ "salva2d/parallel" ]
 
 [dependencies]
 log        = { version = "0.4", optional = true }
@@ -31,7 +32,7 @@ nalgebra   = "0.18"
 kiss3d     = { version = "0.21", features = [ "conrod" ] }
 ncollide2d = "0.20"
 wrapped2d  = { version = "0.4", optional = true }
-salva2d = { version = "0.0", optional = true }
+salva2d = { version = "0.0", features = [ "nphysics" ], optional = true }
 
 [dependencies.nphysics2d]
 path = "../nphysics2d"

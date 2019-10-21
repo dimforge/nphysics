@@ -15,6 +15,7 @@ use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
 use crate::objects::capsule::Capsule;
 use crate::objects::convex::Convex;
+use crate::objects::fluid::Fluid as FluidNode;
 use crate::objects::heightfield::HeightField;
 #[cfg(feature = "dim3")]
 use crate::objects::mesh::Mesh;
@@ -38,7 +39,11 @@ use nphysics::object::{
 use nphysics::world::DefaultGeometricalWorld;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 #[cfg(feature = "fluids")]
+use salva::boundary::Boundary;
+#[cfg(feature = "fluids")]
 use salva::fluid::Fluid;
+#[cfg(feature = "fluids")]
+use salva::LiquidWorld;
 use std::collections::HashMap;
 
 pub trait GraphicsWindow {
@@ -65,10 +70,13 @@ impl GraphicsWindow for Window {
 pub struct GraphicsManager {
     rand: StdRng,
     b2sn: HashMap<DefaultBodyHandle, Vec<Node>>,
+    f2sn: HashMap<usize, FluidNode>,
+    boundary2sn: HashMap<usize, FluidNode>,
     b2color: HashMap<DefaultBodyHandle, Point3<f32>>,
     c2color: HashMap<DefaultColliderHandle, Point3<f32>>,
     b2wireframe: HashMap<DefaultBodyHandle, bool>,
     f2color: HashMap<usize, Point3<f32>>,
+    ground_color: Point3<f32>,
     rays: Vec<Ray<f32>>,
     camera: Camera,
     aabbs: Vec<(DefaultColliderHandle, GraphicsNode)>,
@@ -95,9 +103,12 @@ impl GraphicsManager {
             camera,
             rand: StdRng::seed_from_u64(0),
             b2sn: HashMap::new(),
+            f2sn: HashMap::new(),
+            boundary2sn: HashMap::new(),
             b2color: HashMap::new(),
             c2color: HashMap::new(),
             f2color: HashMap::new(),
+            ground_color: Point3::new(0.5, 0.5, 0.5),
             b2wireframe: HashMap::new(),
             rays: Vec::new(),
             aabbs: Vec::new(),
@@ -118,11 +129,18 @@ impl GraphicsManager {
             }
         }
 
+        for sn in self.f2sn.values_mut().chain(self.boundary2sn.values_mut()) {
+            let node = sn.scene_node_mut();
+            window.remove_graphics_node(node);
+        }
+
         for aabb in self.aabbs.iter_mut() {
             window.remove_graphics_node(&mut aabb.1);
         }
 
         self.b2sn.clear();
+        self.f2sn.clear();
+        self.boundary2sn.clear();
         self.aabbs.clear();
         self.rays.clear();
         self.b2color.clear();
@@ -237,7 +255,7 @@ impl GraphicsManager {
     }
 
     fn alloc_color(&mut self, handle: DefaultBodyHandle) -> Point3<f32> {
-        let mut color = Point3::new(0.5, 0.5, 0.5);
+        let mut color = self.ground_color;
 
         match self.b2color.get(&handle).cloned() {
             Some(c) => color = c,
@@ -283,24 +301,47 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn add_fluid(&mut self, window: &mut Window, handle: usize, fluid: &Fluid<f32>) {
+    pub fn add_fluid(
+        &mut self,
+        window: &mut Window,
+        handle: usize,
+        fluid: &Fluid<f32>,
+        particle_radius: f32,
+    ) {
         let rand = &mut self.rand;
         let color = *self
             .f2color
             .entry(handle)
             .or_insert_with(|| Self::gen_color(rand));
 
-        self.add_fluid_with_color(window, handle, fluid, color);
+        self.add_fluid_with_color(window, handle, fluid, particle_radius, color);
     }
 
+    #[cfg(feature = "fluids")]
+    pub fn add_boundary(
+        &mut self,
+        window: &mut Window,
+        handle: usize,
+        boundary: &Boundary<f32>,
+        particle_radius: f32,
+    ) {
+        let rand = &mut self.rand;
+        let color = self.ground_color;
+        let node = FluidNode::new(particle_radius, &boundary.positions, color, window);
+        self.boundary2sn.insert(handle, node);
+    }
+
+    #[cfg(feature = "fluids")]
     pub fn add_fluid_with_color(
         &mut self,
         window: &mut Window,
         handle: usize,
         fluid: &Fluid<f32>,
+        particle_radius: f32,
         color: Point3<f32>,
     ) {
-        unimplemented!()
+        let node = FluidNode::new(particle_radius, &fluid.positions, color, window);
+        self.f2sn.insert(handle, node);
     }
 
     pub fn add(
@@ -640,6 +681,21 @@ impl GraphicsManager {
     pub fn hide_aabbs(&mut self, window: &mut Window) {
         for mut aabb in self.aabbs.drain(..) {
             window.remove_graphics_node(&mut aabb.1)
+        }
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn draw_fluids(&mut self, liquid_world: &LiquidWorld<f32>) {
+        for (i, fluid) in liquid_world.fluids().iter().enumerate() {
+            if let Some(node) = self.f2sn.get_mut(&i) {
+                node.update(&fluid.positions)
+            }
+        }
+
+        for (i, boundary) in liquid_world.boundaries().iter().enumerate() {
+            if let Some(node) = self.boundary2sn.get_mut(&i) {
+                node.update(&boundary.positions)
+            }
         }
     }
 
