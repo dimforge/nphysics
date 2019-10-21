@@ -19,6 +19,7 @@ required-features = [ "dim3" ]
 default = [ "dim3" ]
 dim3 = [ ]
 fluids = [ "salva3d" ]
+parallel = [ "salva3d/parallel" ]
 
 [dependencies]
 log        = { version = "0.4", optional = true }
@@ -29,7 +30,7 @@ rand       = "0.6"
 nalgebra   = "0.18"
 kiss3d     = { version = "0.21", features = [ "conrod" ] }
 ncollide3d = "0.20"
-salva3d = { version = "0.0", optional = true }
+salva3d = { version = "0.0", features = [ "nphysics" ], optional = true }
 
 [dependencies.nphysics3d]
 path = "../nphysics3d"

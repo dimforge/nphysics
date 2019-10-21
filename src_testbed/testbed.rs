@@ -34,7 +34,7 @@ use nphysics::object::{
 };
 use nphysics::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 #[cfg(feature = "fluids")]
-use salva::LiquidWorld;
+use salva::{coupling::ColliderCouplingManager, LiquidWorld};
 
 #[cfg(feature = "box2d-backend")]
 use crate::box2d_world::Box2dWorld;
@@ -113,10 +113,16 @@ pub struct TestbedState {
     pub selected_backend: usize,
 }
 
+#[cfg(feature = "fluids")]
+struct FluidsState {
+    world: LiquidWorld<f32>,
+    coupling: ColliderCouplingManager<f32, DefaultBodyHandle>,
+}
+
 pub struct Testbed {
     builders: Vec<(&'static str, fn(&mut Testbed))>,
     #[cfg(feature = "fluids")]
-    liquid_world: Option<LiquidWorld<f32>>,
+    fluids: Option<FluidsState>,
     mechanical_world: DefaultMechanicalWorld<f32>,
     geometrical_world: DefaultGeometricalWorld<f32>,
     bodies: DefaultBodySet<f32>,
@@ -199,7 +205,7 @@ impl Testbed {
         Testbed {
             builders: Vec::new(),
             #[cfg(feature = "fluids")]
-            liquid_world: None,
+            fluids: None,
             mechanical_world,
             geometrical_world,
             bodies,
@@ -315,8 +321,15 @@ impl Testbed {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn set_liquid_world(&mut self, liquid_world: LiquidWorld<f32>) {
-        self.liquid_world = Some(liquid_world);
+    pub fn set_liquid_world(
+        &mut self,
+        liquid_world: LiquidWorld<f32>,
+        coupling: ColliderCouplingManager<f32, DefaultBodyHandle>,
+    ) {
+        self.fluids = Some(FluidsState {
+            world: liquid_world,
+            coupling,
+        });
     }
 
     pub fn set_builders(&mut self, builders: Vec<(&'static str, fn(&mut Self))>) {
@@ -871,9 +884,15 @@ impl State for Testbed {
 
                 #[cfg(feature = "fluids")]
                 {
-                    if let Some(liquid_world) = &self.liquid_world {
-                        for (handle, fluid) in liquid_world.fluids().iter().enumerate() {
-                            self.graphics.add_fluid(window, handle, fluid);
+                    if let Some(fluids) = &self.fluids {
+                        let radius = fluids.world.particle_radius();
+
+                        for (handle, fluid) in fluids.world.fluids().iter().enumerate() {
+                            self.graphics.add_fluid(window, handle, fluid, radius);
+                        }
+
+                        for (handle, boundary) in fluids.world.boundaries().iter().enumerate() {
+                            self.graphics.add_boundary(window, handle, boundary, radius);
                         }
                     }
                 }
@@ -971,6 +990,22 @@ impl State for Testbed {
                         &mut self.constraints,
                         &mut self.forces,
                     );
+
+                    #[cfg(feature = "fluids")]
+                    {
+                        if let Some(fluids) = &mut self.fluids {
+                            let dt = self.mechanical_world.timestep();
+                            let gravity = &self.mechanical_world.gravity;
+                            fluids.world.step_with_coupling(
+                                dt,
+                                gravity,
+                                &self.geometrical_world,
+                                &mut fluids.coupling,
+                                &mut self.bodies,
+                                &mut self.colliders,
+                            );
+                        }
+                    }
                 }
 
                 #[cfg(feature = "box2d-backend")]
@@ -1010,6 +1045,13 @@ impl State for Testbed {
 
         self.graphics
             .draw(&self.geometrical_world, &self.colliders, window);
+
+        #[cfg(feature = "fluids")]
+        {
+            if let Some(fluids) = &self.fluids {
+                self.graphics.draw_fluids(&fluids.world)
+            }
+        }
 
         if self.state.flags.contains(TestbedStateFlags::CONTACT_POINTS) {
             draw_collisions(
@@ -1064,7 +1106,7 @@ CCD: {:.2}ms
                 counters.ccd.toi_computation_time.time() * 1000.0,
                 counters.ccd.broad_phase_time.time() * 1000.0,
                 counters.ccd.narrow_phase_time.time() * 1000.0,
-                counters.ccd.solver_time.time() * 1000.0
+                counters.ccd.solver_time.time() * 1000.0,
             );
 
             //            let stats = format!(

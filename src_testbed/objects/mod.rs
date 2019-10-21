@@ -2,6 +2,8 @@ pub mod ball;
 pub mod box_node;
 pub mod capsule;
 pub mod convex;
+#[cfg(feature = "fluids")]
+pub mod fluid;
 pub mod heightfield;
 #[cfg(feature = "dim3")]
 pub mod mesh;

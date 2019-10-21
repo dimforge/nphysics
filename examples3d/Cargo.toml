@@ -6,6 +6,7 @@ edition = "2018"
 
 [features]
 fluids = [ "salva3d", "nphysics_testbed3d/fluids" ]
+parallel = [ "nphysics_testbed3d/parallel"]
 
 [dependencies]
 rand       = { version = "0.6", features = [ "stdweb" ] }
@@ -13,7 +14,7 @@ num-traits = "0.2"
 nalgebra   = "0.18"
 ncollide3d = "0.20"
 kiss3d     = "0.21"
-salva3d    = { version = "0.0", optional = true }
+salva3d    = { version = "0.0", features = [ "nphysics" ], optional = true }
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"
