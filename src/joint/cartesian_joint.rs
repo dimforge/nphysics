@@ -46,7 +46,7 @@ impl<N: RealField> Joint<N> for CartesianJoint<N> {
     }
 
     fn jacobian_mul_coordinates(&self, vels: &[N]) -> Velocity<N> {
-        Velocity::new_with_vectors(Vector::from_row_slice(&vels[..DIM]), na::zero())
+        Velocity::from_vectors(Vector::from_row_slice(&vels[..DIM]), na::zero())
     }
 
     fn jacobian_dot_mul_coordinates(&self, _: &[N]) -> Velocity<N> {

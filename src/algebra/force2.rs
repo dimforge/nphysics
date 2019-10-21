@@ -38,6 +38,15 @@ impl<N: RealField> Force2<N> {
         Self::new(Vector2::new(data[0], data[1]), data[2])
     }
 
+    /// Creates a force from its linear and angular components, both in vector form.
+    #[inline]
+    pub fn from_vectors(linear: Vector2<N>, angular: Vector1<N>) -> Self {
+        Self {
+            linear,
+            angular: angular.x,
+        }
+    }
+
     /// Create a pure torque.
     #[inline]
     pub fn torque(torque: N) -> Self {

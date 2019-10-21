@@ -22,7 +22,7 @@ impl<N: RealField> Velocity3<N> {
 
     /// Create velocity from its linear and angular parts.
     #[inline]
-    pub fn new_with_vectors(linear: Vector3<N>, angular: Vector3<N>) -> Self {
+    pub fn from_vectors(linear: Vector3<N>, angular: Vector3<N>) -> Self {
         Self::new(linear, angular)
     }
 
