@@ -150,11 +150,11 @@ impl<N: RealField> SignoriniModel<N> {
     }
 
     /// Builds non-linear position-based non-penetration constraints for the given contact manifold.
-    pub fn build_position_constraint<Bodies: BodySet<N>, CollHandle: ColliderHandle>(
-        bodies: &Bodies,
-        manifold: &ColliderContactManifold<N, Bodies::Handle, CollHandle>,
+    pub fn build_position_constraint<Handle: BodyHandle, CollHandle: ColliderHandle>(
+        bodies: &dyn BodySet<N, Handle = Handle>,
+        manifold: &ColliderContactManifold<N, Handle, CollHandle>,
         c: &TrackedContact<N>,
-        constraints: &mut ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
+        constraints: &mut ConstraintSet<N, Handle, CollHandle, ContactId>,
     ) {
         let data1 = manifold.collider1;
         let data2 = manifold.collider2;
@@ -197,12 +197,12 @@ impl<N: RealField> SignoriniModel<N> {
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
-    ContactModel<N, Bodies, CollHandle> for SignoriniModel<N>
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    ContactModel<N, Handle, CollHandle> for SignoriniModel<N>
 {
     fn num_velocity_constraints(
         &self,
-        c: &ColliderContactManifold<N, Bodies::Handle, CollHandle>,
+        c: &ColliderContactManifold<N, Handle, CollHandle>,
     ) -> usize {
         c.manifold.len()
     }
@@ -211,13 +211,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         &mut self,
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &Bodies,
+        bodies: &dyn BodySet<N, Handle = Handle>,
         ext_vels: &DVector<N>,
-        manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
+        manifolds: &[ColliderContactManifold<N, Handle, CollHandle>],
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
+        constraints: &mut ConstraintSet<N, Handle, CollHandle, ContactId>,
     ) {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
@@ -280,10 +280,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         self.vel_rng = id_vel..constraints.velocity.unilateral.len();
     }
 
-    fn cache_impulses(
-        &mut self,
-        constraints: &ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
-    ) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Handle, CollHandle, ContactId>) {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
 

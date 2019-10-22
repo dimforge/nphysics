@@ -58,17 +58,16 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
-    pub fn update<Bodies, Colliders, Constraints>(
+    pub fn update<Colliders, Constraints>(
         &mut self,
-        bodies: &mut Bodies,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         colliders: &Colliders,
         gworld: &GeometricalWorld<N, Handle, Colliders::Handle>,
         constraints: &Constraints,
         active_bodies: &mut Vec<Handle>,
     ) where
-        Bodies: BodySet<N, Handle = Handle>,
         Colliders: ColliderSet<N, Handle>,
-        Constraints: JointConstraintSet<N, Bodies>,
+        Constraints: JointConstraintSet<N, Handle>,
     {
         /*
          *
@@ -77,7 +76,7 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
          */
         self.id_to_body.clear();
 
-        bodies.foreach_mut(|handle, body| {
+        bodies.foreach_mut(&mut |handle, body: &mut dyn Body<N>| {
             if body.status_dependent_ndofs() != 0 {
                 if body.is_active() {
                     self.update_energy(body);
@@ -131,10 +130,10 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
         // Run the union-find.
         // FIXME: use the union-find from petgraph?
         #[inline(always)]
-        fn make_union<N: RealField, Bodies: BodySet<N>>(
-            bodies: &Bodies,
-            b1: Bodies::Handle,
-            b2: Bodies::Handle,
+        fn make_union<N: RealField, Handle: BodyHandle>(
+            bodies: &dyn BodySet<N, Handle = Handle>,
+            b1: Handle,
+            b2: Handle,
             ufs: &mut [UnionFindSet],
         ) {
             let b1 = try_ret!(bodies.get(b1));

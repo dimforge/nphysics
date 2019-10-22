@@ -3,7 +3,7 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, Vector, DIM};
-use crate::object::{Body, BodyHandle, BodyPartHandle, BodySet};
+use crate::object::{BodyHandle, BodyPartHandle, BodySet};
 use crate::solver::helper;
 use crate::solver::{
     GenericNonlinearConstraint, IntegrationParameters, LinearConstraints,
@@ -70,8 +70,8 @@ impl<N: RealField, Handle: BodyHandle> UniversalConstraint<N, Handle> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
-    JointConstraint<N, Bodies> for UniversalConstraint<N, Handle>
+impl<N: RealField, Handle: BodyHandle> JointConstraint<N, Handle>
+    for UniversalConstraint<N, Handle>
 {
     fn is_broken(&self) -> bool {
         self.broken
@@ -88,7 +88,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
     fn velocity_constraints(
         &mut self,
         _: &IntegrationParameters<N>,
-        bodies: &Bodies,
+        bodies: &dyn BodySet<N, Handle = Handle>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
@@ -199,10 +199,10 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
-    NonlinearConstraintGenerator<N, Bodies> for UniversalConstraint<N, Handle>
+impl<N: RealField, Handle: BodyHandle> NonlinearConstraintGenerator<N, Handle>
+    for UniversalConstraint<N, Handle>
 {
-    fn num_position_constraints(&self, bodies: &Bodies) -> usize {
+    fn num_position_constraints(&self, bodies: &dyn BodySet<N, Handle = Handle>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             2
@@ -215,7 +215,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
         &self,
         parameters: &IntegrationParameters<N>,
         i: usize,
-        bodies: &mut Bodies,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         let body1 = bodies.get(self.b1.0)?;

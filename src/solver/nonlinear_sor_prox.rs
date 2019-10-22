@@ -3,7 +3,7 @@ use std::ops::MulAssign;
 
 use crate::joint::JointConstraintSet;
 use crate::math::Isometry;
-use crate::object::{Body, BodySet, ColliderAnchor, ColliderSet};
+use crate::object::{BodyHandle, BodySet, ColliderAnchor, ColliderSet};
 use crate::solver::{
     ForceDirection, GenericNonlinearConstraint, IntegrationParameters,
     NonlinearConstraintGenerator, NonlinearUnilateralConstraint,
@@ -16,21 +16,17 @@ impl NonlinearSORProx {
     /// Solve a set of nonlinear position-based constraints.
     pub fn solve<
         N: RealField,
-        Bodies: BodySet<N>,
-        Colliders: ColliderSet<N, Bodies::Handle>,
-        Constraints: JointConstraintSet<N, Bodies>,
+        Handle: BodyHandle,
+        Colliders: ColliderSet<N, Handle>,
+        Constraints: JointConstraintSet<N, Handle>,
     >(
         parameters: &IntegrationParameters<N>,
-        bodies: &mut Bodies,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         colliders: &Colliders,
-        contact_constraints: &mut [NonlinearUnilateralConstraint<
-            N,
-            Bodies::Handle,
-            Colliders::Handle,
-        >],
+        contact_constraints: &mut [NonlinearUnilateralConstraint<N, Handle, Colliders::Handle>],
         joints_constraints: &Constraints,
         island_joints: &[Constraints::Handle],
-        internal_constraints: &[Bodies::Handle],
+        internal_constraints: &[Handle],
         jacobians: &mut [N],
         max_iter: usize,
     ) {
@@ -60,11 +56,11 @@ impl NonlinearSORProx {
 
     fn solve_generator<
         N: RealField,
-        Bodies: BodySet<N>,
-        Gen: ?Sized + NonlinearConstraintGenerator<N, Bodies>,
+        Handle: BodyHandle,
+        Gen: ?Sized + NonlinearConstraintGenerator<N, Handle>,
     >(
         parameters: &IntegrationParameters<N>,
-        bodies: &mut Bodies,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         generator: &Gen,
         jacobians: &mut [N],
     ) {
@@ -79,10 +75,10 @@ impl NonlinearSORProx {
         }
     }
 
-    pub fn solve_generic<N: RealField, Bodies: BodySet<N>>(
+    pub fn solve_generic<N: RealField, Handle: BodyHandle>(
         parameters: &IntegrationParameters<N>,
-        bodies: &mut Bodies,
-        constraint: &mut GenericNonlinearConstraint<N, Bodies::Handle>,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
+        constraint: &mut GenericNonlinearConstraint<N, Handle>,
         jacobians: &mut [N],
     ) {
         let dim1 = Dynamic::new(constraint.dim1);
@@ -124,15 +120,15 @@ impl NonlinearSORProx {
 
     fn solve_unilateral<
         N: RealField,
-        Bodies: BodySet<N>,
-        Colliders: ColliderSet<N, Bodies::Handle>,
+        Handle: BodyHandle,
+        Colliders: ColliderSet<N, Handle>,
         D1: Dim,
         D2: Dim,
     >(
         parameters: &IntegrationParameters<N>,
-        bodies: &mut Bodies,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         colliders: &Colliders,
-        constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>,
+        constraint: &mut NonlinearUnilateralConstraint<N, Handle, Colliders::Handle>,
         jacobians: &mut [N],
         dim1: D1,
         dim2: D2,
@@ -159,13 +155,13 @@ impl NonlinearSORProx {
 
     fn update_contact_constraint<
         N: RealField,
-        Bodies: BodySet<N>,
-        Colliders: ColliderSet<N, Bodies::Handle>,
+        Handle: BodyHandle,
+        Colliders: ColliderSet<N, Handle>,
     >(
         parameters: &IntegrationParameters<N>,
-        bodies: &Bodies,
+        bodies: &dyn BodySet<N, Handle = Handle>,
         colliders: &Colliders,
-        constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>,
+        constraint: &mut NonlinearUnilateralConstraint<N, Handle, Colliders::Handle>,
         jacobians: &mut [N],
     ) -> bool {
         let body1 = try_ret!(bodies.get(constraint.body1.0), false);

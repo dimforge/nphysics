@@ -11,8 +11,8 @@ use ncollide::pipeline::{
 use ncollide::query::{ContactManifold, Proximity, Ray};
 
 use crate::object::{
-    Body, BodyHandle, BodySet, Collider, ColliderAnchor, ColliderHandle, ColliderSet,
-    DefaultBodyHandle, DefaultColliderHandle,
+    BodyHandle, BodySet, Collider, ColliderAnchor, ColliderHandle, ColliderSet, DefaultBodyHandle,
+    DefaultColliderHandle,
 };
 use crate::volumetric::Volumetric;
 
@@ -94,23 +94,20 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     }
 
     /// Maintain the internal structures of the geometrical world by handling body removals and colliders insersion and removals.
-    pub fn maintain<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
-    where
-        Bodies: BodySet<N, Handle = Handle>,
-        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
-    {
+    pub fn maintain<Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &mut self,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
+        colliders: &mut Colliders,
+    ) {
         self.handle_removals(bodies, colliders);
         self.handle_insertions(bodies, colliders);
     }
 
-    fn handle_insertions<Bodies, Colliders>(
+    fn handle_insertions<Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
         &mut self,
-        bodies: &mut Bodies,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         colliders: &mut Colliders,
-    ) where
-        Bodies: BodySet<N, Handle = Handle>,
-        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
-    {
+    ) {
         while let Some(handle) = colliders.pop_insertion_event() {
             if let Some(collider) = colliders.get_mut(handle) {
                 self.register_collider(handle, collider);
@@ -149,11 +146,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         }
     }
 
-    fn handle_removals<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
-    where
-        Bodies: BodySet<N, Handle = Handle>,
-        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
-    {
+    fn handle_removals<Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &mut self,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
+        colliders: &mut Colliders,
+    ) {
         let mut graph_id_remapping = HashMap::new();
 
         while let Some((removed_handle, mut removed)) = colliders.pop_removal_event() {
@@ -234,11 +231,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     }
 
     /// Synchronize all colliders with their body parent and the underlying collision world.
-    pub fn sync_colliders<Bodies, Colliders>(&mut self, bodies: &Bodies, colliders: &mut Colliders)
-    where
-        Bodies: BodySet<N, Handle = Handle>,
-        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
-    {
+    pub fn sync_colliders<Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
+        &mut self,
+        bodies: &dyn BodySet<N, Handle = Handle>,
+        colliders: &mut Colliders,
+    ) {
         colliders.foreach_mut(|_collider_id, collider| {
             let body = try_ret!(bodies.get(collider.body()));
 

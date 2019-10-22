@@ -4,16 +4,16 @@ use downcast_rs::Downcast;
 use generational_arena::Arena;
 use na::{DVector, RealField};
 
-use crate::object::{Body, BodyPartHandle, BodySet, DefaultBodySet};
+use crate::object::{BodyHandle, BodyPartHandle, BodySet, DefaultBodyHandle};
 use crate::solver::{IntegrationParameters, LinearConstraints, NonlinearConstraintGenerator};
 
 /// Trait implemented by sets of constraint-based joints.
 ///
 /// A set of constraint-based joints maps a joint handle to a joint instance. In addition, it must maintain a set of
 /// joint handle of joints that have been inserted removed (see the `pop_insertion_event` and `pop_removal_event` methods for details).
-pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
+pub trait JointConstraintSet<N: RealField, Handle: BodyHandle> {
     /// Type of a constraint-based joints stored in this set.
-    type JointConstraint: ?Sized + JointConstraint<N, Bodies>;
+    type JointConstraint: ?Sized + JointConstraint<N, Handle>;
     /// Type of a joint handle identifying a joint in this set.
     type Handle: Copy;
 
@@ -39,11 +39,7 @@ pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
     /// This method should return a removed joint handle only once.
     fn pop_insertion_event(
         &mut self,
-    ) -> Option<(
-        Self::Handle,
-        BodyPartHandle<Bodies::Handle>,
-        BodyPartHandle<Bodies::Handle>,
-    )>;
+    ) -> Option<(Self::Handle, BodyPartHandle<Handle>, BodyPartHandle<Handle>)>;
     /// Gets the handle of one joint that has been removed.
     ///
     /// A joint set must keep track (using typically a stack or a queue) of every joint that has been
@@ -51,11 +47,7 @@ pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
     /// physical actions like waking bodies that were attached to this joint.
     fn pop_removal_event(
         &mut self,
-    ) -> Option<(
-        Self::Handle,
-        BodyPartHandle<Bodies::Handle>,
-        BodyPartHandle<Bodies::Handle>,
-    )>;
+    ) -> Option<(Self::Handle, BodyPartHandle<Handle>, BodyPartHandle<Handle>)>;
     /// Remove a joint from this set.
     ///
     /// A constraint-based joint can be removed automatically by nphysics when one of its attached
@@ -66,21 +58,21 @@ pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
 /// A set containing all the joint-constraints added to the world.
 ///
 /// It is based on an arena using generational indices to avoid the ABA problem.
-pub struct DefaultJointConstraintSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> {
-    constraints: Arena<Box<dyn JointConstraint<N, Bodies>>>,
+pub struct DefaultJointConstraintSet<N: RealField, Handle: BodyHandle = DefaultBodyHandle> {
+    constraints: Arena<Box<dyn JointConstraint<N, Handle>>>,
     inserted: Vec<(
         DefaultJointConstraintHandle,
-        BodyPartHandle<Bodies::Handle>,
-        BodyPartHandle<Bodies::Handle>,
+        BodyPartHandle<Handle>,
+        BodyPartHandle<Handle>,
     )>,
     removed: Vec<(
         DefaultJointConstraintHandle,
-        BodyPartHandle<Bodies::Handle>,
-        BodyPartHandle<Bodies::Handle>,
+        BodyPartHandle<Handle>,
+        BodyPartHandle<Handle>,
     )>,
 }
 
-impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
+impl<N: RealField, Handle: BodyHandle> DefaultJointConstraintSet<N, Handle> {
     /// Creates an empty set.
     pub fn new() -> Self {
         DefaultJointConstraintSet {
@@ -93,7 +85,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     /// Adds a joint to this set.
     pub fn insert(
         &mut self,
-        constraint: impl JointConstraint<N, Bodies>,
+        constraint: impl JointConstraint<N, Handle>,
     ) -> DefaultJointConstraintHandle {
         self.insert_boxed(Box::new(constraint))
     }
@@ -101,7 +93,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     /// Adds a joint (represented as a boxed trait-object) to this set.
     pub fn insert_boxed(
         &mut self,
-        constraint: Box<dyn JointConstraint<N, Bodies>>,
+        constraint: Box<dyn JointConstraint<N, Handle>>,
     ) -> DefaultJointConstraintHandle {
         let (part1, part2) = constraint.anchors();
         let handle = self.constraints.insert(constraint);
@@ -113,7 +105,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn remove(
         &mut self,
         to_remove: DefaultJointConstraintHandle,
-    ) -> Option<Box<dyn JointConstraint<N, Bodies>>> {
+    ) -> Option<Box<dyn JointConstraint<N, Handle>>> {
         let res = self.constraints.remove(to_remove)?;
         let (part1, part2) = res.anchors();
         self.removed.push((to_remove, part1, part2));
@@ -129,7 +121,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn get(
         &self,
         handle: DefaultJointConstraintHandle,
-    ) -> Option<&dyn JointConstraint<N, Bodies>> {
+    ) -> Option<&dyn JointConstraint<N, Handle>> {
         self.constraints.get(handle).map(|b| &**b)
     }
 
@@ -137,7 +129,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn get_mut(
         &mut self,
         handle: DefaultJointConstraintHandle,
-    ) -> Option<&mut dyn JointConstraint<N, Bodies>> {
+    ) -> Option<&mut dyn JointConstraint<N, Handle>> {
         self.constraints.get_mut(handle).map(|b| &mut **b)
     }
 
@@ -147,7 +139,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     ) -> impl Iterator<
         Item = (
             DefaultJointConstraintHandle,
-            &dyn JointConstraint<N, Bodies>,
+            &dyn JointConstraint<N, Handle>,
         ),
     > {
         self.constraints.iter().map(|b| (b.0, &**b.1))
@@ -159,17 +151,17 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     ) -> impl Iterator<
         Item = (
             DefaultJointConstraintHandle,
-            &mut dyn JointConstraint<N, Bodies>,
+            &mut dyn JointConstraint<N, Handle>,
         ),
     > {
         self.constraints.iter_mut().map(|b| (b.0, &mut **b.1))
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies>
-    for DefaultJointConstraintSet<N, Bodies>
+impl<N: RealField, Handle: BodyHandle> JointConstraintSet<N, Handle>
+    for DefaultJointConstraintSet<N, Handle>
 {
-    type JointConstraint = dyn JointConstraint<N, Bodies>;
+    type JointConstraint = dyn JointConstraint<N, Handle>;
     type Handle = DefaultJointConstraintHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::JointConstraint> {
@@ -198,21 +190,13 @@ impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies>
 
     fn pop_insertion_event(
         &mut self,
-    ) -> Option<(
-        Self::Handle,
-        BodyPartHandle<Bodies::Handle>,
-        BodyPartHandle<Bodies::Handle>,
-    )> {
+    ) -> Option<(Self::Handle, BodyPartHandle<Handle>, BodyPartHandle<Handle>)> {
         self.inserted.pop()
     }
 
     fn pop_removal_event(
         &mut self,
-    ) -> Option<(
-        Self::Handle,
-        BodyPartHandle<Bodies::Handle>,
-        BodyPartHandle<Bodies::Handle>,
-    )> {
+    ) -> Option<(Self::Handle, BodyPartHandle<Handle>, BodyPartHandle<Handle>)> {
         self.removed.pop()
     }
 
@@ -225,13 +209,13 @@ impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies>
 pub type DefaultJointConstraintHandle = generational_arena::Index;
 
 /// Trait implemented by joint that operate by generating constraints to restrict the relative motion of two body parts.
-pub trait JointConstraint<N: RealField, Bodies: BodySet<N>>:
-    NonlinearConstraintGenerator<N, Bodies> + Downcast + Send + Sync
+pub trait JointConstraint<N: RealField, Handle: BodyHandle>:
+    NonlinearConstraintGenerator<N, Handle> + Downcast + Send + Sync
 {
     /// Return `true` if the constraint is active.
     ///
     /// Typically, a constraint is disable if it is between two sleeping bodies, or, between bodies without any degrees of freedom.
-    fn is_active(&self, bodies: &Bodies) -> bool {
+    fn is_active(&self, bodies: &dyn BodySet<N, Handle = Handle>) -> bool {
         let (b1, b2) = self.anchors();
         let body1 = try_ret!(bodies.get(b1.0), false);
         let body2 = try_ret!(bodies.get(b2.0), false);
@@ -245,17 +229,12 @@ pub trait JointConstraint<N: RealField, Bodies: BodySet<N>>:
     /// The maximum number of velocity constraints generated by this joint.
     fn num_velocity_constraints(&self) -> usize;
     /// The two body parts affected by this joint.
-    fn anchors(
-        &self,
-    ) -> (
-        BodyPartHandle<Bodies::Handle>,
-        BodyPartHandle<Bodies::Handle>,
-    );
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>);
     /// Initialize and retrieve all the constraints appied to the bodies attached to this joint.
     fn velocity_constraints(
         &mut self,
         parameters: &IntegrationParameters<N>,
-        bodies: &Bodies,
+        bodies: &dyn BodySet<N, Handle = Handle>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
@@ -271,4 +250,4 @@ pub trait JointConstraint<N: RealField, Bodies: BodySet<N>>:
     }
 }
 
-impl_downcast!(JointConstraint<N, Bodies> where N: RealField, Bodies: BodySet<N>);
+impl_downcast!(JointConstraint<N, Handle> where N: RealField, Handle: BodyHandle);
