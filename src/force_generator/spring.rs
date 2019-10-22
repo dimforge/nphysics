@@ -2,7 +2,7 @@ use na::{RealField, Unit};
 
 use crate::force_generator::ForceGenerator;
 use crate::math::{ForceType, Point, Vector};
-use crate::object::{Body, BodyHandle, BodyPartHandle, BodySet};
+use crate::object::{BodyHandle, BodyPartHandle, BodySet};
 use crate::solver::IntegrationParameters;
 
 /// Generator of a force proportional to the distance separating two bodies.
@@ -53,10 +53,12 @@ impl<N: RealField, Handle: BodyHandle> Spring<N, Handle> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
-    ForceGenerator<N, Bodies> for Spring<N, Handle>
-{
-    fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut Bodies) {
+impl<N: RealField, Handle: BodyHandle> ForceGenerator<N, Handle> for Spring<N, Handle> {
+    fn apply(
+        &mut self,
+        _: &IntegrationParameters<N>,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
+    ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));

@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
 use crate::math::{SpatialDim, SPATIAL_DIM};
-use crate::object::{Body, BodySet};
+use crate::object::{BodyHandle, BodySet};
 use crate::solver::{
     BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, LinearConstraints,
     UnilateralConstraint, UnilateralGroundConstraint,
@@ -16,8 +16,8 @@ use crate::solver::{
 pub(crate) struct SORProx;
 
 impl SORProx {
-    fn warmstart_set<N: RealField, Bodies: BodySet<N>, Id>(
-        _bodies: &mut Bodies,
+    fn warmstart_set<N: RealField, Handle: BodyHandle, Id>(
+        _bodies: &mut dyn BodySet<N, Handle = Handle>,
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
@@ -45,11 +45,11 @@ impl SORProx {
     }
 
     /// Solve the given set of constraints.
-    pub fn solve<N: RealField, Bodies: BodySet<N>>(
-        bodies: &mut Bodies,
+    pub fn solve<N: RealField, Handle: BodyHandle>(
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         contact_constraints: &mut LinearConstraints<N, ContactId>,
         joint_constraints: &mut LinearConstraints<N, usize>,
-        internal: &[Bodies::Handle],
+        internal: &[Handle],
         mj_lambda: &mut DVector<N>,
         jacobians: &[N],
         max_iter: usize,
@@ -79,8 +79,8 @@ impl SORProx {
         }
     }
 
-    fn step_unilateral<N: RealField, Bodies: BodySet<N>, Id>(
-        _bodies: &mut Bodies,
+    fn step_unilateral<N: RealField, Handle: BodyHandle, Id>(
+        _bodies: &mut dyn BodySet<N, Handle = Handle>,
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
@@ -109,8 +109,8 @@ impl SORProx {
         }
     }
 
-    fn step_bilateral<N: RealField, Bodies: BodySet<N>, Id>(
-        _bodies: &mut Bodies,
+    fn step_bilateral<N: RealField, Handle: BodyHandle, Id>(
+        _bodies: &mut dyn BodySet<N, Handle = Handle>,
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
@@ -156,11 +156,11 @@ impl SORProx {
         }
     }
 
-    fn step<N: RealField, Bodies: BodySet<N>>(
-        bodies: &mut Bodies,
+    fn step<N: RealField, Handle: BodyHandle>(
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         contact_constraints: &mut LinearConstraints<N, ContactId>,
         joint_constraints: &mut LinearConstraints<N, usize>,
-        internal: &[Bodies::Handle],
+        internal: &[Handle],
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
     ) {

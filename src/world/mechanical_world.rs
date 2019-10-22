@@ -51,23 +51,23 @@ struct SubstepState<N: RealField, Handle: BodyHandle> {
 }
 
 /// The physics world.
-pub struct MechanicalWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {
+pub struct MechanicalWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     /// Performance counters used for debugging and benchmarking nphysics.
     pub counters: Counters,
     /// The constraints solver.
-    pub solver: MoreauJeanSolver<N, Bodies, CollHandle>,
+    pub solver: MoreauJeanSolver<N, Handle, CollHandle>,
     /// Parameters of the whole simulation.
     pub integration_parameters: IntegrationParameters<N>,
     /// Coefficient table used for resolving material properties to apply at one contact.
     pub material_coefficients: MaterialsCoefficientsTable<N>,
     /// The acting on this mechanical world.
     pub gravity: Vector<N>,
-    activation_manager: ActivationManager<N, Bodies::Handle>,
-    substep: SubstepState<N, Bodies::Handle>,
+    activation_manager: ActivationManager<N, Handle>,
+    substep: SubstepState<N, Handle>,
 }
 
-impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
-    MechanicalWorld<N, Bodies, CollHandle>
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    MechanicalWorld<N, Handle, CollHandle>
 {
     /// Creates a new physics world with default parameters.
     ///
@@ -112,13 +112,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
     /// events from every sets this mechanical world interacts with.
     pub fn maintain<Colliders, Constraints>(
         &mut self,
-        gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
-        bodies: &mut Bodies,
+        gworld: &mut GeometricalWorld<N, Handle, CollHandle>,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         colliders: &mut Colliders,
         constraints: &mut Constraints,
     ) where
-        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
-        Constraints: JointConstraintSet<N, Bodies>,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Handle>,
     {
         // NOTE: the order of handling events matters.
         // In particular, handling body removal events must be done first because it
@@ -180,15 +180,15 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
     /// Execute one time step of the physics simulation.
     pub fn step<Colliders, Constraints, Forces>(
         &mut self,
-        gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
-        bodies: &mut Bodies,
+        gworld: &mut GeometricalWorld<N, Handle, CollHandle>,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         colliders: &mut Colliders,
         constraints: &mut Constraints,
         forces: &mut Forces,
     ) where
-        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
-        Constraints: JointConstraintSet<N, Bodies>,
-        Forces: ForceGeneratorSet<N, Bodies>,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Handle>,
+        Forces: ForceGeneratorSet<N, Handle>,
     {
         if !self.substep.active {
             self.counters.step_started();
@@ -205,7 +205,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
              * Update body dynamics and accelerations.
              *
              */
-            bodies.foreach_mut(|_, b| {
+            bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                 b.step_started();
                 b.update_kinematics();
                 b.update_dynamics(self.integration_parameters.dt());
@@ -216,7 +216,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
             let parameters = &self.integration_parameters;
             forces.foreach_mut(|_, f| f.apply(parameters, bodies));
 
-            bodies.foreach_mut(|_, b| {
+            bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                 b.update_acceleration(&self.gravity, parameters);
             });
 
@@ -282,7 +282,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
              * Solve the system and integrate.
              *
              */
-            bodies.foreach_mut(|_, b| {
+            bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                 // FIXME This is currently needed by the solver because otherwise
                 // some kinematic bodies may end up with a companion_id (used as
                 // an assembly_id) that it out of bounds of the velocity vector.
@@ -303,7 +303,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
                 &self.material_coefficients,
             );
 
-            bodies.foreach_mut(|_, b| {
+            bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                 if b.status() == BodyStatus::Kinematic {
                     b.integrate(parameters)
                 }
@@ -318,7 +318,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
              */
             // FIXME: objects involved in a non-linear position stabilization already
             // updated their kinematics.
-            bodies.foreach_mut(|_, b| {
+            bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                 b.update_kinematics();
                 b.update_dynamics(parameters.dt());
             });
@@ -339,7 +339,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
              * Finally, clear the update flag of every body.
              *
              */
-            bodies.foreach_mut(|_, b| {
+            bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                 b.clear_forces();
                 b.validate_advancement();
             });
@@ -365,7 +365,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
             self.integration_parameters.t += self.integration_parameters.dt();
             self.counters.step_completed();
 
-            bodies.foreach_mut(|_, b| {
+            bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                 b.clear_update_flags();
             });
 
@@ -377,13 +377,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
     // assuming body motions clamped at their first TOI.
     fn predict_next_impacts<Colliders>(
         &self,
-        gworld: &GeometricalWorld<N, Bodies::Handle, CollHandle>,
-        bodies: &Bodies,
+        gworld: &GeometricalWorld<N, Handle, CollHandle>,
+        bodies: &dyn BodySet<N, Handle = Handle>,
         colliders: &Colliders,
         end_time: N,
-    ) -> PredictedImpacts<N, Bodies::Handle, CollHandle>
+    ) -> PredictedImpacts<N, Handle, CollHandle>
     where
-        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
     {
         let mut impacts = Vec::new();
         let mut frozen = HashMap::<_, N>::new();
@@ -538,15 +538,15 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
 
     fn solve_ccd<Colliders, Constraints, Forces>(
         &mut self,
-        gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
-        bodies: &mut Bodies,
+        gworld: &mut GeometricalWorld<N, Handle, CollHandle>,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
         colliders: &mut Colliders,
         constraints: &mut Constraints,
         _forces: &mut Forces,
     ) where
-        Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
-        Constraints: JointConstraintSet<N, Bodies>,
-        Forces: ForceGeneratorSet<N, Bodies>,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Handle>,
+        Forces: ForceGeneratorSet<N, Handle>,
     {
         let dt0 = self.integration_parameters.dt();
         let _inv_dt0 = self.integration_parameters.inv_dt();
@@ -611,7 +611,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
                 parameters.set_dt(dt0 - last_toi);
 
                 // We will use the companion ID to know which body is already on the island.
-                bodies.foreach_mut(|_h, b| {
+                bodies.foreach_mut(&mut |_h, b: &mut dyn Body<N>| {
                     b.set_companion_id(0);
                 });
 
@@ -660,25 +660,34 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
                                 let handle1 = colliders.get(ch1).unwrap().body();
                                 let handle2 = colliders.get(ch2).unwrap().body();
                                 if bodies.contains(handle1) && bodies.contains(handle2) {
-                                    let mut prepare_body = |h, b: &mut Bodies::Body, c: &mut Collider<N, Bodies::Handle>| {
-                                        b.clear_forces();
-                                        b.update_kinematics();
-                                        b.update_dynamics(parameters.dt());
-                                        b.update_acceleration(&Vector::zeros(), &parameters);
+                                    let mut prepare_body =
+                                        |h, b: &mut dyn Body<N>, c: &mut Collider<N, Handle>| {
+                                            b.clear_forces();
+                                            b.update_kinematics();
+                                            b.update_dynamics(parameters.dt());
+                                            b.update_acceleration(&Vector::zeros(), &parameters);
 
-                                        let curr_body_time = self.substep.body_times.entry(h).or_insert(N::zero());
+                                            let curr_body_time = self
+                                                .substep
+                                                .body_times
+                                                .entry(h)
+                                                .or_insert(N::zero());
 
-                                        let target_time = frozen.get(&h).cloned().unwrap_or(last_toi);
-                                        b.advance(target_time - *curr_body_time);
-                                        b.clamp_advancement();
+                                            let target_time =
+                                                frozen.get(&h).cloned().unwrap_or(last_toi);
+                                            b.advance(target_time - *curr_body_time);
+                                            b.clamp_advancement();
 
-                                        // This body will have its motion clamped between the times target_time and last_time.
-                                        *curr_body_time = last_toi;
+                                            // This body will have its motion clamped between the times target_time and last_time.
+                                            *curr_body_time = last_toi;
 
-                                        b.set_companion_id(1);
-                                        island.push(h);
-                                        c.set_position(b.part(0).unwrap().position() * c.position_wrt_body());
-                                    };
+                                            b.set_companion_id(1);
+                                            island.push(h);
+                                            c.set_position(
+                                                b.part(0).unwrap().position()
+                                                    * c.position_wrt_body(),
+                                            );
+                                        };
 
                                     let b1_needs_preparation = {
                                         let b1 = bodies.get_mut(handle1).unwrap();
@@ -822,7 +831,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
                 self.counters.ccd.narrow_phase_time.pause();
 
                 // Solve the system and integrate.
-                bodies.foreach_mut(|_, b| {
+                bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                     b.set_companion_id(0);
                 });
 
@@ -844,7 +853,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
                 // Update body kinematics and dynamics
                 // after the contact resolution step.
                 let _gravity = &self.gravity;
-                bodies.foreach_mut(|_, b| {
+                bodies.foreach_mut(&mut |_, b: &mut dyn Body<N>| {
                     b.clear_forces();
                     b.update_kinematics();
                     b.update_dynamics(parameters.dt());
@@ -857,7 +866,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
                 }
             } else {
                 let _substep = &mut self.substep;
-                bodies.foreach_mut(|handle, body| {
+                bodies.foreach_mut(&mut |handle, body: &mut dyn Body<N>| {
                     if !body.is_static() && frozen.contains_key(&handle) {
                         body.clamp_advancement();
                     }

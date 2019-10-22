@@ -17,15 +17,13 @@ impl<T: Copy + Hash + PartialEq + Eq + 'static + Send + Sync> BodyHandle for T {
 /// A set of bodies maps a body handle to a body instance. In addition, it must maintain a set of
 /// body handle of bodies that have been removed (see the `pop_removal_event` method for details).
 pub trait BodySet<N: RealField> {
-    /// Type of a body stored in this set.
-    type Body: ?Sized + Body<N>;
     /// Type of a body handle identifying a body in this set.
     type Handle: BodyHandle;
 
     /// Gets a reference to the body identified by `handle`.
-    fn get(&self, handle: Self::Handle) -> Option<&Self::Body>;
+    fn get(&self, handle: Self::Handle) -> Option<&dyn Body<N>>;
     /// Gets a mutable reference to the body identified by `handle`.
-    fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body>;
+    fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut dyn Body<N>>;
 
     /// Gets a reference to the two bodies identified by `handle1` and `handle2`.
     ///
@@ -34,7 +32,7 @@ pub trait BodySet<N: RealField> {
         &self,
         handle1: Self::Handle,
         handle2: Self::Handle,
-    ) -> (Option<&Self::Body>, Option<&Self::Body>) {
+    ) -> (Option<&dyn Body<N>>, Option<&dyn Body<N>>) {
         (self.get(handle1), self.get(handle2))
     }
 
@@ -42,9 +40,9 @@ pub trait BodySet<N: RealField> {
     fn contains(&self, handle: Self::Handle) -> bool;
 
     /// Iterate through all the bodies on this set, applying the closure `f` on them.
-    fn foreach(&self, f: impl FnMut(Self::Handle, &Self::Body));
+    fn foreach(&self, f: &mut dyn FnMut(Self::Handle, &dyn Body<N>));
     /// Mutable iterate through all the bodies on this set, applying the closure `f` on them.
-    fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::Body));
+    fn foreach_mut(&mut self, f: &mut dyn FnMut(Self::Handle, &mut dyn Body<N>));
 
     /// Gets the handle of one body that has been removed.
     ///
@@ -145,14 +143,13 @@ impl<N: RealField> DefaultBodySet<N> {
 }
 
 impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
-    type Body = dyn Body<N>;
     type Handle = DefaultBodyHandle;
 
-    fn get(&self, handle: Self::Handle) -> Option<&Self::Body> {
+    fn get(&self, handle: Self::Handle) -> Option<&dyn Body<N>> {
         self.get(handle)
     }
 
-    fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body> {
+    fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut dyn Body<N>> {
         self.get_mut(handle)
     }
 
@@ -160,13 +157,13 @@ impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
         self.contains(handle)
     }
 
-    fn foreach(&self, mut f: impl FnMut(Self::Handle, &Self::Body)) {
+    fn foreach(&self, f: &mut dyn FnMut(Self::Handle, &dyn Body<N>)) {
         for (h, b) in self.iter() {
             f(h, b)
         }
     }
 
-    fn foreach_mut(&mut self, mut f: impl FnMut(Self::Handle, &mut Self::Body)) {
+    fn foreach_mut(&mut self, f: &mut dyn FnMut(Self::Handle, &mut dyn Body<N>)) {
         for (h, b) in self.iter_mut() {
             f(h, b)
         }

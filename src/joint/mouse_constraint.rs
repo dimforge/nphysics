@@ -3,7 +3,7 @@ use na::{DVector, RealField, Unit};
 
 use crate::joint::JointConstraint;
 use crate::math::{Point, Vector, DIM};
-use crate::object::{Body, BodyHandle, BodyPartHandle, BodySet};
+use crate::object::{BodyHandle, BodyPartHandle, BodySet};
 use crate::solver::{
     helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits,
 };
@@ -53,9 +53,7 @@ impl<N: RealField, Handle: BodyHandle> MouseConstraint<N, Handle> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
-    JointConstraint<N, Bodies> for MouseConstraint<N, Handle>
-{
+impl<N: RealField, Handle: BodyHandle> JointConstraint<N, Handle> for MouseConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         DIM
     }
@@ -67,7 +65,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
     fn velocity_constraints(
         &mut self,
         parameters: &IntegrationParameters<N>,
-        bodies: &Bodies,
+        bodies: &dyn BodySet<N, Handle = Handle>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
@@ -154,10 +152,10 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
     fn cache_impulses(&mut self, _: &LinearConstraints<N, usize>, _: N) {}
 }
 
-impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
-    NonlinearConstraintGenerator<N, Bodies> for MouseConstraint<N, Handle>
+impl<N: RealField, Handle: BodyHandle> NonlinearConstraintGenerator<N, Handle>
+    for MouseConstraint<N, Handle>
 {
-    fn num_position_constraints(&self, _: &Bodies) -> usize {
+    fn num_position_constraints(&self, _: &dyn BodySet<N, Handle = Handle>) -> usize {
         0
     }
 
@@ -165,7 +163,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>>
         &self,
         _: &IntegrationParameters<N>,
         _: usize,
-        _: &mut Bodies,
+        _: &mut dyn BodySet<N, Handle = Handle>,
         _: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         None

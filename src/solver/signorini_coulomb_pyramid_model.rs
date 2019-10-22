@@ -7,7 +7,7 @@ use std::ops::Range;
 use crate::detection::ColliderContactManifold;
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable};
 use crate::math::{Vector, DIM};
-use crate::object::{Body, BodySet, ColliderHandle};
+use crate::object::{BodyHandle, BodySet, ColliderHandle};
 use crate::solver::helper;
 use crate::solver::{
     BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel, ForceDirection,
@@ -44,12 +44,12 @@ impl<N: RealField> Default for SignoriniCoulombPyramidModel<N> {
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
-    ContactModel<N, Bodies, CollHandle> for SignoriniCoulombPyramidModel<N>
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
+    ContactModel<N, Handle, CollHandle> for SignoriniCoulombPyramidModel<N>
 {
     fn num_velocity_constraints(
         &self,
-        c: &ColliderContactManifold<N, Bodies::Handle, CollHandle>,
+        c: &ColliderContactManifold<N, Handle, CollHandle>,
     ) -> usize {
         DIM * c.len()
     }
@@ -58,13 +58,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         &mut self,
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &Bodies,
+        bodies: &dyn BodySet<N, Handle = Handle>,
         ext_vels: &DVector<N>,
-        manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
+        manifolds: &[ColliderContactManifold<N, Handle, CollHandle>],
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
+        constraints: &mut ConstraintSet<N, Handle, CollHandle, ContactId>,
     ) {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
@@ -220,10 +220,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle>
         self.friction_rng = id_friction..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(
-        &mut self,
-        constraints: &ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
-    ) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Handle, CollHandle, ContactId>) {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
         let ground_friction =
