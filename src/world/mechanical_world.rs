@@ -14,13 +14,13 @@ use crate::material::MaterialsCoefficientsTable;
 use crate::math::Vector;
 use crate::object::{
     Body, BodyHandle, BodyPartMotion, BodySet, BodyStatus, Collider, ColliderHandle, ColliderSet,
-    DefaultBodySet, DefaultColliderHandle,
+    DefaultBodyHandle, DefaultColliderHandle,
 };
 use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::GeometricalWorld;
 
-/// The default mechanical world, that can be used with a `DefaultBodySet` and `DefaultColliderHandle`.
-pub type DefaultMechanicalWorld<N> = MechanicalWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
+/// The default mechanical world, that can be used with a `DefaultBodyHandle` and `DefaultColliderHandle`.
+pub type DefaultMechanicalWorld<N> = MechanicalWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
 
 enum PredictedImpacts<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     Impacts(Vec<TOIEntry<N, Handle, CollHandle>>, HashMap<Handle, N>),
