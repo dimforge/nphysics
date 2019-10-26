@@ -43,7 +43,6 @@ impl<N: RealField> Joint<N> for CartesianJoint<N> {
         _: &[N],
         _: &mut JacobianSliceMut<N>,
     ) {
-
     }
 
     fn jacobian_mul_coordinates(&self, vels: &[N]) -> Velocity<N> {
