@@ -880,7 +880,8 @@ impl<N: RealField> BodyPart<N> for MassConstraintElement<N> {
     }
 
     fn position(&self) -> Isometry<N> {
-        Isometry::new(Vector::<N>::y() * na::convert::<_, N>(100.0f64), na::zero()) // XXX
+        // XXX
+        Isometry::new(Vector::<N>::y() * na::convert::<_, N>(100.0f64), na::zero())
     }
 
     fn velocity(&self) -> Velocity<N> {
