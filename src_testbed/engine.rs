@@ -71,11 +71,14 @@ impl GraphicsWindow for Window {
 pub struct GraphicsManager {
     rand: StdRng,
     b2sn: HashMap<DefaultBodyHandle, Vec<Node>>,
+    #[cfg(feature = "fluids")]
     f2sn: HashMap<FluidHandle, FluidNode>,
+    #[cfg(feature = "fluids")]
     boundary2sn: HashMap<BoundaryHandle, FluidNode>,
     b2color: HashMap<DefaultBodyHandle, Point3<f32>>,
     c2color: HashMap<DefaultColliderHandle, Point3<f32>>,
     b2wireframe: HashMap<DefaultBodyHandle, bool>,
+    #[cfg(feature = "fluids")]
     f2color: HashMap<FluidHandle, Point3<f32>>,
     ground_color: Point3<f32>,
     rays: Vec<Ray<f32>>,
@@ -104,10 +107,13 @@ impl GraphicsManager {
             camera,
             rand: StdRng::seed_from_u64(0),
             b2sn: HashMap::new(),
+            #[cfg(feature = "fluids")]
             f2sn: HashMap::new(),
+            #[cfg(feature = "fluids")]
             boundary2sn: HashMap::new(),
             b2color: HashMap::new(),
             c2color: HashMap::new(),
+            #[cfg(feature = "fluids")]
             f2color: HashMap::new(),
             ground_color: Point3::new(0.5, 0.5, 0.5),
             b2wireframe: HashMap::new(),
@@ -130,6 +136,7 @@ impl GraphicsManager {
             }
         }
 
+        #[cfg(feature = "fluids")]
         for sn in self.f2sn.values_mut().chain(self.boundary2sn.values_mut()) {
             let node = sn.scene_node_mut();
             window.remove_graphics_node(node);
@@ -140,7 +147,9 @@ impl GraphicsManager {
         }
 
         self.b2sn.clear();
+        #[cfg(feature = "fluids")]
         self.f2sn.clear();
+        #[cfg(feature = "fluids")]
         self.boundary2sn.clear();
         self.aabbs.clear();
         self.rays.clear();
@@ -335,7 +344,6 @@ impl GraphicsManager {
         boundary: &Boundary<f32>,
         particle_radius: f32,
     ) {
-        let rand = &mut self.rand;
         let color = self.ground_color;
         let node = FluidNode::new(particle_radius, &boundary.positions, color, window);
         self.boundary2sn.insert(handle, node);

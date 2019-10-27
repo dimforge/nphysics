@@ -19,6 +19,7 @@ mod conveyor_belt2;
 mod cross2;
 mod damping2;
 mod fem_surface2;
+#[cfg(feature = "fluids")]
 mod fluids2;
 mod force_generator2;
 mod heightfield2;
@@ -75,6 +76,7 @@ fn main() {
         ("Conveyor Belt", conveyor_belt2::init_world),
         ("Damping", damping2::init_world),
         ("FEM Surface", fem_surface2::init_world),
+        #[cfg(feature = "fluids")]
         ("Fluids", fluids2::init_world),
         ("Force Generator", force_generator2::init_world),
         ("Heightfield", heightfield2::init_world),

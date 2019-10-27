@@ -22,6 +22,7 @@ mod cross3;
 mod damping3;
 mod dzhanibekov3;
 mod fem_volume3;
+#[cfg(feature = "fluids")]
 mod fluids3;
 mod force_generator3;
 mod heightfield3;
@@ -78,6 +79,7 @@ fn main() {
         ("Damping", damping3::init_world),
         ("Dzhanibekov Effect", dzhanibekov3::init_world),
         ("FEM Volume", fem_volume3::init_world),
+        #[cfg(feature = "fluids")]
         ("Fluids", fluids3::init_world),
         ("Force Generator", force_generator3::init_world),
         ("Heightfield", heightfield3::init_world),
