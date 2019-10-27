@@ -15,6 +15,7 @@ use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
 use crate::objects::capsule::Capsule;
 use crate::objects::convex::Convex;
+#[cfg(feature = "fluids")]
 use crate::objects::fluid::Fluid as FluidNode;
 use crate::objects::heightfield::HeightField;
 #[cfg(feature = "dim3")]
@@ -39,9 +40,9 @@ use nphysics::object::{
 use nphysics::world::DefaultGeometricalWorld;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 #[cfg(feature = "fluids")]
-use salva::boundary::Boundary;
+use salva::boundary::{Boundary, BoundaryHandle};
 #[cfg(feature = "fluids")]
-use salva::fluid::Fluid;
+use salva::fluid::{Fluid, FluidHandle};
 #[cfg(feature = "fluids")]
 use salva::LiquidWorld;
 use std::collections::HashMap;
@@ -70,12 +71,12 @@ impl GraphicsWindow for Window {
 pub struct GraphicsManager {
     rand: StdRng,
     b2sn: HashMap<DefaultBodyHandle, Vec<Node>>,
-    f2sn: HashMap<usize, FluidNode>,
-    boundary2sn: HashMap<usize, FluidNode>,
+    f2sn: HashMap<FluidHandle, FluidNode>,
+    boundary2sn: HashMap<BoundaryHandle, FluidNode>,
     b2color: HashMap<DefaultBodyHandle, Point3<f32>>,
     c2color: HashMap<DefaultColliderHandle, Point3<f32>>,
     b2wireframe: HashMap<DefaultBodyHandle, bool>,
-    f2color: HashMap<usize, Point3<f32>>,
+    f2color: HashMap<FluidHandle, Point3<f32>>,
     ground_color: Point3<f32>,
     rays: Vec<Ray<f32>>,
     camera: Camera,
@@ -212,6 +213,15 @@ impl GraphicsManager {
                     new_sns.push(sn);
                 }
             }
+        }
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn set_fluid_color(&mut self, f: usize, color: Point3<f32>) {
+        self.f2color.insert(f, color);
+
+        if let Some(n) = self.f2sn.get_mut(&f) {
+            n.set_color(color)
         }
     }
 

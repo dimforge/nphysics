@@ -87,29 +87,6 @@ extern crate ncollide2d as ncollide;
 extern crate ncollide3d as ncollide;
 extern crate num_traits as num;
 
-/*
- * The two following crates are pulled-in for
- * measuring time.
- */
-#[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
-extern crate time;
-
-#[cfg(all(any(target_arch = "wasm32", target_arch = "asmjs"), feature = "stdweb",))]
-#[macro_use]
-extern crate stdweb;
-
-#[cfg(all(
-    any(target_arch = "wasm32", target_arch = "asmjs"),
-    feature = "use-wasm-bindgen",
-))]
-extern crate wasm_bindgen;
-
-#[cfg(all(
-    any(target_arch = "wasm32", target_arch = "asmjs"),
-    feature = "use-wasm-bindgen",
-))]
-extern crate web_sys;
-
 //#[cfg(test)]
 //extern crate test;
 
