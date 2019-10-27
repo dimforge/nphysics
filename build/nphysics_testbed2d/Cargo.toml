@@ -22,12 +22,13 @@ box2d-backend = [ "wrapped2d" ]
 fluids = [ "salva2d" ]
 parallel = [ "salva2d/parallel" ]
 
+
 [dependencies]
 log        = { version = "0.4", optional = true }
 bitflags   = "1.0"
 num-traits = "0.2"
-time       = "0.1"
 rand       = "0.6"
+instant    = { version = "0.1", features = [ "stdweb", "now" ]}
 nalgebra   = "0.18"
 kiss3d     = { version = "0.21", features = [ "conrod" ] }
 ncollide2d = "0.20"

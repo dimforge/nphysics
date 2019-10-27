@@ -355,6 +355,11 @@ impl Testbed {
         self.graphics.set_body_color(body, color);
     }
 
+    #[cfg(feature = "fluids")]
+    pub fn set_fluid_color(&mut self, body: usize, color: Point3<f32>) {
+        self.graphics.set_fluid_color(body, color);
+    }
+
     pub fn set_body_wireframe(&mut self, body: DefaultBodyHandle, wireframe_enabled: bool) {
         self.graphics.set_body_wireframe(body, wireframe_enabled);
     }
@@ -979,8 +984,10 @@ impl State for Testbed {
             self.handle_special_event(window, event);
         }
 
+        #[cfg(feature = "fluids")]
+        let mut fluids_time = 0.0;
+
         if self.state.running != RunMode::Stop {
-            // let before = time::precise_time_s();
             for _ in 0..self.nsteps {
                 if self.state.selected_backend == NPHYSICS_BACKEND {
                     self.mechanical_world.step(
@@ -993,6 +1000,7 @@ impl State for Testbed {
 
                     #[cfg(feature = "fluids")]
                     {
+                        fluids_time = instant::now();
                         if let Some(fluids) = &mut self.fluids {
                             let dt = self.mechanical_world.timestep();
                             let gravity = &self.mechanical_world.gravity;
@@ -1005,6 +1013,8 @@ impl State for Testbed {
                                 &mut self.colliders,
                             );
                         }
+
+                        fluids_time = instant::now() - fluids_time;
                     }
                 }
 
@@ -1076,7 +1086,7 @@ impl State for Testbed {
         if true {
             let counters = self.mechanical_world.counters;
 
-            let profile = format!(
+            let mut profile = format!(
                 r#"Total: {:.2}ms
 Collision detection: {:.2}ms
 |_ Broad-phase: {:.2}ms
@@ -1092,42 +1102,32 @@ CCD: {:.2}ms
    Broad-phase: {:.2}ms
    Narrow-phase: {:.2}ms
    Solver: {:.2}ms"#,
-                counters.step_time() * 1000.0,
-                counters.collision_detection_time() * 1000.0,
-                counters.broad_phase_time() * 1000.0,
-                counters.narrow_phase_time() * 1000.0,
-                counters.island_construction_time() * 1000.0,
-                counters.solver_time() * 1000.0,
-                counters.assembly_time() * 1000.0,
-                counters.velocity_resolution_time() * 1000.0,
-                counters.position_resolution_time() * 1000.0,
-                counters.ccd_time() * 1000.0,
+                counters.step_time(),
+                counters.collision_detection_time(),
+                counters.broad_phase_time(),
+                counters.narrow_phase_time(),
+                counters.island_construction_time(),
+                counters.solver_time(),
+                counters.assembly_time(),
+                counters.velocity_resolution_time(),
+                counters.position_resolution_time(),
+                counters.ccd_time(),
                 counters.ccd.num_substeps,
-                counters.ccd.toi_computation_time.time() * 1000.0,
-                counters.ccd.broad_phase_time.time() * 1000.0,
-                counters.ccd.narrow_phase_time.time() * 1000.0,
-                counters.ccd.solver_time.time() * 1000.0,
+                counters.ccd.toi_computation_time.time(),
+                counters.ccd.broad_phase_time.time(),
+                counters.ccd.narrow_phase_time.time(),
+                counters.ccd.solver_time.time(),
             );
 
-            //            let stats = format!(
-            //                r#"Total: {:.2}ms
-            //Collision detection: {:.2}ms
-            //|_ Broad-phase: {:.2}ms
-            //   Narrow-phase: {:.2}ms
-            //Island computation: {:.2}ms
-            //Solver: {:.2}ms
-            //|_ Assembly: {:.2}ms
-            //   Velocity resolution: {:.2}ms
-            //   Position resolution: {:.2}ms"#,
-            //                counters.step_time() * 1000.0,
-            //                counters.collision_detection_time() * 1000.0,
-            //                counters.broad_phase_time() * 1000.0,
-            //                counters.narrow_phase_time() * 1000.0,
-            //                counters.island_construction_time() * 1000.0,
-            //                counters.solver_time() * 1000.0,
-            //                counters.assembly_time() * 1000.0,
-            //                counters.velocity_resolution_time() * 1000.0,
-            //                counters.position_resolution_time() * 1000.0);
+            #[cfg(feature = "fluids")]
+            {
+                profile = format!(
+                    r#"{}
+Fluids: {:.2}ms
+                        "#,
+                    profile, fluids_time,
+                )
+            }
 
             if self.state.flags.contains(TestbedStateFlags::PROFILE) {
                 window.draw_text(&profile, &Point2::origin(), 45.0, &self.font, &color);
