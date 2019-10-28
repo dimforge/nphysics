@@ -34,8 +34,8 @@ pub struct GeometricalWorld<N: RealField, Handle: BodyHandle, CollHandle: Collid
     pub(crate) interactions: InteractionGraph<N, CollHandle>,
     /// A user-defined broad-phase pair filter.
     // FIXME: we don't actually use this currently.
-    pub(crate) pair_filters:
-        Option<Box<dyn BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
+    //    pub(crate) pair_filters:
+    //        Option<Box<dyn BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
     pub(crate) body_colliders: HashMap<Handle, Vec<CollHandle>>,
 }
 
@@ -51,7 +51,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             broad_phase: Box::new(broad_phase),
             narrow_phase,
             interactions: InteractionGraph::new(),
-            pair_filters: None,
+            //            pair_filters: None,
             body_colliders: HashMap::new(),
         }
     }

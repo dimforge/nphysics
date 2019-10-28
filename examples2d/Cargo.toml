@@ -5,17 +5,24 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 edition = "2018"
 
 [features]
-parallel = [ "nphysics_testbed2d/parallel"]
-fluids = [ "salva2d", "nphysics_testbed2d/fluids" ]
 box2d-backend = [ "nphysics_testbed2d/box2d-backend" ]
 
+
 [dependencies]
-rand       = "0.6"
+rand       = "0.7"
 Inflector  = "0.11"
 alga       = "0.9"
-nalgebra   = "0.18"
-ncollide2d = "0.20"
-salva2d    = { version = "0.0", features = [ "nphysics" ], optional = true }
+nalgebra   = "0.19"
+ncollide2d = "0.21"
+
+[target.wasm32-unknown-unknown.dependencies]
+stdweb = "0.4"
+
+[target.wasm32-unknown-emscripten.dependencies]
+stdweb = "0.4"
+
+[target.asmjs-unknown-emscripten.dependencies]
+stdweb = "0.4"
 
 [dependencies.nphysics_testbed2d]
 path = "../build/nphysics_testbed2d"
