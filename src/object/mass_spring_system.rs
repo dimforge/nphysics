@@ -246,7 +246,7 @@ impl<N: RealField> MassSpringSystem<N> {
 
     /// Creates a rectangular quad.
     #[cfg(feature = "dim3")]
-    fn quad(
+    pub fn quad(
         transform: &Isometry<N>,
         extents: &Vector2<N>,
         nx: usize,

@@ -40,9 +40,7 @@ use nphysics::object::{
 use nphysics::world::DefaultGeometricalWorld;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 #[cfg(feature = "fluids")]
-use salva::boundary::{Boundary, BoundaryHandle};
-#[cfg(feature = "fluids")]
-use salva::fluid::{Fluid, FluidHandle};
+use salva::object::{Boundary, BoundaryHandle, Fluid, FluidHandle};
 #[cfg(feature = "fluids")]
 use salva::LiquidWorld;
 use std::collections::HashMap;

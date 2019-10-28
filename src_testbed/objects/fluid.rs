@@ -1,9 +1,7 @@
-use crate::objects::node::{self, GraphicsNode};
+use crate::objects::node::GraphicsNode;
 use kiss3d::window::Window;
 use na::Point3;
-use ncollide::shape;
-use nphysics::math::{Isometry, Point};
-use nphysics::object::{ColliderAnchor, DefaultColliderHandle, DefaultColliderSet};
+use nphysics::math::Point;
 
 pub struct Fluid {
     color: Point3<f32>,

@@ -174,6 +174,7 @@ impl Testbed {
         let flags = TestbedStateFlags::SLEEP;
         let ui = TestbedUi::new(&mut window);
 
+        #[allow(unused_mut)]
         let mut backend_names = vec!["nphysics"];
         #[cfg(feature = "box2d-backend")]
         backend_names.push("box2d");
