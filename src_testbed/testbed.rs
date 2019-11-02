@@ -1087,7 +1087,8 @@ impl State for Testbed {
         if true {
             let counters = self.mechanical_world.counters;
 
-            let profile = format!(
+            #[allow(unused_mut)]
+            let mut profile = format!(
                 r#"Total: {:.2}ms
 Collision detection: {:.2}ms
 |_ Broad-phase: {:.2}ms
