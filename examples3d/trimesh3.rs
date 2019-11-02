@@ -10,8 +10,8 @@ use nphysics3d::object::{
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-use rand::distributions::{Distribution, Normal};
 use rand::thread_rng;
+use rand_distr::{Distribution, Normal};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -28,7 +28,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Use a fourier series to model ground height. This isn't an ideal terrain
      * model, but is a lot better than using uncorrelated random points.
      */
-    let distribution = Normal::new(0.0, 0.5);
+    let distribution = Normal::new(0.0, 0.5).unwrap();
 
     let make_fourier = || {
         let mut rng = thread_rng();

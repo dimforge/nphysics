@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 rand       = { version = "0.7", features = [ "stdweb" ] }
+rand_distr = "0.2"
 num-traits = "0.2"
 Inflector  = "0.11"
 nalgebra   = "0.19"
