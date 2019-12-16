@@ -12,8 +12,8 @@ license = "BSD-3-Clause"
 edition = "2018"
 
 [features]
-default = [ "dim2", "stdweb" ]
-use-wasm-bindgen = [ "dim2", "wasm-bindgen", "web-sys" ]
+default = [ "dim2", "stdweb" , "instant/stdweb"]
+use-wasm-bindgen = [ "dim2", "wasm-bindgen", "web-sys" , "instant/wasm-bindgen" ]
 dim2    = [ ]
 
 [lib]
@@ -34,7 +34,7 @@ approx     = "0.3"
 downcast-rs = "1.0"
 bitflags   = "1.0"
 ncollide2d = "0.21"
-instant    = { version = "0.1", features = [ "stdweb", "now" ]}
+instant    = { version = "0.1", features = [ "now" ]}
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = {version = "0.4", optional = true}
