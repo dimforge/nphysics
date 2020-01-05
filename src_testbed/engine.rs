@@ -822,6 +822,11 @@ impl GraphicsManager {
     pub fn nodes_mut(&mut self) -> impl Iterator<Item = &mut Node> {
         self.b2sn.values_mut().flat_map(|val| val.iter_mut())
     }
+
+    #[cfg(feature = "dim3")]
+    pub fn set_up_axis(&mut self, up_axis: na::Vector3<f32>) {
+        self.camera.set_up_axis(up_axis);
+    }
 }
 
 impl Default for GraphicsManager {
