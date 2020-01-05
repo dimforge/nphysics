@@ -377,6 +377,11 @@ impl Testbed {
         &mut self.graphics
     }
 
+    #[cfg(feature = "dim3")]
+    pub fn set_up_axis(&mut self, up_axis: Vector3<f32>) {
+        self.graphics.set_up_axis(up_axis);
+    }
+
     pub fn load_obj(path: &str) -> Vec<(Vec<Point3<f32>>, Vec<usize>)> {
         let path = Path::new(path);
         let empty = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
