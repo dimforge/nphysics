@@ -57,9 +57,9 @@ pub struct ColliderRemovalData<N: RealField, Handle: BodyHandle> {
     pub(crate) graph_index: CollisionObjectGraphIndex,
 }
 
-/// Data stored into each collider.
+/// Data stored in each collider.
 ///
-/// Those are needed by nphysics.
+/// This is needed by nphysics.
 pub struct ColliderData<N: RealField, Handle: BodyHandle> {
     margin: N,
     density: N,
@@ -152,7 +152,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
     /// A mutable reference to this collider's material.
     ///
     /// If the material is shared, then an internal clone is performed
-    /// before returning the mutable reference (this effectively call
+    /// before returning the mutable reference (this effectively calls
     /// the `Arc::make_mut` method to get a copy-on-write behavior).
     #[inline]
     pub fn material_mut(&mut self) -> &mut dyn Material<N> {
@@ -202,7 +202,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         std::mem::replace(&mut self.0.data_mut().user_data, data)
     }
 
-    /// Replace the user-data of this collider by `None` and returns the old value.
+    /// Replaces the user-data of this collider by `None` and returns the old value.
     #[inline]
     pub fn take_user_data(&mut self) -> Option<Box<dyn Any + Send + Sync>> {
         self.0.data_mut().user_data.take()
@@ -221,7 +221,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.data_mut().margin = margin;
     }
 
-    /// Clear all the internal flags tracking changes made to this collider.
+    /// Clears all the internal flags tracking changes made to this collider.
     #[inline]
     pub fn clear_update_flags(&mut self) {
         self.0.clear_update_flags()
@@ -263,6 +263,16 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.data().material()
     }
 
+    /// A mutable reference to this collider's material.
+    ///
+    /// If the material is shared, then an internal clone is performed
+    /// before returning the mutable reference (this effectively calls
+    /// the `Arc::make_mut` method to get a copy-on-write behavior).
+    #[inline]
+    pub fn material(&mut self) -> &mut dyn Material<N> {
+        self.0.data().material_mut()
+    }
+
     /// Returns `true` if this collider is a sensor.
     #[inline]
     pub fn is_sensor(&self) -> bool {
@@ -275,7 +285,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.data().ccd_enabled
     }
 
-    /// Enable or disable Continuous Collision Detection (CCD) for this collider.
+    /// Enables or disables Continuous Collision Detection (CCD) for this collider.
     #[inline]
     pub fn enable_ccd(&mut self, enabled: bool) {
         self.0.data_mut().ccd_enabled = enabled
@@ -295,7 +305,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
      * Original methods from the CollisionObject.
      */
 
-    /// The collider non-stable graph index.
+    /// This collider's non-stable graph index.
     ///
     /// This index may change whenever a collider is removed from the world.
     #[inline]
@@ -347,19 +357,19 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.set_deformations(coords)
     }
 
-    /// The collider shape.
+    /// This collider's shape.
     #[inline]
     pub fn shape(&self) -> &dyn Shape<N> {
         &**self.0.shape()
     }
 
-    /// The collider shape.
+    /// This collider's shape.
     #[inline]
     pub fn shape_handle(&self) -> &ShapeHandle<N> {
         self.0.shape()
     }
 
-    /// Set the collider shape.
+    /// Sets this collider's shape.
     #[inline]
     pub fn set_shape(&mut self, shape: ShapeHandle<N>) {
         self.0.set_shape(shape)
@@ -377,7 +387,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.set_collision_groups(groups)
     }
 
-    /// The kind of queries this collider is expected to .
+    /// Returns the kind of queries this collider is expected to emit.
     #[inline]
     pub fn query_type(&self) -> GeometricQueryType<N> {
         self.0.query_type()
@@ -661,7 +671,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
         [val] get_ccd_enabled -> ccd_enabled: bool
     );
 
-    /// Build a deformable collider and configure it to be attached to the given parent body.
+    /// Builds a deformable collider and configures it to be attached to the given parent body.
     pub fn build<Handle: BodyHandle>(&self, parent_handle: Handle) -> Collider<N, Handle> {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction)
