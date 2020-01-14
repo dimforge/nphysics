@@ -270,7 +270,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     /// the `Arc::make_mut` method to get a copy-on-write behavior).
     #[inline]
     pub fn material_mut(&mut self) -> &mut dyn Material<N> {
-        self.0.data().material_mut()
+        self.0.data_mut().material_mut()
     }
 
     /// Returns `true` if this collider is a sensor.
