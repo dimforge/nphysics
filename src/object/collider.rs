@@ -269,7 +269,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     /// before returning the mutable reference (this effectively calls
     /// the `Arc::make_mut` method to get a copy-on-write behavior).
     #[inline]
-    pub fn material(&mut self) -> &mut dyn Material<N> {
+    pub fn material_mut(&mut self) -> &mut dyn Material<N> {
         self.0.data().material_mut()
     }
 
