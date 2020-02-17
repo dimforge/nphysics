@@ -1,3 +1,6 @@
+#[cfg(feature = "fluids")]
+pub use self::fluid::FluidRenderingMode;
+
 pub mod ball;
 pub mod box_node;
 pub mod capsule;

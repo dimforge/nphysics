@@ -24,6 +24,8 @@ use crate::objects::node::{GraphicsNode, Node};
 use crate::objects::plane::Plane;
 #[cfg(feature = "dim2")]
 use crate::objects::polyline::Polyline;
+#[cfg(feature = "fluids")]
+use crate::objects::FluidRenderingMode;
 use ncollide::pipeline::CollisionGroups;
 use ncollide::query::Ray;
 #[cfg(feature = "dim2")]
@@ -83,6 +85,10 @@ pub struct GraphicsManager {
     camera: Camera,
     aabbs: Vec<(DefaultColliderHandle, GraphicsNode)>,
     ground_handle: Option<DefaultBodyHandle>,
+    #[cfg(feature = "fluids")]
+    fluid_rendering_mode: FluidRenderingMode,
+    #[cfg(feature = "fluids")]
+    render_boundary_particles: bool,
 }
 
 impl GraphicsManager {
@@ -118,11 +124,29 @@ impl GraphicsManager {
             rays: Vec::new(),
             aabbs: Vec::new(),
             ground_handle: None,
+            #[cfg(feature = "fluids")]
+            fluid_rendering_mode: FluidRenderingMode::StaticColor,
+            #[cfg(feature = "fluids")]
+            render_boundary_particles: false,
         }
     }
 
     pub fn set_ground_handle(&mut self, handle: Option<DefaultBodyHandle>) {
         self.ground_handle = handle
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn set_fluid_rendering_mode(&mut self, mode: FluidRenderingMode) {
+        self.fluid_rendering_mode = mode;
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn enable_boundary_particles_rendering(&mut self, enabled: bool) {
+        self.render_boundary_particles = enabled;
+
+        for sn in self.boundary2sn.values_mut() {
+            sn.scene_node_mut().set_visible(enabled);
+        }
     }
 
     pub fn clear(&mut self, window: &mut Window) {
@@ -704,13 +728,15 @@ impl GraphicsManager {
     pub fn draw_fluids(&mut self, liquid_world: &LiquidWorld<f32>) {
         for (i, fluid) in liquid_world.fluids().iter().enumerate() {
             if let Some(node) = self.f2sn.get_mut(&i) {
-                node.update(&fluid.positions)
+                node.update_with_fluid(fluid, self.fluid_rendering_mode)
             }
         }
 
-        for (i, boundary) in liquid_world.boundaries().iter().enumerate() {
-            if let Some(node) = self.boundary2sn.get_mut(&i) {
-                node.update(&boundary.positions)
+        if self.render_boundary_particles {
+            for (i, boundary) in liquid_world.boundaries().iter().enumerate() {
+                if let Some(node) = self.boundary2sn.get_mut(&i) {
+                    node.update_with_boundary(boundary)
+                }
             }
         }
     }
