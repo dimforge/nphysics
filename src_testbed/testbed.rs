@@ -7,6 +7,8 @@ use std::path::Path;
 use std::rc::Rc;
 
 use crate::engine::{GraphicsManager, GraphicsWindow};
+#[cfg(feature = "fluids")]
+use crate::objects::FluidRenderingMode;
 use crate::ui::TestbedUi;
 use kiss3d::camera::Camera;
 use kiss3d::event::Event;
@@ -34,7 +36,7 @@ use nphysics::object::{
 };
 use nphysics::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 #[cfg(feature = "fluids")]
-use salva::{coupling::ColliderCouplingManager, LiquidWorld};
+use salva::{coupling::ColliderCouplingSet, LiquidWorld};
 
 #[cfg(feature = "box2d-backend")]
 use crate::box2d_world::Box2dWorld;
@@ -116,7 +118,7 @@ pub struct TestbedState {
 #[cfg(feature = "fluids")]
 struct FluidsState {
     world: LiquidWorld<f32>,
-    coupling: ColliderCouplingManager<f32, DefaultBodyHandle>,
+    coupling: ColliderCouplingSet<f32, DefaultBodyHandle>,
 }
 
 pub struct Testbed {
@@ -325,7 +327,7 @@ impl Testbed {
     pub fn set_liquid_world(
         &mut self,
         liquid_world: LiquidWorld<f32>,
-        coupling: ColliderCouplingManager<f32, DefaultBodyHandle>,
+        coupling: ColliderCouplingSet<f32, DefaultBodyHandle>,
     ) {
         self.fluids = Some(FluidsState {
             world: liquid_world,
@@ -367,6 +369,16 @@ impl Testbed {
 
     pub fn set_collider_color(&mut self, collider: DefaultColliderHandle, color: Point3<f32>) {
         self.graphics.set_collider_color(collider, color);
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn set_fluid_rendering_mode(&mut self, mode: FluidRenderingMode) {
+        self.graphics.set_fluid_rendering_mode(mode)
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn enable_boundary_particles_rendering(&mut self, enabled: bool) {
+        self.graphics.enable_boundary_particles_rendering(enabled)
     }
 
     //    pub fn world(&self) -> &Box<WorldOwner> {
@@ -1013,10 +1025,9 @@ impl State for Testbed {
                             fluids.world.step_with_coupling(
                                 dt,
                                 gravity,
-                                &self.geometrical_world,
-                                &mut fluids.coupling,
-                                &mut self.bodies,
-                                &mut self.colliders,
+                                &mut fluids
+                                    .coupling
+                                    .as_manager_mut(&self.colliders, &mut self.bodies),
                             );
                         }
 
