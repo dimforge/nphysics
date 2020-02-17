@@ -1,9 +1,18 @@
+use crate::objects::fluid::FluidRenderingMode::VelocityColor;
 use crate::objects::node::GraphicsNode;
 use kiss3d::window::Window;
-use na::Point3;
-use nphysics::math::Point;
+use na::{Point3, Vector3};
+use nphysics::math::{Point, Vector};
+use salva::object::{Boundary, Fluid as SalvaFluid};
+
+#[derive(Copy, Clone, Debug)]
+pub enum FluidRenderingMode {
+    VelocityColor { min: f32, max: f32 },
+    StaticColor,
+}
 
 pub struct Fluid {
+    radius: f32,
     color: Point3<f32>,
     base_color: Point3<f32>,
     gfx: GraphicsNode,
@@ -34,6 +43,7 @@ impl Fluid {
         }
 
         let mut res = Fluid {
+            radius,
             color,
             base_color: color,
             gfx,
@@ -58,10 +68,55 @@ impl Fluid {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, centers: &[Point<f32>]) {
-        for (pt, ball) in centers.iter().zip(self.balls_gfx.iter_mut()) {
-            ball.set_local_translation(pt.coords.into())
+    fn update(
+        &mut self,
+        centers: &[Point<f32>],
+        velocities: &[Vector<f32>],
+        mode: FluidRenderingMode,
+    ) {
+        if centers.len() > self.balls_gfx.len() {
+            for _ in 0..centers.len() - self.balls_gfx.len() {
+                #[cfg(feature = "dim2")]
+                let ball_gfx = self.gfx.add_circle(self.radius);
+                #[cfg(feature = "dim3")]
+                let ball_gfx = self.gfx.add_sphere(self.radius);
+                self.balls_gfx.push(ball_gfx);
+            }
         }
+
+        for ball_gfx in &mut self.balls_gfx[centers.len()..] {
+            ball_gfx.set_visible(false);
+        }
+
+        for (i, (pt, ball)) in centers.iter().zip(self.balls_gfx.iter_mut()).enumerate() {
+            ball.set_visible(true);
+            ball.set_local_translation(pt.coords.into());
+
+            let color = match mode {
+                FluidRenderingMode::StaticColor => self.base_color,
+                FluidRenderingMode::VelocityColor { min, max } => {
+                    let start = self.base_color.coords;
+                    let end = Vector3::new(1.0, 0.0, 0.0);
+                    let vel = velocities[i];
+                    let t = (vel.norm() - min) / (max - min);
+                    start.lerp(&end, na::clamp(t, 0.0, 1.0)).into()
+                }
+            };
+
+            ball.set_color(color.x, color.y, color.z);
+        }
+    }
+
+    pub fn update_with_boundary(&mut self, boundary: &Boundary<f32>) {
+        self.update(&boundary.positions, &[], FluidRenderingMode::StaticColor)
+    }
+
+    pub fn update_with_fluid(
+        &mut self,
+        fluid: &SalvaFluid<f32>,
+        rendering_mode: FluidRenderingMode,
+    ) {
+        self.update(&fluid.positions, &fluid.velocities, rendering_mode)
     }
 
     pub fn scene_node(&self) -> &GraphicsNode {
