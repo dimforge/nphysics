@@ -248,7 +248,7 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn set_fluid_color(&mut self, f: usize, color: Point3<f32>) {
+    pub fn set_fluid_color(&mut self, f: FluidHandle, color: Point3<f32>) {
         self.f2color.insert(f, color);
 
         if let Some(n) = self.f2sn.get_mut(&f) {
@@ -345,7 +345,7 @@ impl GraphicsManager {
     pub fn add_fluid(
         &mut self,
         window: &mut Window,
-        handle: usize,
+        handle: FluidHandle,
         fluid: &Fluid<f32>,
         particle_radius: f32,
     ) {
@@ -362,7 +362,7 @@ impl GraphicsManager {
     pub fn add_boundary(
         &mut self,
         window: &mut Window,
-        handle: usize,
+        handle: BoundaryHandle,
         boundary: &Boundary<f32>,
         particle_radius: f32,
     ) {
@@ -375,7 +375,7 @@ impl GraphicsManager {
     pub fn add_fluid_with_color(
         &mut self,
         window: &mut Window,
-        handle: usize,
+        handle: FluidHandle,
         fluid: &Fluid<f32>,
         particle_radius: f32,
         color: Point3<f32>,
@@ -726,14 +726,14 @@ impl GraphicsManager {
 
     #[cfg(feature = "fluids")]
     pub fn draw_fluids(&mut self, liquid_world: &LiquidWorld<f32>) {
-        for (i, fluid) in liquid_world.fluids().iter().enumerate() {
+        for (i, fluid) in liquid_world.fluids().iter() {
             if let Some(node) = self.f2sn.get_mut(&i) {
                 node.update_with_fluid(fluid, self.fluid_rendering_mode)
             }
         }
 
         if self.render_boundary_particles {
-            for (i, boundary) in liquid_world.boundaries().iter().enumerate() {
+            for (i, boundary) in liquid_world.boundaries().iter() {
                 if let Some(node) = self.boundary2sn.get_mut(&i) {
                     node.update_with_boundary(boundary)
                 }

@@ -36,7 +36,7 @@ use nphysics::object::{
 };
 use nphysics::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 #[cfg(feature = "fluids")]
-use salva::{coupling::ColliderCouplingSet, LiquidWorld};
+use salva::{coupling::ColliderCouplingSet, object::FluidHandle, LiquidWorld};
 
 #[cfg(feature = "box2d-backend")]
 use crate::box2d_world::Box2dWorld;
@@ -359,8 +359,8 @@ impl Testbed {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn set_fluid_color(&mut self, body: usize, color: Point3<f32>) {
-        self.graphics.set_fluid_color(body, color);
+    pub fn set_fluid_color(&mut self, fluid: FluidHandle, color: Point3<f32>) {
+        self.graphics.set_fluid_color(fluid, color);
     }
 
     pub fn set_body_wireframe(&mut self, body: DefaultBodyHandle, wireframe_enabled: bool) {
@@ -910,11 +910,11 @@ impl State for Testbed {
                     if let Some(fluids) = &self.fluids {
                         let radius = fluids.world.particle_radius();
 
-                        for (handle, fluid) in fluids.world.fluids().iter().enumerate() {
+                        for (handle, fluid) in fluids.world.fluids().iter() {
                             self.graphics.add_fluid(window, handle, fluid, radius);
                         }
 
-                        for (handle, boundary) in fluids.world.boundaries().iter().enumerate() {
+                        for (handle, boundary) in fluids.world.boundaries().iter() {
                             self.graphics.add_boundary(window, handle, boundary, radius);
                         }
                     }
