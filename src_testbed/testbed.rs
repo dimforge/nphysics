@@ -695,6 +695,7 @@ impl Testbed {
                     for (_, b, inter) in self.geometrical_world.interferences_with_ray(
                         &self.colliders,
                         &ray,
+                        std::f32::MAX,
                         &all_groups,
                     ) {
                         if !b.query_type().is_proximity_query() && inter.toi < mintoi {
@@ -752,6 +753,7 @@ impl Testbed {
                     for (_, b, inter) in self.geometrical_world.interferences_with_ray(
                         &self.colliders,
                         &ray,
+                        std::f32::MAX,
                         &all_groups,
                     ) {
                         if ((Some(b.body()) != self.ground_handle)

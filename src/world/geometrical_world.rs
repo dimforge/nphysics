@@ -341,9 +341,10 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         &'a self,
         colliders: &'a Colliders,
         ray: &'b Ray<N>,
+        max_toi: N,
         groups: &'b CollisionGroups,
     ) -> pipeline::InterferencesWithRay<'a, 'b, N, Colliders> {
-        pipeline::interferences_with_ray(&colliders, &*self.broad_phase, ray, groups)
+        pipeline::interferences_with_ray(&colliders, &*self.broad_phase, ray, max_toi, groups)
     }
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a point.

@@ -784,7 +784,8 @@ impl GraphicsManager {
 
         for ray in &self.rays {
             let groups = CollisionGroups::new();
-            let inter = geometrical_world.interferences_with_ray(colliders, ray, &groups);
+            let inter =
+                geometrical_world.interferences_with_ray(colliders, ray, std::f32::MAX, &groups);
             let hit = inter.fold(1000.0, |t, (_, _, hit)| hit.toi.min(t));
             let p1 = ray.origin;
             let p2 = ray.origin + ray.dir * hit;

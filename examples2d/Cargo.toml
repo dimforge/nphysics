@@ -12,8 +12,8 @@ box2d-backend = [ "nphysics_testbed2d/box2d-backend" ]
 rand       = "0.7"
 Inflector  = "0.11"
 alga       = "0.9"
-nalgebra   = "0.19"
-ncollide2d = "0.21"
+nalgebra   = "0.20"
+ncollide2d = "0.22"
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = "0.4"

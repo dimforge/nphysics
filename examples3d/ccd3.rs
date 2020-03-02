@@ -56,7 +56,7 @@ pub fn init_world(testbed: &mut Testbed) {
         ),
     ];
 
-    for pose in wall_poses.into_iter() {
+    for pose in wall_poses.iter() {
         let co = ColliderDesc::new(ground_shape.clone())
             .position(*pose)
             .build(BodyPartHandle(ground_handle, 0));
