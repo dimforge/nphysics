@@ -59,22 +59,22 @@ jobs:
           command: cargo install -f cargo-web;
       - run:
           name: build nphysics2d
-          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics2d;
+          command: cd build/nphysics2d && cargo web build --verbose --target wasm32-unknown-unknown;
       - run:
           name: build nphysics3d
-          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics3d;
+          command: cd build/nphysics3d && cargo web build --verbose --target wasm32-unknown-unknown;
       - run:
           name: build nphysics-examples-2d
-          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics-examples-2d;
+          command: cd examples2d && cargo web build --verbose --target wasm32-unknown-unknown;
       - run:
           name: build nphysics-examples-3d
-          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics-examples-3d;
+          command: cd examples3d && cargo web build --verbose --target wasm32-unknown-unknown;
       - run:
           name: build nphysics_testbed2d
-          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed2d;
+          command: cd build/nphysics_testbed2d && cargo web build --verbose --target wasm32-unknown-unknown;
       - run:
           name: build nphysics_testbed3d
-          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed3d;
+          command: cd build/nphysics_testbed3d && cargo web build --verbose --target wasm32-unknown-unknown;
 
 
 workflows:
