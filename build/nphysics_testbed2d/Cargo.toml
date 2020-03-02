@@ -37,4 +37,4 @@ salva2d = { version = "0.1", features = [ "nphysics" ], optional = true }
 
 [dependencies.nphysics2d]
 path = "../nphysics2d"
-version = "0.13"
+version = "0.14"
