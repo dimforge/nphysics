@@ -22,31 +22,31 @@ path = "../../src/lib.rs"
 required-features = [ "dim2" ]
 
 [dependencies]
-either     = "1.0"
+either     = "1"
 num-traits = "0.2"
 slotmap    = "0.4" # For impulse cache.
 generational-arena = "0.2" # For default body/collide/constraint/force sets.
-smallvec   = "0.6"
-lazy_static = "1.0"
+smallvec   = "1"
+lazy_static = "1"
 alga       = "0.9"
-nalgebra   = { version = "0.19", features = [ "sparse" ] }
+nalgebra   = { version = "0.20", features = [ "sparse" ] }
 approx     = "0.3"
-downcast-rs = "1.0"
-bitflags   = "1.0"
-ncollide2d = "0.21"
+downcast-rs = "1"
+bitflags   = "1"
+ncollide2d = "0.22"
 instant    = { version = "0.1", features = [ "now" ]}
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = {version = "0.4", optional = true}
-wasm-bindgen = {version = "0.2.21", optional = true}
-web-sys = {version = "0.3.27", optional = true, features = ['Window', 'Performance', 'PerformanceTiming']}
+wasm-bindgen = {version = "0.2", optional = true}
+web-sys = {version = "0.3", optional = true, features = ['Window', 'Performance', 'PerformanceTiming']}
 
 [target.wasm32-unknown-emscripten.dependencies]
 stdweb = {version = "0.4", optional = true}
-wasm-bindgen = {version = "0.2.21", optional = true}
-web-sys = {version = "0.3.27", optional = true, features = ['Window', 'Performance', 'PerformanceTiming']}
+wasm-bindgen = {version = "0.2", optional = true}
+web-sys = {version = "0.3", optional = true, features = ['Window', 'Performance', 'PerformanceTiming']}
 
 [target.asmjs-unknown-emscripten.dependencies]
 stdweb = {version = "0.4", optional = true}
-wasm-bindgen = {version = "0.2.21", optional = true}
-web-sys = {version = "0.3.27", optional = true, features = ['Window', 'Performance', 'PerformanceTiming']}
+wasm-bindgen = {version = "0.2", optional = true}
+web-sys = {version = "0.3", optional = true, features = ['Window', 'Performance', 'PerformanceTiming']}

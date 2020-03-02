@@ -25,13 +25,13 @@ parallel = [ "salva2d/parallel" ]
 
 [dependencies]
 log        = { version = "0.4", optional = true }
-bitflags   = "1.0"
+bitflags   = "1"
 num-traits = "0.2"
 rand       = "0.7"
 instant    = { version = "0.1", features = [ "stdweb", "now" ]}
-nalgebra   = "0.19"
-kiss3d     = { version = "0.22", features = [ "conrod" ] }
-ncollide2d = "0.21"
+nalgebra   = "0.20"
+kiss3d     = { version = "0.23", features = [ "conrod" ] }
+ncollide2d = "0.22"
 wrapped2d  = { version = "0.4", optional = true }
 salva2d = { version = "0.1", features = [ "nphysics" ], optional = true }
 

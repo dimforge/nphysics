@@ -138,8 +138,6 @@ impl<N: RealField, Handle: BodyHandle> JointConstraint<N, Handle> for BallConstr
             self.impulses[c.impulse_id] = c.impulse;
         }
 
-        println!("Impulse norm: {}", self.impulses.norm() * inv_dt);
-
         if self.impulses.norm_squared() * inv_dt * inv_dt > self.break_force_squared {
             self.broken = true;
         }

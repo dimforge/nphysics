@@ -266,7 +266,6 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
 
     /// Execute one step for the iterative resolution of this body's internal position constraints.
-    #[inline]
     fn step_solve_internal_position_constraints(&mut self, parameters: &IntegrationParameters<N>);
 
     /// Add the given inertia to the local inertia of this body part.
@@ -340,15 +339,12 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     }
 
     /// Whether this body is affected by gravity.
-    #[inline]
     fn gravity_enabled(&self) -> bool;
 
     /// Enable or disable gravity for this body.
-    #[inline]
     fn enable_gravity(&mut self, enabled: bool);
 
     /// Gets the velocity of the given point of this body.
-    #[inline]
     fn velocity_at_point(&self, part_id: usize, point: &Point<N>) -> Velocity<N>;
 
     /*
