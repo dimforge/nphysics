@@ -343,6 +343,10 @@ impl Testbed {
         }
     }
 
+    pub fn mechanical_world(&self) -> &DefaultMechanicalWorld<f32> {
+        &self.mechanical_world
+    }
+
     pub fn mechanical_world_mut(&mut self) -> &mut DefaultMechanicalWorld<f32> {
         &mut self.mechanical_world
     }
