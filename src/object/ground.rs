@@ -148,6 +148,11 @@ impl<N: RealField> Body<N> for Ground<N> {
     }
 
     #[inline]
+    fn velocity_at_point(&self, _: usize, _: &Point<N>) -> Velocity<N> {
+        Velocity::zero()
+    }
+
+    #[inline]
     fn integrate(&mut self, _: &IntegrationParameters<N>) {}
 
     #[inline]

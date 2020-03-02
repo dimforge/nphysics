@@ -347,6 +347,10 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     #[inline]
     fn enable_gravity(&mut self, enabled: bool);
 
+    /// Gets the velocity of the given point of this body.
+    #[inline]
+    fn velocity_at_point(&self, part_id: usize, point: &Point<N>) -> Velocity<N>;
+
     /*
      * Application of forces/impulses.
      */

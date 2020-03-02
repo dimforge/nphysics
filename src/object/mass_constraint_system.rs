@@ -730,6 +730,12 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         }
     }
 
+    #[inline]
+    fn velocity_at_point(&self, part_id: usize, point: &Point<N>) -> Velocity<N> {
+        let element = &self.elements[part_id];
+        fem_helper::velocity_at_point(element.indices, &self.positions, &self.velocities, point)
+    }
+
     fn apply_force_at_local_point(
         &mut self,
         part_id: usize,

@@ -1,4 +1,3 @@
-use crate::objects::fluid::FluidRenderingMode::VelocityColor;
 use crate::objects::node::GraphicsNode;
 use kiss3d::window::Window;
 use na::{Point3, Vector3};

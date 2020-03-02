@@ -648,6 +648,12 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
+    fn velocity_at_point(&self, _: usize, point: &Point<N>) -> Velocity<N> {
+        let pos = point - self.com;
+        self.velocity.shift(&pos)
+    }
+
+    #[inline]
     fn fill_constraint_geometry(
         &self,
         _: &dyn BodyPart<N>,
