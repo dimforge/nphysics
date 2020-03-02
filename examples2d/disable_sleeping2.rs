@@ -5,11 +5,10 @@ extern crate nphysics_testbed2d;
 
 use na::Vector2;
 use ncollide2d::shape::{Cuboid, ShapeHandle};
+use nphysics2d::math::Velocity;
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
-use nphysics2d::math::Velocity;
 use nphysics_testbed2d::Testbed;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -48,8 +47,8 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_world(world);
+    testbed.look_at(Point2::origin(), 95.0);
 }
-
 
 fn main() {
     let mut testbed = Testbed::new_empty();

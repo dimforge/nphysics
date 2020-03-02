@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry2, Vector2};
+use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Compound, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -90,6 +90,7 @@ pub fn init_world(testbed: &mut Testbed) {
         joint_constraints,
         force_generators,
     );
+    testbed.look_at(Point2::new(0.0, 3.0), 95.0);
 }
 
 fn main() {

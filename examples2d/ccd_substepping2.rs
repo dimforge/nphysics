@@ -2,17 +2,18 @@
 
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2, Isometry2, Point3};
-use ncollide2d::shape::{Cuboid, ShapeHandle, Compound, Ball};
+use na::{Isometry2, Point2, Point3, Vector2};
 use ncollide2d::query::Proximity;
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use ncollide2d::shape::{Ball, Compound, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
-use nphysics2d::material::{MaterialHandle, BasicMaterial};
+use nphysics2d::material::{BasicMaterial, MaterialHandle};
 use nphysics2d::math::Velocity;
+use nphysics2d::object::{
+    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
-
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -32,8 +33,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground
      */
     let ground_size = 25.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
 
     let material = MaterialHandle::new(BasicMaterial::new(2.0, 0.5));
 
@@ -64,7 +64,6 @@ pub fn init_world(testbed: &mut Testbed) {
         .material(material.clone())
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
-
 
     // Add a sensor, to show that CCD works on sensors too.
     let co = ColliderDesc::new(ground_shape)
@@ -120,9 +119,12 @@ pub fn init_world(testbed: &mut Testbed) {
     // Callback that will be executed on the main loop to handle proximities.
     testbed.add_callback(move |_, geometrical_world, _, colliders, graphics, _| {
         for prox in geometrical_world.proximity_events() {
-            println!("Detected proximity {:?} between {:?} and {:?}.", prox.new_status, prox.collider1, prox.collider2);
+            println!(
+                "Detected proximity {:?} between {:?} and {:?}.",
+                prox.new_status, prox.collider1, prox.collider2
+            );
             let c1 = colliders.get(prox.collider1).unwrap();
-            let c2= colliders.get(prox.collider2).unwrap();
+            let c2 = colliders.get(prox.collider2).unwrap();
             let body1 = c1.body();
             let body2 = c2.body();
 
@@ -142,7 +144,7 @@ pub fn init_world(testbed: &mut Testbed) {
                             Point3::new(0.5, 0.5, 1.0)
                         }
                     }
-                },
+                }
             };
 
             if body1 != ground_handle {
@@ -156,13 +158,18 @@ pub fn init_world(testbed: &mut Testbed) {
     });
 
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
-    testbed.look_at(Point2::new(-3.0, -5.0), 95.0);
+    testbed.set_world(
+        mechanical_world,
+        geometrical_world,
+        bodies,
+        colliders,
+        joint_constraints,
+        force_generators,
+    );
+    testbed.look_at(Point2::new(3.0, 5.0), 95.0);
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
-        ("CCD substepping", init_world),
-    ]);
+    let testbed = Testbed::from_builders(0, vec![("CCD substepping", init_world)]);
     testbed.run()
 }

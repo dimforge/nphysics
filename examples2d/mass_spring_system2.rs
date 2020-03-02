@@ -118,7 +118,7 @@ pub fn init_world(testbed: &mut Testbed) {
         force_generators,
     );
     testbed.set_body_color(deformable_handle, Point3::new(0.0, 0.0, 1.0));
-    testbed.look_at(Point2::new(0.0, -3.0), 100.0);
+    testbed.look_at(Point2::new(0.0, 3.0), 100.0);
 }
 
 fn main() {

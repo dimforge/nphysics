@@ -76,7 +76,7 @@ pub fn init_world(testbed: &mut Testbed) {
         joint_constraints,
         force_generators,
     );
-    testbed.look_at(Point2::new(0.0, -2.5), 95.0);
+    testbed.look_at(Point2::new(0.0, 2.5), 95.0);
 }
 
 fn main() {
