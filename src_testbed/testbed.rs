@@ -136,6 +136,8 @@ pub struct Testbed {
     nsteps: usize,
     camera_locked: bool, // Used so that the camera can remain the same before and after we change backend or press the restart button.
     callbacks: Callbacks,
+    #[cfg(feature = "fluids")]
+    callbacks_fluids: CallbacksFluids,
     time: f32,
     hide_counters: bool,
     persistant_contacts: HashMap<ContactId, bool>,
@@ -151,6 +153,22 @@ pub struct Testbed {
 type Callbacks = Vec<
     Box<
         dyn Fn(
+            &mut DefaultMechanicalWorld<f32>,
+            &mut DefaultGeometricalWorld<f32>,
+            &mut DefaultBodySet<f32>,
+            &mut DefaultColliderSet<f32>,
+            &mut GraphicsManager,
+            f32,
+        ),
+    >,
+>;
+
+#[cfg(feature = "fluids")]
+type CallbacksFluids = Vec<
+    Box<
+        dyn FnMut(
+            &mut LiquidWorld<f32>,
+            &mut ColliderCouplingSet<f32, DefaultBodyHandle>,
             &mut DefaultMechanicalWorld<f32>,
             &mut DefaultGeometricalWorld<f32>,
             &mut DefaultBodySet<f32>,
@@ -216,6 +234,8 @@ impl Testbed {
             forces,
             constraints,
             callbacks: Vec::new(),
+            #[cfg(feature = "fluids")]
+            callbacks_fluids: Vec::new(),
             window: Some(window),
             graphics,
             nsteps: 1,
@@ -323,12 +343,17 @@ impl Testbed {
         }
     }
 
+    pub fn mechanical_world_mut(&mut self) -> &mut DefaultMechanicalWorld<f32> {
+        &mut self.mechanical_world
+    }
+
     #[cfg(feature = "fluids")]
     pub fn set_liquid_world(
         &mut self,
-        liquid_world: LiquidWorld<f32>,
+        mut liquid_world: LiquidWorld<f32>,
         coupling: ColliderCouplingSet<f32, DefaultBodyHandle>,
     ) {
+        liquid_world.counters.enable();
         self.fluids = Some(FluidsState {
             world: liquid_world,
             coupling,
@@ -423,6 +448,8 @@ impl Testbed {
 
     fn clear(&mut self, window: &mut Window) {
         self.callbacks.clear();
+        #[cfg(feature = "fluids")]
+        self.callbacks_fluids.clear();
         self.persistant_contacts.clear();
         self.ground_handle = None;
         self.state.grabbed_object = None;
@@ -445,6 +472,25 @@ impl Testbed {
         callback: F,
     ) {
         self.callbacks.push(Box::new(callback));
+    }
+
+    #[cfg(feature = "fluids")]
+    pub fn add_callback_with_fluids<
+        F: FnMut(
+                &mut LiquidWorld<f32>,
+                &mut ColliderCouplingSet<f32, DefaultBodyHandle>,
+                &mut DefaultMechanicalWorld<f32>,
+                &mut DefaultGeometricalWorld<f32>,
+                &mut DefaultBodySet<f32>,
+                &mut DefaultColliderSet<f32>,
+                &mut GraphicsManager,
+                f32,
+            ) + 'static,
+    >(
+        &mut self,
+        callback: F,
+    ) {
+        self.callbacks_fluids.push(Box::new(callback));
     }
 
     pub fn run(mut self) {
@@ -1058,6 +1104,24 @@ impl State for Testbed {
                         &mut self.graphics,
                         self.time,
                     )
+                }
+
+                #[cfg(feature = "fluids")]
+                {
+                    if let Some(fluid_state) = &mut self.fluids {
+                        for f in &mut self.callbacks_fluids {
+                            f(
+                                &mut fluid_state.world,
+                                &mut fluid_state.coupling,
+                                &mut self.mechanical_world,
+                                &mut self.geometrical_world,
+                                &mut self.bodies,
+                                &mut self.colliders,
+                                &mut self.graphics,
+                                self.time,
+                            )
+                        }
+                    }
                 }
 
                 if !self.hide_counters {

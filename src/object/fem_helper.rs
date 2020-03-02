@@ -11,7 +11,7 @@ use ncollide::query::PointQueryWithLocation;
 use ncollide::shape::Tetrahedron;
 use ncollide::shape::{Segment, Triangle};
 
-use crate::math::{Dim, Isometry, Point, DIM};
+use crate::math::{Dim, Isometry, Point, Velocity, DIM};
 use crate::object::BodyStatus;
 use crate::solver::ForceDirection;
 
@@ -62,6 +62,37 @@ impl FiniteElementIndices {
     //            FiniteElementIndices::Segment(_) => 2,
     //        }
     //    }
+}
+
+#[inline]
+pub(crate) fn velocity_at_point<N: RealField>(
+    indices: FiniteElementIndices,
+    positions: &DVector<N>,
+    velocities: &DVector<N>,
+    point: &Point<N>,
+) -> Velocity<N> {
+    let material_point = material_point_at_world_point(indices, positions, point);
+
+    #[cfg(feature = "dim2")]
+    let bcoords = [
+        (N::one() - material_point[0] - material_point[1]),
+        material_point[0],
+        material_point[1],
+    ];
+    #[cfg(feature = "dim3")]
+    let bcoords = [
+        (N::one() - material_point[0] - material_point[1] - material_point[2]),
+        material_point[0],
+        material_point[1],
+        material_point[2],
+    ];
+
+    let mut vel = Velocity::zero();
+    for (index, bcoord) in indices.as_slice().iter().zip(bcoords.iter()) {
+        vel.linear += velocities.fixed_rows::<Dim>(*index) * *bcoord;
+    }
+
+    vel
 }
 
 #[inline]

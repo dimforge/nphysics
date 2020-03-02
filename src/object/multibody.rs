@@ -1165,6 +1165,13 @@ impl<N: RealField> Body<N> for Multibody<N> {
         link.local_inertia += inertia;
     }
 
+    #[inline]
+    fn velocity_at_point(&self, part_id: usize, point: &Point<N>) -> Velocity<N> {
+        let link = &self.rbs[part_id];
+        let pos = point - link.com;
+        link.velocity.shift(&pos)
+    }
+
     fn apply_force(
         &mut self,
         part_id: usize,
