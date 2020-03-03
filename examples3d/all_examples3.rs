@@ -49,7 +49,11 @@ fn demo_name_from_command_line() -> Option<String> {
 fn demo_name_from_url() -> Option<String> {
     let window = stdweb::web::window();
     let hash = window.location()?.search().ok()?;
-    Some(hash[1..].to_string())
+    if !hash.is_empty() {
+        Some(hash[1..].to_string())
+    } else {
+        None
+    }
 }
 
 #[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]

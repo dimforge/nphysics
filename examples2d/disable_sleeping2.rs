@@ -3,7 +3,7 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::Vector2;
+use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::math::Velocity;
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
