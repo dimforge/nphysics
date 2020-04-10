@@ -468,7 +468,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
             if self.max_linear_velocity.is_zero() {
                 self.velocity.linear = na::zero();
             } else {
-                self.velocity.linear /= self.max_linear_velocity * linvel_norm;
+                self.velocity.linear *= self.max_linear_velocity / linvel_norm;
             }
         }
 
