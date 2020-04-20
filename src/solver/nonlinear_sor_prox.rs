@@ -300,15 +300,11 @@ impl NonlinearSORProx {
         parameters: &IntegrationParameters<N>,
     ) -> N {
         if is_angular {
-            na::sup(
-                &((rhs + parameters.allowed_angular_error) * parameters.erp),
-                &(-parameters.max_angular_correction),
-            )
+            ((rhs + parameters.allowed_angular_error) * parameters.erp)
+                .max(-parameters.max_angular_correction)
         } else {
-            na::sup(
-                &((rhs + parameters.allowed_linear_error) * parameters.erp),
-                &(-parameters.max_linear_correction),
-            )
+            ((rhs + parameters.allowed_linear_error) * parameters.erp)
+                .max(-parameters.max_linear_correction)
         }
     }
 }

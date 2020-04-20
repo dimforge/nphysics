@@ -4,12 +4,11 @@ members = [ "build/nphysics2d", "build/nphysics_testbed2d", "examples2d",
 
 [profile.release]
 #lto = true
-#codegen-units = 1
-
-#[patch.crates-io]
-#ncollide2d = { path = "../ncollide/build/ncollide2d" }
-#ncollide3d = { path = "../ncollide/build/ncollide3d" }
+codegen-units = 1
 
 [patch.crates-io]
+#ncollide2d = { path = "../ncollide/build/ncollide2d" }
+#ncollide3d = { path = "../ncollide/build/ncollide3d" }
+#kiss3d = { path = "../kiss3d" }
 nphysics2d = { path = "build/nphysics2d" }
 nphysics3d = { path = "build/nphysics3d" }

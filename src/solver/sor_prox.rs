@@ -197,7 +197,7 @@ impl SORProx {
             + jacobian2.dot(&mj_lambda.rows_generic(id2, dim2))
             + c.rhs;
 
-        let new_impulse = na::sup(&N::zero(), &(c.impulse - c.r * dimpulse));
+        let new_impulse = (c.impulse - c.r * dimpulse).max(N::zero());
         let dlambda = new_impulse - c.impulse;
 
         c.impulse = new_impulse;
@@ -220,7 +220,7 @@ impl SORProx {
 
         let dimpulse = jacobian.dot(&mj_lambda.rows_generic_mut(c.assembly_id, dim)) + c.rhs;
 
-        let new_impulse = na::sup(&N::zero(), &(c.impulse - c.r * dimpulse));
+        let new_impulse = (c.impulse - c.r * dimpulse).max(N::zero());
         let dlambda = new_impulse - c.impulse;
 
         c.impulse = new_impulse;

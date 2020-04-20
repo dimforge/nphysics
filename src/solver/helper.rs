@@ -1,6 +1,5 @@
 //! Utilities for computing velocity and position constraints.
 
-use alga::linear::{FiniteDimInnerSpace, FiniteDimVectorSpace};
 #[cfg(feature = "dim3")]
 use na;
 use na::{DVector, DVectorSlice, RealField, Unit};
@@ -264,8 +263,12 @@ pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>, H: Bod
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, usize>,
 ) {
-    let mut i = 0;
-    Vector::canonical_basis(|dir| {
+    #[cfg(feature = "dim2")]
+    let canonical_basis = [Vector::x(), Vector::y()];
+    #[cfg(feature = "dim3")]
+    let canonical_basis = [Vector::x(), Vector::y(), Vector::z()];
+
+    for (i, dir) in canonical_basis.iter().enumerate() {
         cancel_relative_linear_velocity_wrt_axis(
             body1,
             part1,
@@ -286,11 +289,7 @@ pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>, H: Bod
             jacobians,
             constraints,
         );
-
-        i += 1;
-
-        true
-    });
+    }
 }
 
 /// Generate position constraints to cancel the relative translation of two bodies wrt the given axis.
@@ -519,8 +518,12 @@ pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>, H: Bo
     jacobians: &mut [N],
     constraints: &mut LinearConstraints<N, usize>,
 ) {
-    let mut i = 0;
-    AngularVector::canonical_basis(|dir| {
+    #[cfg(feature = "dim2")]
+    let canonical_basis = [AngularVector::x()];
+    #[cfg(feature = "dim3")]
+    let canonical_basis = [Vector::x(), Vector::y(), Vector::z()];
+
+    for (i, dir) in canonical_basis.iter().enumerate() {
         cancel_relative_angular_velocity_wrt_axis(
             body1,
             part1,
@@ -541,11 +544,7 @@ pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>, H: Bo
             jacobians,
             constraints,
         );
-
-        i += 1;
-
-        true
-    });
+    }
 }
 
 /// Generate position constraints to cancel the relative rotation of two bodies.
