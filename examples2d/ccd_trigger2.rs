@@ -26,8 +26,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground
      */
-    let ground_size = 25.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_size = r!(25.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(1.0))));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -41,12 +41,12 @@ pub fn init_world(testbed: &mut Testbed) {
      */
 
     let projectile_body = RigidBodyDesc::new()
-        .translation(Vector2::new(-5.0, 3.5))
-        .velocity(Velocity::linear(100.0, -40.0))
+        .translation(Vector2::new(r!(-5.0), r!(3.5)))
+        .velocity(Velocity::linear(r!(100.0), r!(-40.0)))
         .build();
     let projectile_handle = bodies.insert(projectile_body);
 
-    let projectile_shape = ShapeHandle::new(Ball::new(0.3));
+    let projectile_shape = ShapeHandle::new(Ball::new(r!(0.3)));
 
     let projectile_collider = ColliderDesc::new(projectile_shape)
         .ccd_enabled(true)
@@ -65,7 +65,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
 
-    let shift = 2.0 * (rad + ColliderDesc::<Real>::default_margin());
+    let shift = r!(2.0) * (rad + ColliderDesc::<Real>::default_margin());
     let centerx = shift * r!(num as f32) / r!(2.0);
     let centery = rad + ColliderDesc::<Real>::default_margin() * r!(2.0);
 

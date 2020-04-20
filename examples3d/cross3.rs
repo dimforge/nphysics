@@ -25,7 +25,11 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let ground_thickness = r!(0.2);
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(3.0),
+        ground_thickness,
+        r!(3.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -58,7 +62,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 5;
     let shift = (large_rad + r!(0.08)) * r!(2.0);
     let centerx = shift * r!(num as f32) / r!(2.0);
-    let centery = 3.0 + shift / r!(2.0);
+    let centery = r!(3.0) + shift / r!(2.0);
     let centerz = shift * r!(num as f32) / r!(2.0);
 
     for i in 0usize..num {

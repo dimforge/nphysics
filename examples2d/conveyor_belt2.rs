@@ -30,8 +30,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground
      */
-    let ground_size = 5.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.2)));
+    let ground_size = r!(5.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(0.2))));
     let conveyor_material1 = BasicMaterial {
         surface_velocity: Some(Vector2::x()),
         ..BasicMaterial::default()
@@ -43,15 +43,15 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0..10 {
         let co = ColliderDesc::new(ground_shape.clone())
-            .translation(Vector2::new(-2.0, 5.0 - r!(i as f32) * 4.0))
-            .rotation(0.1)
+            .translation(Vector2::new(r!(-2.0), r!(5.0) - r!(i as f32) * r!(4.0)))
+            .rotation(r!(0.1))
             .material(MaterialHandle::new(conveyor_material1))
             .build(BodyPartHandle(ground_handle, 0));
         colliders.insert(co);
 
         let co = ColliderDesc::new(ground_shape.clone())
-            .translation(Vector2::new(2.0, 3.0 - r!(i as f32) * 4.0))
-            .rotation(-0.1)
+            .translation(Vector2::new(r!(2.0), r!(3.0) - r!(i as f32) * r!(4.0)))
+            .rotation(r!(-0.1))
             .material(MaterialHandle::new(conveyor_material2))
             .build(BodyPartHandle(ground_handle, 0));
         colliders.insert(co);
@@ -66,8 +66,8 @@ pub fn init_world(testbed: &mut Testbed) {
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
 
     let shift = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
-    let centerx = shift * r!(num as f32) / r!(2.0) + 5.0;
-    let centery = shift / r!(2.0) + 5.0;
+    let centerx = shift * r!(num as f32) / r!(2.0) + r!(5.0);
+    let centery = shift / r!(2.0) + r!(5.0);
 
     for i in 0usize..num {
         for j in 0..num {

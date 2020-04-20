@@ -108,7 +108,11 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<Real>, colliders: &mut DefaultColl
         .set_body_shift(Vector3::new(r!(0.0), arm_length + space, r!(0.0)));
 
     body.add_child(spherical)
-        .set_parent_shift(Vector3::new(r!(0.0), body_rady, -body_radx - 2.0 * space))
+        .set_parent_shift(Vector3::new(
+            r!(0.0),
+            body_rady,
+            -body_radx - r!(2.0) * space,
+        ))
         .set_body_shift(Vector3::new(r!(0.0), arm_length + space, r!(0.0)));
 
     /*

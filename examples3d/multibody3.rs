@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{ComplexField, Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -30,7 +30,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Shape that will be re-used for several multibody links.
      */
-    let rad = 0.2;
+    let rad = r!(0.2);
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid.clone()).density(r!(1.0));
 
@@ -38,12 +38,12 @@ pub fn init_world(testbed: &mut Testbed) {
      * Revolute joints.
      */
     let num = 6;
-    let revo = RevoluteJoint::new(Vector3::x_axis(), -0.1);
-    let body_shift = Vector3::z() * (rad * 3.0 + 0.2);
+    let revo = RevoluteJoint::new(Vector3::x_axis(), r!(-0.1));
+    let body_shift = Vector3::z() * (rad * r!(3.0 + 0.2));
 
     let mut multibody_desc = MultibodyDesc::new(revo)
         .body_shift(body_shift)
-        .parent_shift(Vector3::new(0.0, 5.0, 11.0));
+        .parent_shift(Vector3::new(r!(0.0), r!(5.0), r!(11.0)));
 
     let mut curr = &mut multibody_desc;
 
@@ -63,16 +63,17 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Prismatic joint.
      */
-    let mut prism = PrismaticJoint::new(Vector3::y_axis(), 0.0);
+    let mut prism = PrismaticJoint::new(Vector3::y_axis(), r!(0.0));
     prism.enable_min_offset(-rad * r!(2.0)); // Limit the joint so it does not fall indefinitely.
-    let mut multibody_desc = MultibodyDesc::new(prism).parent_shift(Vector3::new(0.0, 5.0, 5.0));
+    let mut multibody_desc =
+        MultibodyDesc::new(prism).parent_shift(Vector3::new(r!(0.0), r!(5.0), r!(5.0)));
 
     let mut curr = &mut multibody_desc;
 
     for _ in 0usize..num {
         curr = curr
             .add_child(prism)
-            .set_parent_shift(Vector3::z() * rad * 3.0);
+            .set_parent_shift(Vector3::z() * rad * r!(3.0));
     }
 
     let multibody = multibody_desc.build();
@@ -88,7 +89,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ball joint.
      */
     let spherical = BallJoint::new(na::zero());
-    let mut multibody_desc = MultibodyDesc::new(spherical).parent_shift(Vector3::y() * 5.0);
+    let mut multibody_desc = MultibodyDesc::new(spherical).parent_shift(Vector3::y() * r!(5.0));
     let mut curr = &mut multibody_desc;
 
     for i in 0usize..num {
@@ -167,7 +168,7 @@ pub fn init_world(testbed: &mut Testbed) {
                 x += rad * r!(2.0);
             }
 
-            let mut planar = PlanarJoint::new(axis1, axis2, x, y, 0.0);
+            let mut planar = PlanarJoint::new(axis1, axis2, x, y, r!(0.0));
             planar.enable_min_offset_1(-width / r!(2.0));
             planar.enable_max_offset_1(width / r!(2.0));
             planar.enable_min_offset_2(r!(-5.0));

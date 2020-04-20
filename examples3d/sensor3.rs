@@ -26,7 +26,11 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let ground_thickness = r!(0.2);
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(3.0),
+        ground_thickness,
+        r!(3.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -38,7 +42,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create some boxes.
      */
     let num = 10;
-    let rad = 0.2;
+    let rad = r!(0.2);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
@@ -53,7 +57,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new()
-                .translation(Vector3::new(x, 3.0, z))
+                .translation(Vector3::new(x, r!(3.0), z))
                 .build();
             let rb_handle = bodies.insert(rb);
 
@@ -73,7 +77,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     // Rigid body so that the sensor can move.
     let sensor = RigidBodyDesc::new()
-        .translation(Vector3::new(0.0, 10.0, 0.0))
+        .translation(Vector3::new(r!(0.0), r!(10.0), r!(0.0)))
         .build();
     let sensor_handle = bodies.insert(sensor);
 
@@ -85,7 +89,7 @@ pub fn init_world(testbed: &mut Testbed) {
     colliders.insert(co);
 
     // Ball-shaped sensor.
-    let sensor_geom = ShapeHandle::new(Ball::new(rad * 5.0));
+    let sensor_geom = ShapeHandle::new(Ball::new(rad * r!(5.0)));
     // We create a collider desc without density because we don't
     // want it to contribute to the rigid body mass.
     let sensor_collider = ColliderDesc::new(sensor_geom)

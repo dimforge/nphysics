@@ -28,16 +28,16 @@ pub fn init_world(testbed: &mut Testbed) {
     // Ground body shared to which both obstacle colliders will be attached.
     let ground_handle = bodies.insert(Ground::new());
 
-    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.2)));
+    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(r!(0.2))));
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 
     let co = obstacle_desc
-        .set_translation(Vector2::x() * 4.0)
+        .set_translation(Vector2::x() * r!(4.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = obstacle_desc
-        .set_translation(Vector2::x() * -4.0)
+        .set_translation(Vector2::x() * r!(-4.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -45,10 +45,10 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the deformable body and a collider for its boundary.
      */
     let mut deformable = FEMSurfaceDesc::quad(50, 1)
-        .scale(Vector2::new(10.0, 1.0))
-        .translation(Vector2::y() * 1.0)
-        .young_modulus(1.0e4)
-        .mass_damping(0.2)
+        .scale(Vector2::new(r!(10.0), r!(1.0)))
+        .translation(Vector2::y() * r!(1.0))
+        .young_modulus(r!(1.0e4))
+        .mass_damping(r!(0.2))
         .build();
     let collider_desc = deformable.boundary_collider_desc();
     let deformable_handle = bodies.insert(deformable);
@@ -61,7 +61,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let num = 10;
     let rad = r!(0.1);
-    let shift = 2.0 * rad;
+    let shift = r!(2.0) * rad;
     let centerx = shift * r!(num as f32) / r!(2.0);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));

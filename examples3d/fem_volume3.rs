@@ -28,25 +28,29 @@ pub fn init_world(testbed: &mut Testbed) {
     let ground_handle = bodies.insert(Ground::new());
 
     let ground_thickness = r!(0.2);
-    let ground = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(3.0),
+        ground_thickness,
+        r!(3.0),
+    )));
 
     let co = ColliderDesc::new(ground)
-        .translation(Vector3::y() * (-ground_thickness - 1.0))
+        .translation(Vector3::y() * (-ground_thickness - r!(1.0)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
-    let ground_size = 3.0;
-    let obstacle = ShapeHandle::new(Cuboid::new(Vector3::new(0.02, 0.02, ground_size)));
+    let ground_size = r!(3.0);
+    let obstacle = ShapeHandle::new(Cuboid::new(Vector3::new(r!(0.02), r!(0.02), ground_size)));
 
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 
     let co = obstacle_desc
-        .set_translation(Vector3::new(0.4, -0.01, 0.0))
+        .set_translation(Vector3::new(r!(0.4), r!(-0.01), r!(0.0)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = obstacle_desc
-        .set_translation(Vector3::new(-0.4, -0.01, 0.0))
+        .set_translation(Vector3::new(r!(-0.4), r!(-0.01), r!(0.0)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -54,11 +58,11 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the deformable body and a collider for its boundary.
      */
     let mut fem_body = FEMVolumeDesc::cube(20, 1, 1)
-        .scale(Vector3::new(1.0, 0.1, 0.1))
-        .translation(Vector3::y() * 0.1)
-        .young_modulus(1.0e3)
-        .poisson_ratio(0.2)
-        .mass_damping(0.2)
+        .scale(Vector3::new(r!(1.0), r!(0.1), r!(0.1)))
+        .translation(Vector3::y() * r!(0.1))
+        .young_modulus(r!(1.0e3))
+        .poisson_ratio(r!(0.2))
+        .mass_damping(r!(0.2))
         .build();
     let boundary_desc = fem_body.boundary_collider_desc();
     let fem_body_handle = bodies.insert(fem_body);

@@ -28,18 +28,18 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut shapes = Vec::new();
     shapes.push((
         Isometry3::identity(),
-        ShapeHandle::new(Cuboid::new(Vector3::new(1.0, 0.1, 0.1))),
+        ShapeHandle::new(Cuboid::new(Vector3::new(r!(1.0), r!(0.1), r!(0.1)))),
     ));
     shapes.push((
-        Isometry3::translation(0.0, 0.4, 0.0),
-        ShapeHandle::new(Cuboid::new(Vector3::new(0.1, 0.2, 0.1))),
+        Isometry3::translation(r!(0.0), r!(0.4), r!(0.0)),
+        ShapeHandle::new(Cuboid::new(Vector3::new(r!(0.1), r!(0.2), r!(0.1)))),
     ));
 
     /*
      * Create the rigid body.
      */
     let rb = RigidBodyDesc::new()
-        .velocity(Velocity::angular(0.0, 10.0, 0.1))
+        .velocity(Velocity::angular(r!(0.0), r!(10.0), r!(0.1)))
         .build();
     let rb_handle = bodies.insert(rb);
 

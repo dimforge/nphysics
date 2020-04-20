@@ -8,7 +8,7 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, Real, Testbed};
+use nphysics_testbed2d::{r, IntoReal, Real, Testbed};
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
@@ -27,7 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Polyline
      */
     let mut rng = StdRng::seed_from_u64(0);
-    let heights = DVector::from_fn(20, |_, _| rng.gen::<Real>());
+    let heights = DVector::from_fn(20, |_, _| rng.gen::<f64>().into_real());
 
     let mut heightfield = HeightField::new(heights, Vector2::new(r!(20.0), r!(1.0)));
 

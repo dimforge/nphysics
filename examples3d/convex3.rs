@@ -8,7 +8,7 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::{r, IntoReal, Testbed};
 
 use rand::distributions::{Distribution, Standard};
 use rand::{rngs::StdRng, SeedableRng};
@@ -28,7 +28,11 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground
      */
     let ground_thickness = r!(0.2);
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(3.0),
+        ground_thickness,
+        r!(3.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -41,7 +45,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let npts = 10usize;
     let num = 6;
-    let shift = 0.4;
+    let shift = r!(0.4);
     let centerx = shift * r!(num as f32) / r!(2.0);
     let centery = shift / r!(2.0);
     let centerz = shift * r!(num as f32) / r!(2.0);
@@ -58,8 +62,8 @@ pub fn init_world(testbed: &mut Testbed) {
                 let mut pts = Vec::with_capacity(npts);
 
                 for _ in 0..npts {
-                    let pt: Point3<Real> = distribution.sample(&mut rng);
-                    pts.push(pt * 0.4);
+                    let pt: Point3<f64> = distribution.sample(&mut rng);
+                    pts.push((pt.into_real() * r!(0.4)).into());
                 }
 
                 // Build the rigid body.

@@ -24,8 +24,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground
      */
-    let ground_size = 25.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_size = r!(25.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(1.0))));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -63,8 +63,8 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0usize..num {
         for j in 0usize..num {
-            let x = r!(i as f32) * 2.5 * large_rad - centerx;
-            let y = r!(j as f32) * 2.5 * -large_rad + centery * r!(2.0);
+            let x = r!(i as f32) * r!(2.5) * large_rad - centerx;
+            let y = r!(j as f32) * r!(2.5) * -large_rad + centery * r!(2.0);
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();

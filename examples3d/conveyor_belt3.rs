@@ -27,16 +27,16 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Conveyor belts. We create 8 belts to form a "circle".
      */
-    let conveyor_length = 5.0;
-    let conveyor_half_width = 1.0;
+    let conveyor_length = r!(5.0);
+    let conveyor_half_width = r!(1.0);
     let conveyor_side_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
         conveyor_length - conveyor_half_width,
-        0.2,
+        r!(0.2),
         conveyor_half_width,
     )));
     let conveyor_corner_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
         conveyor_half_width,
-        0.2,
+        r!(0.2),
         conveyor_half_width,
     )));
     let conveyor_shift = conveyor_length;
@@ -46,7 +46,7 @@ pub fn init_world(testbed: &mut Testbed) {
         ..BasicMaterial::default()
     };
     let conveyor_corner_material = BasicMaterial {
-        surface_velocity: Some(Vector3::new(r!(1.0), 0.0, r!(-2.0))),
+        surface_velocity: Some(Vector3::new(r!(1.0), r!(0.0), r!(-2.0))),
         ..BasicMaterial::default()
     };
 
@@ -126,7 +126,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let centerx = shift * r!(num as f32) / r!(2.0) + conveyor_shift;
     let centery = shift / r!(2.0);
     let centerz = shift * r!(num as f32) / r!(2.0);
-    let height = 0.0;
+    let height = r!(0.0);
 
     for i in 0usize..num {
         for j in 0usize..num {

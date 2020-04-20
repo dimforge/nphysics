@@ -28,16 +28,16 @@ pub fn init_world(testbed: &mut Testbed) {
     // Ground body shared to which both obstacle colliders will be attached.
     let ground_handle = bodies.insert(Ground::new());
 
-    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.2)));
+    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(r!(0.2))));
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 
     let co = obstacle_desc
-        .set_translation(Vector2::x() * 4.0)
+        .set_translation(Vector2::x() * r!(4.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = obstacle_desc
-        .set_translation(Vector2::x() * -4.0)
+        .set_translation(Vector2::x() * r!(-4.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -45,17 +45,17 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the deformable body and a collider for its boundary.
      */
     let polyline = Polyline::quad(50, 1)
-        .scaled(&Vector2::new(10.0, 1.0))
-        .transformed(&Isometry2::translation(0.0, 1.0));
+        .scaled(&Vector2::new(r!(10.0), r!(1.0)))
+        .transformed(&Isometry2::translation(r!(0.0), r!(1.0)));
 
     let mut deformable = MassSpringSystemDesc::from_polyline(&polyline)
-        .stiffness(1.0e2)
-        .damping_ratio(0.2)
+        .stiffness(r!(1.0e2))
+        .damping_ratio(r!(0.2))
         .build();
 
     // Add other springs for volume stiffness.
-    deformable.generate_neighbor_springs(1.0e2, 0.5);
-    deformable.generate_neighbor_springs(1.0e2, 0.5);
+    deformable.generate_neighbor_springs(r!(1.0e2), r!(0.5));
+    deformable.generate_neighbor_springs(r!(1.0e2), r!(0.5));
 
     let nnodes = deformable.num_nodes();
     let extra_springs1 = (0..)
@@ -64,7 +64,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let extra_springs2 = (1..).map(|i| Point2::new(i, nnodes - i)).take(nnodes / 2);
 
     for spring in extra_springs1.chain(extra_springs2) {
-        deformable.add_spring(spring.x, spring.y, 1.0e2, 0.5);
+        deformable.add_spring(spring.x, spring.y, r!(1.0e2), r!(0.5));
     }
 
     let deformable_handle = bodies.insert(deformable);
@@ -79,7 +79,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let num = 20;
     let rad = r!(0.1);
-    let shift = 2.0 * rad;
+    let shift = r!(2.0) * rad;
     let centerx = shift * r!(num as f32) / r!(2.0);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
@@ -91,7 +91,7 @@ pub fn init_world(testbed: &mut Testbed) {
             let x = (fi * shift / r!(2.0))
                 + (fj - fi) * r!(2.0) * (rad + ColliderDesc::<Real>::default_margin())
                 - centerx;
-            let y = fi * r!(2.0) * (rad + ColliderDesc::<Real>::default_margin()) + rad + 2.0;
+            let y = fi * r!(2.0) * (rad + ColliderDesc::<Real>::default_margin()) + rad + r!(2.0);
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
@@ -99,7 +99,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
             // Build the collider.
             let co = ColliderDesc::new(cuboid.clone())
-                .density(0.1)
+                .density(r!(0.1))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
         }

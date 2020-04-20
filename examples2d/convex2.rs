@@ -11,7 +11,7 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, Real, Testbed};
+use nphysics_testbed2d::{r, IntoReal, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -55,8 +55,8 @@ pub fn init_world(testbed: &mut Testbed) {
             let mut pts = Vec::with_capacity(npts);
 
             for _ in 0..npts {
-                let pt: Point2<Real> = distribution.sample(&mut rng);
-                pts.push(pt * r!(0.4));
+                let pt: Point2<f64> = distribution.sample(&mut rng);
+                pts.push(pt.into_real() * r!(0.4));
             }
 
             // Build the rigid body.

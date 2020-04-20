@@ -2,7 +2,7 @@ extern crate nalgebra as na;
 
 use std::f32;
 
-use na::{Point3, Vector3};
+use na::{ComplexField, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -28,7 +28,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the balls
      */
     let num = 10;
-    let rad = 0.2;
+    let rad = r!(0.2);
 
     let cube = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
     let subdiv = r!(1.0 / (num as f32));

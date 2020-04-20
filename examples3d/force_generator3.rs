@@ -22,8 +22,8 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut force_generators = DefaultForceGeneratorSet::new();
 
     // We setup two force generators that will replace the gravity.
-    let mut up_gravity = ConstantAcceleration::new(Vector3::y() * 9.81, Vector3::zeros());
-    let mut down_gravity = ConstantAcceleration::new(Vector3::y() * -9.81, Vector3::zeros());
+    let mut up_gravity = ConstantAcceleration::new(Vector3::y() * r!(9.81), Vector3::zeros());
+    let mut down_gravity = ConstantAcceleration::new(Vector3::y() * r!(-9.81), Vector3::zeros());
 
     /*
      * Planes
@@ -37,7 +37,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let plane = ShapeHandle::new(Plane::new(-Vector3::y_axis()));
     let co = ColliderDesc::new(plane)
-        .translation(Vector3::y() * 20.0)
+        .translation(Vector3::y() * r!(20.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -46,18 +46,18 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let num = 1000f64.sqrt() as usize;
     let rad = r!(0.1);
-    let shift = 0.25 * rad;
+    let shift = r!(0.25) * rad;
     let centerx = shift * r!(num as f32) / r!(2.0);
-    let centery = 0.5;
+    let centery = r!(0.5);
 
     let ball = ShapeHandle::new(Ball::new(rad));
 
     for i in 0usize..num {
         for j in 0usize..2 {
             for k in 0usize..num {
-                let x = r!(i as f32) * 2.5 * rad - centerx;
-                let y = 1.0 + r!(j as f32) * 2.5 * rad + centery;
-                let z = r!(k as f32) * 2.5 * rad - centerx;
+                let x = r!(i as f32) * r!(2.5) * rad - centerx;
+                let y = r!(1.0) + r!(j as f32) * r!(2.5) * rad + centery;
+                let z = r!(k as f32) * r!(2.5) * rad - centerx;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()

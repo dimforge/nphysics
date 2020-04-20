@@ -98,7 +98,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
             // Build the collider.
             let co = ColliderDesc::new(cuboid.clone())
-                .density(0.1)
+                .density(r!(0.1))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
         }

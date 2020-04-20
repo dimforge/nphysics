@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{ComplexField, Point3, Vector3};
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::{DefaultJointConstraintSet, RevoluteJoint};
@@ -26,7 +26,11 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let ground_thickness = r!(0.2);
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(10.0, ground_thickness, 10.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(10.0),
+        ground_thickness,
+        r!(10.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -38,14 +42,14 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the boxes
      */
     let num = 6;
-    let rad = 0.2;
+    let rad = r!(0.2);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
     let cuboid_collider_desc = ColliderDesc::new(cuboid).density(r!(1.0));
 
     let shift = (rad + cuboid_collider_desc.get_margin()) * r!(2.0);
     let centerx = shift * r!(num as f32) / r!(2.0);
-    let centery = shift / r!(2.0) + 3.04;
+    let centery = shift / r!(2.0) + r!(3.04);
     let centerz = shift * r!(num as f32) / r!(2.0);
 
     for i in 0usize..num {
@@ -73,12 +77,16 @@ pub fn init_world(testbed: &mut Testbed) {
      */
 
     let platform_body = RigidBodyDesc::new()
-        .translation(Vector3::new(0.0, 1.5 + 0.8, -10.0 * rad))
+        .translation(Vector3::new(r!(0.0), r!(1.5 + 0.8), r!(-10.0) * rad))
         .status(BodyStatus::Kinematic)
         .build();
     let platform_handle = bodies.insert(platform_body);
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 10.0, rad, rad * 10.0)));
+    let geom = ShapeHandle::new(Cuboid::new(Vector3::new(
+        rad * r!(10.0),
+        rad,
+        rad * r!(10.0),
+    )));
     let platform_collider = ColliderDesc::new(geom)
         .density(r!(1.0))
         .build(BodyPartHandle(platform_handle, 0));
@@ -87,15 +95,15 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Setup a kinematic multibody.
      */
-    let joint = RevoluteJoint::new(Vector3::x_axis(), 0.0);
+    let joint = RevoluteJoint::new(Vector3::x_axis(), r!(0.0));
 
     let mut mb = MultibodyDesc::new(joint)
         .body_shift(Vector3::z() * r!(2.0))
-        .parent_shift(Vector3::new(0.0, 2.0, 5.0))
+        .parent_shift(Vector3::new(r!(0.0), r!(2.0), r!(5.0)))
         .build();
 
     mb.set_status(BodyStatus::Kinematic);
-    mb.generalized_velocity_mut()[0] = 3.0;
+    mb.generalized_velocity_mut()[0] = r!(3.0);
 
     let mb_handle = bodies.insert(mb);
     let mb_collider = cuboid_collider_desc.build(BodyPartHandle(mb_handle, 0));
@@ -104,18 +112,18 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Setup a motorized multibody.
      */
-    let mut joint = RevoluteJoint::new(Vector3::x_axis(), 0.0);
-    joint.set_desired_angular_motor_velocity(-2.0);
-    joint.set_max_angular_motor_torque(1.0);
+    let mut joint = RevoluteJoint::new(Vector3::x_axis(), r!(0.0));
+    joint.set_desired_angular_motor_velocity(r!(-2.0));
+    joint.set_max_angular_motor_torque(r!(1.0));
     joint.enable_angular_motor();
 
     let mb = MultibodyDesc::new(joint)
         .body_shift(Vector3::z() * r!(2.0))
-        .parent_shift(Vector3::new(0.0, 3.0, -4.0))
+        .parent_shift(Vector3::new(r!(0.0), r!(3.0), r!(-4.0)))
         .build();
 
     let mb_handle = bodies.insert(mb);
-    let geom = ShapeHandle::new(Ball::new(2.0 * rad));
+    let geom = ShapeHandle::new(Ball::new(r!(2.0) * rad));
     let ball_collider_desc = ColliderDesc::new(geom).density(r!(1.0));
     let mb_collider = ball_collider_desc.build(BodyPartHandle(mb_handle, 0));
     colliders.insert(mb_collider);
@@ -128,13 +136,13 @@ pub fn init_world(testbed: &mut Testbed) {
         let platform_z = platform.position().translation.z;
 
         let mut vel = *platform.velocity();
-        vel.linear.y = (time * 5.0).sin() * 0.8;
+        vel.linear.y = (time * r!(5.0)).sin() * r!(0.8);
 
-        if platform_z >= rad * 10.0 {
-            vel.linear.z = -1.0;
+        if platform_z >= rad * r!(10.0) {
+            vel.linear.z = r!(-1.0);
         }
-        if platform_z <= -rad * 10.0 {
-            vel.linear.z = 1.0;
+        if platform_z <= -rad * r!(10.0) {
+            vel.linear.z = r!(1.0);
         }
 
         platform.set_velocity(vel);

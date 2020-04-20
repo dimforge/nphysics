@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2};
+use na::{ComplexField, Point2, Vector2};
 use ncollide2d::shape::{Cuboid, Polyline, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -40,8 +40,8 @@ pub fn init_world(testbed: &mut Testbed) {
     let distribution = Standard;
 
     for i in 0usize..num_split {
-        let h: Real = distribution.sample(&mut rng);
-        vertices[i + 1].y = h * max_h + begin_h;
+        let h: f64 = distribution.sample(&mut rng);
+        vertices[i + 1].y = r!(h) * max_h + begin_h;
     }
 
     let polyline = ShapeHandle::new(Polyline::new(vertices, None));

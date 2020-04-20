@@ -25,15 +25,15 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let platform_height = 0.4;
-    let platform_shape = ShapeHandle::new(Cuboid::new(Vector2::new(0.03, 0.03)));
+    let platform_height = r!(0.4);
+    let platform_shape = ShapeHandle::new(Cuboid::new(Vector2::new(r!(0.03), r!(0.03))));
 
     let positions = [
-        Isometry2::new(Vector2::new(0.4, platform_height), na::zero()),
-        Isometry2::new(Vector2::new(0.2, -platform_height), na::zero()),
-        Isometry2::new(Vector2::new(0.0, platform_height), na::zero()),
-        Isometry2::new(Vector2::new(-0.2, -platform_height), na::zero()),
-        Isometry2::new(Vector2::new(-0.4, platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(0.4), platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(0.2), -platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(0.0), platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(-0.2), -platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(-0.4), platform_height), na::zero()),
     ];
 
     let mut platforms = Vec::new();
@@ -53,11 +53,11 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the deformable body and a collider for its contour.
      */
     let mut deformable = FEMSurfaceDesc::quad(20, 1)
-        .scale(Vector2::new(1.1, 0.1))
+        .scale(Vector2::new(r!(1.1), r!(0.1)))
         .density(r!(1.0))
-        .young_modulus(1.0e2)
-        .mass_damping(0.2)
-        .plasticity(0.1, 5.0, 10.0)
+        .young_modulus(r!(1.0e2))
+        .mass_damping(r!(0.2))
+        .plasticity(r!(0.1), r!(5.0), r!(10.0))
         .build();
     let collider_desc = deformable.boundary_collider_desc();
     let deformable_surface_handle = bodies.insert(deformable);
@@ -87,8 +87,8 @@ pub fn init_world(testbed: &mut Testbed) {
             let platform_y = platform.position().translation.vector.y;
 
             let mut vel = *platform.velocity();
-            let vel_magnitude = 0.1;
-            let max_traversal = 0.005;
+            let vel_magnitude = r!(0.1);
+            let max_traversal = r!(0.005);
 
             if i % 2 == 0 {
                 if platform_y <= -max_traversal {

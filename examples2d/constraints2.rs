@@ -26,12 +26,12 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let ground_size = 25.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_size = r!(25.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(1.0))));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
-        .translation(-Vector2::y() * 10.0)
+        .translation(-Vector2::y() * r!(10.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -39,7 +39,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Revolute constraints.
      */
     let num = 10;
-    let rad = 0.2;
+    let rad = r!(0.2);
     let mut parent = BodyPartHandle(ground_handle, 0);
 
     let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
@@ -115,8 +115,8 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0..num {
         for j in 0..num {
-            let mut x = r!(i as f32) * rad * 3.0 - width / r!(2.0) + r!(5.0);
-            let y = r!(j as f32) * rad * -3.0 + width / r!(2.0) + r!(4.0);
+            let mut x = r!(i as f32) * rad * r!(3.0) - width / r!(2.0) + r!(5.0);
+            let y = r!(j as f32) * rad * r!(-3.0) + width / r!(2.0) + r!(4.0);
 
             if j % 2 == 0 {
                 x += rad * r!(2.0);

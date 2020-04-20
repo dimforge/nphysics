@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{ComplexField, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -31,18 +31,22 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground
      */
     let ground_thickness = r!(0.2);
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 10.0)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(3.0),
+        ground_thickness,
+        r!(10.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
-        .translation(Vector3::y() * (-ground_thickness - 5.0))
+        .translation(Vector3::y() * (-ground_thickness - r!(5.0)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     /*
      * Geometries that will be re-used for several multibody links..
      */
-    let rad = 0.2;
+    let rad = r!(0.2);
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
     let collider_desc = ColliderDesc::new(cuboid.clone()).density(r!(1.0));
@@ -52,11 +56,11 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let num = 6;
     let mut parent = BodyPartHandle(ground_handle, 0);
-    let first_anchor = Point3::new(0.0, 5.0, 11.0);
+    let first_anchor = Point3::new(r!(0.0), r!(5.0), r!(11.0));
     let mut pos = first_anchor.coords;
 
     for i in 0usize..num {
-        let body_anchor = Point3::new(0.0, 0.0, 1.0) * (rad * 3.0 + 0.2);
+        let body_anchor = Point3::new(r!(0.0), r!(0.0), r!(1.0)) * (rad * r!(3.0) + r!(0.2));
         let parent_anchor = if i == 0 {
             first_anchor
         } else {
@@ -80,7 +84,7 @@ pub fn init_world(testbed: &mut Testbed) {
             Vector3::x_axis(),
         );
 
-        constraint.set_break_force(40.0);
+        constraint.set_break_force(r!(40.0));
         joint_constraints.insert(constraint);
 
         parent = BodyPartHandle(rb_handle, 0);
@@ -89,7 +93,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Prismatic constraint.
      */
-    let first_anchor = Point3::new(0.0, 5.0, 4.0);
+    let first_anchor = Point3::new(r!(0.0), r!(5.0), r!(4.0));
     let mut pos = first_anchor.coords;
     parent = BodyPartHandle(ground_handle, 0);
 
@@ -99,7 +103,7 @@ pub fn init_world(testbed: &mut Testbed) {
         if i == 0 {
             parent_anchor = first_anchor;
         } else {
-            body_anchor = Point3::new(0.0, 0.0, -1.0) * (rad * 3.0);
+            body_anchor = Point3::new(r!(0.0), r!(0.0), r!(-1.0)) * (rad * r!(3.0));
         }
 
         pos -= body_anchor.coords;
@@ -117,7 +121,7 @@ pub fn init_world(testbed: &mut Testbed) {
             Vector3::y_axis(),
             body_anchor,
         );
-        constraint.set_break_force(40.0);
+        constraint.set_break_force(r!(40.0));
         constraint.enable_min_offset(-rad * r!(2.0));
         joint_constraints.insert(constraint);
 
@@ -127,7 +131,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ball constraint.
      */
-    let first_anchor = Point3::new(0.0, 5.0, 0.0);
+    let first_anchor = Point3::new(r!(0.0), r!(5.0), r!(0.0));
     let mut pos = first_anchor.coords;
     parent = BodyPartHandle(ground_handle, 0);
 
@@ -138,7 +142,7 @@ pub fn init_world(testbed: &mut Testbed) {
         if i == 0 {
             parent_anchor = first_anchor;
         } else {
-            body_anchor = Point3::new(angle.cos(), 0.3, angle.sin()) * (rad * 5.0);
+            body_anchor = Point3::new(angle.cos(), r!(0.3), angle.sin()) * (rad * r!(5.0));
         }
 
         pos -= body_anchor.coords;
@@ -155,7 +159,7 @@ pub fn init_world(testbed: &mut Testbed) {
             parent_anchor,
             body_anchor,
         );
-        constraint.set_break_force(40.0);
+        constraint.set_break_force(r!(40.0));
         joint_constraints.insert(constraint);
         parent = BodyPartHandle(rb_handle, 0);
     }
@@ -163,8 +167,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Universal constraint.
      */
-    let parent_pos = Vector3::new(0.0, 5.0, -5.0);
-    let child_pos = Vector3::new(0.0, 5.0, -6.0);
+    let parent_pos = Vector3::new(r!(0.0), r!(5.0), r!(-5.0));
+    let child_pos = Vector3::new(r!(0.0), r!(5.0), r!(-6.0));
 
     let co = ColliderDesc::new(cuboid)
         .translation(parent_pos)
@@ -181,12 +185,12 @@ pub fn init_world(testbed: &mut Testbed) {
         BodyPartHandle(rb_handle, 0),
         Point3::from(parent_pos),
         Vector3::x_axis(),
-        Point3::new(0.0, 0.0, 1.0),
+        Point3::new(r!(0.0), r!(0.0), r!(1.0)),
         Vector3::z_axis(),
         r!(FRAC_PI_2),
     );
 
-    constraint.set_break_force(40.0);
+    constraint.set_break_force(r!(40.0));
     joint_constraints.insert(constraint);
 
     /*

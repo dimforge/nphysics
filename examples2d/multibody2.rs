@@ -25,19 +25,19 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground
      */
-    let ground_size = 25.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_size = r!(25.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(1.0))));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
-        .translation(-Vector2::y() * 5.0)
+        .translation(-Vector2::y() * r!(5.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     /*
      * Shape that will be re-used for several multibody links.
      */
-    let rad = 0.2;
+    let rad = r!(0.2);
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid.clone()).density(r!(1.0));
 
@@ -45,12 +45,12 @@ pub fn init_world(testbed: &mut Testbed) {
      * Revolute joint.
      */
     let num = 10;
-    let revo = RevoluteJoint::new(-0.1);
-    let body_shift = Vector2::x() * (rad * 3.0 + 0.2);
+    let revo = RevoluteJoint::new(r!(-0.1));
+    let body_shift = Vector2::x() * (rad * r!(3.0) + r!(0.2));
 
     let mut multibody_desc = MultibodyDesc::new(revo)
         .body_shift(body_shift)
-        .parent_shift(Vector2::new(-4.0, 5.0));
+        .parent_shift(Vector2::new(r!(-4.0), r!(5.0)));
 
     let mut curr = &mut multibody_desc;
 
@@ -70,17 +70,17 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Prismatic joint.
      */
-    let mut prism = PrismaticJoint::new(Vector2::y_axis(), 0.0);
+    let mut prism = PrismaticJoint::new(Vector2::y_axis(), r!(0.0));
     // Joint limit so that it does not fall indefinitely.
     prism.enable_min_offset(-rad * r!(2.0));
-    let mut multibody_desc = MultibodyDesc::new(prism).parent_shift(Vector2::new(5.0, 5.0));
+    let mut multibody_desc = MultibodyDesc::new(prism).parent_shift(Vector2::new(r!(5.0), r!(5.0)));
 
     let mut curr = &mut multibody_desc;
 
     for _ in 0usize..num {
         curr = curr
             .add_child(prism)
-            .set_parent_shift(Vector2::x() * rad * 3.0);
+            .set_parent_shift(Vector2::x() * rad * r!(3.0));
     }
 
     let multibody = multibody_desc.build();
@@ -95,13 +95,13 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Cartesian joint.
      */
-    let shift = Vector2::new(0.0, -2.0);
-    let width = 5.0 * rad * 4.0;
+    let shift = Vector2::new(r!(0.0), r!(-2.0));
+    let width = r!(5.0) * rad * r!(4.0);
 
     for i in 0..7 {
         for j in 0..7 {
-            let mut x = r!(i as f32) * rad * 4.0 - width / r!(2.0);
-            let y = r!(j as f32) * rad * 4.0 - width / r!(2.0) + 4.0;
+            let mut x = r!(i as f32) * rad * r!(4.0) - width / r!(2.0);
+            let y = r!(j as f32) * rad * r!(4.0) - width / r!(2.0) + r!(4.0);
 
             if j % 2 == 0 {
                 x += rad * r!(2.0);

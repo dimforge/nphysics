@@ -31,31 +31,40 @@ pub fn init_world(testbed: &mut Testbed) {
      * dynamic rigid bodies (to show that CCD between moving colliders work
      * as well).
      */
-    let ground_size = 25.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
+    let ground_size = r!(25.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(0.1))));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape.clone()).build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
-        .position(Isometry2::new(Vector2::new(-3.0, 0.0), 3.14 / r!(2.0)))
+        .position(Isometry2::new(
+            Vector2::new(r!(-3.0), r!(0.0)),
+            r!(3.14) / r!(2.0),
+        ))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
-        .position(Isometry2::new(Vector2::new(6.0, 0.0), 3.14 / r!(2.0)))
+        .position(Isometry2::new(
+            Vector2::new(r!(6.0), r!(0.0)),
+            r!(3.14) / r!(2.0),
+        ))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
-        .position(Isometry2::translation(0.0, 10.0))
+        .position(Isometry2::translation(r!(0.0), r!(10.0)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     // Add a sensor, to show that CCD works on sensors too.
     let co = ColliderDesc::new(ground_shape)
-        .position(Isometry2::new(Vector2::new(2.5, 0.0), 3.14 / r!(2.0)))
+        .position(Isometry2::new(
+            Vector2::new(r!(2.5), r!(0.0)),
+            r!(3.14) / r!(2.0),
+        ))
         .sensor(true)
         .build(BodyPartHandle(ground_handle, 0));
     let sensor_handle = colliders.insert(co);

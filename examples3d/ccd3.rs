@@ -26,7 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground.
      */
     let ground_thickness = r!(0.2);
-    let ground_half_width = 3.0;
+    let ground_half_width = r!(3.0);
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
         ground_half_width,
         ground_thickness,
@@ -75,7 +75,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let centerx = shift * r!(num as f32) / r!(2.0);
     let centery = shift / r!(2.0);
     let centerz = shift * r!(num as f32) / r!(2.0);
-    let height = 1.5;
+    let height = r!(1.5);
 
     for i in 0usize..num {
         for j in 0usize..num {

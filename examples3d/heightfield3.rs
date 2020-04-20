@@ -8,7 +8,7 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::{r, IntoReal, Real, Testbed};
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
@@ -27,7 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Setup a random ground.
      */
     let mut rng = StdRng::from_seed([0; 32]);
-    let heights = DMatrix::from_fn(10, 15, |_, _| rng.gen::<Real>());
+    let heights = DMatrix::from_fn(10, 15, |_, _| rng.gen::<f64>().into_real());
 
     let mut heightfield: HeightField<Real> =
         HeightField::new(heights, Vector3::new(r!(10.0), r!(1.5), r!(10.0)));
@@ -62,7 +62,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let num = 7;
     let rad = r!(0.1);
-    let shift = rad * r!(2.0) + 0.5;
+    let shift = rad * r!(2.0) + r!(0.5);
     let centerx = shift * r!(num as f32) / r!(2.0);
     let centery = shift / r!(2.0);
     let centerz = shift * r!(num as f32) / r!(2.0);
