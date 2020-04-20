@@ -9,7 +9,7 @@ use nphysics3d::object::{
     Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::{r, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*

@@ -13,7 +13,7 @@ use nphysics3d::object::{
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::{r, Testbed};
 use std::f32::consts::{FRAC_PI_2, PI};
 
 pub fn init_world(testbed: &mut Testbed) {
