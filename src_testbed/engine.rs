@@ -347,12 +347,12 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn add_fluid(
+    pub fn add_fluid<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         handle: FluidHandle,
-        fluid: &Fluid<f32>,
-        particle_radius: f32,
+        fluid: &Fluid<N>,
+        particle_radius: N,
     ) {
         let rand = &mut self.rand;
         let color = *self
@@ -364,28 +364,38 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn add_boundary(
+    pub fn add_boundary<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         handle: BoundaryHandle,
-        boundary: &Boundary<f32>,
-        particle_radius: f32,
+        boundary: &Boundary<N>,
+        particle_radius: N,
     ) {
         let color = self.ground_color;
-        let node = FluidNode::new(particle_radius, &boundary.positions, color, window);
+        let node = FluidNode::new(
+            na::convert(particle_radius),
+            &boundary.positions,
+            color,
+            window,
+        );
         self.boundary2sn.insert(handle, node);
     }
 
     #[cfg(feature = "fluids")]
-    pub fn add_fluid_with_color(
+    pub fn add_fluid_with_color<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         handle: FluidHandle,
-        fluid: &Fluid<f32>,
-        particle_radius: f32,
+        fluid: &Fluid<N>,
+        particle_radius: N,
         color: Point3<f32>,
     ) {
-        let node = FluidNode::new(particle_radius, &fluid.positions, color, window);
+        let node = FluidNode::new(
+            na::convert(particle_radius),
+            &fluid.positions,
+            color,
+            window,
+        );
         self.f2sn.insert(handle, node);
     }
 
@@ -727,7 +737,7 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn draw_fluids(&mut self, liquid_world: &LiquidWorld<f32>) {
+    pub fn draw_fluids<N: RealField + SubsetOf<f32>>(&mut self, liquid_world: &LiquidWorld<N>) {
         for (i, fluid) in liquid_world.fluids().iter() {
             if let Some(node) = self.f2sn.get_mut(&i) {
                 node.update_with_fluid(fluid, self.fluid_rendering_mode)

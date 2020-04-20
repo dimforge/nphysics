@@ -117,15 +117,15 @@ pub struct TestbedState<N: RealField> {
 }
 
 #[cfg(feature = "fluids")]
-struct FluidsState {
-    world: LiquidWorld<f32>,
-    coupling: ColliderCouplingSet<f32, DefaultBodyHandle>,
+struct FluidsState<N: RealField> {
+    world: LiquidWorld<N>,
+    coupling: ColliderCouplingSet<N, DefaultBodyHandle>,
 }
 
 pub struct Testbed<N: RealField = f32> {
     builders: Vec<(&'static str, fn(&mut Testbed<N>))>,
     #[cfg(feature = "fluids")]
-    fluids: Option<FluidsState>,
+    fluids: Option<FluidsState<N>>,
     mechanical_world: DefaultMechanicalWorld<N>,
     geometrical_world: DefaultGeometricalWorld<N>,
     bodies: DefaultBodySet<N>,
@@ -138,7 +138,7 @@ pub struct Testbed<N: RealField = f32> {
     camera_locked: bool, // Used so that the camera can remain the same before and after we change backend or press the restart button.
     callbacks: Callbacks<N>,
     #[cfg(feature = "fluids")]
-    callbacks_fluids: CallbacksFluids,
+    callbacks_fluids: CallbacksFluids<N>,
     time: N,
     hide_counters: bool,
     persistant_contacts: HashMap<ContactId, bool>,
@@ -482,14 +482,14 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
     #[cfg(feature = "fluids")]
     pub fn add_callback_with_fluids<
         F: FnMut(
-                &mut LiquidWorld<f32>,
-                &mut ColliderCouplingSet<f32, DefaultBodyHandle>,
-                &mut DefaultMechanicalWorld<f32>,
-                &mut DefaultGeometricalWorld<f32>,
-                &mut DefaultBodySet<f32>,
-                &mut DefaultColliderSet<f32>,
+                &mut LiquidWorld<N>,
+                &mut ColliderCouplingSet<N, DefaultBodyHandle>,
+                &mut DefaultMechanicalWorld<N>,
+                &mut DefaultGeometricalWorld<N>,
+                &mut DefaultBodySet<N>,
+                &mut DefaultColliderSet<N>,
                 &mut GraphicsManager,
-                f32,
+                N,
             ) + 'static,
     >(
         &mut self,
