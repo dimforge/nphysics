@@ -8,7 +8,7 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
@@ -16,7 +16,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -27,10 +27,10 @@ pub fn init_world(testbed: &mut Testbed) {
      * Setup a random ground.
      */
     let mut rng = StdRng::from_seed([0; 32]);
-    let heights = DMatrix::from_fn(10, 15, |_, _| rng.gen::<f32>());
+    let heights = DMatrix::from_fn(10, 15, |_, _| rng.gen::<Real>());
 
-    let mut heightfield: HeightField<f32> =
-        HeightField::new(heights, Vector3::new(10.0, 1.5, 10.0));
+    let mut heightfield: HeightField<Real> =
+        HeightField::new(heights, Vector3::new(r!(10.0), r!(1.5), r!(10.0)));
     let statuses = heightfield.cells_statuses_mut();
 
     // It is possible to customize the way the triangles
@@ -61,21 +61,21 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create some boxes and spheres.
      */
     let num = 7;
-    let rad = 0.1;
-    let shift = rad * 2.0 + 0.5;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0;
-    let centerz = shift * (num as f32) / 2.0;
-    let height = 1.0;
+    let rad = r!(0.1);
+    let shift = rad * r!(2.0) + 0.5;
+    let centerx = shift * r!(num as f32) / r!(2.0);
+    let centery = shift / r!(2.0);
+    let centerz = shift * r!(num as f32) / r!(2.0);
+    let height = r!(1.0);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery + height;
-                let z = k as f32 * shift - centerz;
+                let x = r!(i as f32) * shift - centerx;
+                let y = r!(j as f32) * shift + centery + height;
+                let z = r!(k as f32) * shift - centerz;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -85,7 +85,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
                 // Build the collider.
                 let co = ColliderDesc::new(cuboid.clone())
-                    .density(1.0)
+                    .density(r!(1.0))
                     .build(BodyPartHandle(rb_handle, 0));
                 colliders.insert(co);
             }

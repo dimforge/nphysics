@@ -11,7 +11,7 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -28,28 +28,28 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the balls
      */
     let num = 10;
-    let rad = 0.2;
+    let rad = r!(0.2);
 
     let cube = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let _shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0 + 0.002;
-    let subdiv = 1.0 / (num as f32);
+    let _shift = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0) + 0.002;
+    let subdiv = r!(1.0) / r!(num);
 
     for i in 0usize..num {
-        let (x, y) = (i as f32 * subdiv * f32::consts::PI * 2.0).sin_cos();
+        let (x, y) = (r!(i as f32) * subdiv * r!(f32::consts::PI) * r!(2.0)).sin_cos();
         let dir = Vector2::new(x, y);
 
         // Build the rigid body.
         let rb = RigidBodyDesc::new()
             .translation(dir)
-            .velocity(Velocity::new(dir * 10.0, 100.0))
-            .linear_damping((i + 1) as f32 * subdiv * 10.0)
-            .angular_damping((num - i) as f32 * subdiv * 10.0)
+            .velocity(Velocity::new(dir * r!(10.0), r!(100.0)))
+            .linear_damping(r!((i + 1) as f32) * subdiv * r!(10.0))
+            .angular_damping(r!((num - i) as f32) * subdiv * r!(10.0))
             .build();
         let rb_handle = bodies.insert(rb);
 
         // Build the collider.
         let co = ColliderDesc::new(cube.clone())
-            .density(1.0)
+            .density(r!(1.0))
             .build(BodyPartHandle(rb_handle, 0));
         colliders.insert(co);
     }

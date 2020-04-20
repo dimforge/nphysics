@@ -9,13 +9,13 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -43,7 +43,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * A floor that will collide with everything (default behaviour).
      */
-    let ground_thickness = 0.2;
+    let ground_thickness = r!(0.2);
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(3.0, ground_thickness)));
 
     let main_floor = ColliderDesc::new(ground_shape)
@@ -67,7 +67,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * A blue floor that will collide with the BLUE group only.
      */
     let blue_floor = ColliderDesc::new(ground_shape)
-        .translation(Vector2::y() * 2.0)
+        .translation(Vector2::y() * r!(2.0))
         .collision_groups(blue_group)
         .build(BodyPartHandle(ground_handle, 0));
     let blue_collider_handle = colliders.insert(blue_floor);
@@ -78,17 +78,17 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the boxes
      */
     let num = 8;
-    let rad = 0.1;
+    let rad = r!(0.1);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
+    let shift = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f32) / r!(2.0);
     let centery = 2.5;
 
     for k in 0usize..4 {
         for i in 0usize..num {
-            let x = i as f32 * shift - centerx;
-            let y = k as f32 * shift + centery;
+            let x = r!(i as f32) * shift - centerx;
+            let y = r!(k as f32) * shift + centery;
 
             // Alternate between the GREEN and BLUE groups.
             let (group, color) = if k % 2 == 0 {
@@ -103,7 +103,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
             // Build the collider.
             let co = ColliderDesc::new(cuboid.clone())
-                .density(1.0)
+                .density(r!(1.0))
                 .collision_groups(group)
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);

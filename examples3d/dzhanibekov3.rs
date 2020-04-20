@@ -9,7 +9,7 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -48,7 +48,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let geom = ShapeHandle::new(Compound::new(shapes));
     let co = ColliderDesc::new(geom)
-        .density(1.0)
+        .density(r!(1.0))
         .build(BodyPartHandle(rb_handle, 0));
     colliders.insert(co);
 

@@ -8,7 +8,7 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 use rand::distributions::{Distribution, Standard};
 use rand::{rngs::StdRng, SeedableRng};
@@ -17,7 +17,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -28,19 +28,19 @@ pub fn init_world(testbed: &mut Testbed) {
      * Polyline
      */
     let num_split = 20;
-    let begin = -15.0f32;
-    let max_h = 3.0;
-    let begin_h = -3.0;
-    let step = (begin.abs() * 2.0) / (num_split as f32);
-    let mut vertices: Vec<Point2<f32>> = (0..num_split + 2)
-        .map(|i| Point2::new(begin + (i as f32) * step, 0.0))
+    let begin = r!(-15.0);
+    let max_h = r!(3.0);
+    let begin_h = r!(-3.0);
+    let step = (begin.abs() * r!(2.0)) / r!(num_split);
+    let mut vertices: Vec<Point2<Real>> = (0..num_split + 2)
+        .map(|i| Point2::new(begin + r!(i as f32) * step, r!(0.0)))
         .collect();
 
     let mut rng = StdRng::seed_from_u64(0);
     let distribution = Standard;
 
     for i in 0usize..num_split {
-        let h: f32 = distribution.sample(&mut rng);
+        let h: Real = distribution.sample(&mut rng);
         vertices[i + 1].y = h * max_h + begin_h;
     }
 
@@ -56,19 +56,19 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let width = 75;
     let height = 7;
-    let rad = 0.1;
+    let rad = r!(0.1);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
 
-    let shift = 2.0 * (rad + ColliderDesc::<f32>::default_margin());
-    let centerx = shift * (width as f32) / 2.0;
+    let shift = r!(2.0) * (rad + ColliderDesc::<Real>::default_margin());
+    let centerx = shift * r!(width) / r!(2.0);
 
     for i in 0usize..height {
         for j in 0usize..width {
-            let fj = j as f32;
-            let fi = i as f32;
+            let fj = r!(j as f32);
+            let fi = r!(i as f32);
             let x = fj * shift - centerx;
-            let y = fi * shift + 0.5;
+            let y = fi * shift + r!(0.5);
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
@@ -76,7 +76,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
             // Build the collider.
             let co = ColliderDesc::new(cuboid.clone())
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
         }

@@ -11,13 +11,13 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -27,8 +27,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground
      */
-    let ground_size = 50.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_size = r!(50.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(1.0))));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -41,22 +41,22 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let npts = 10usize;
     let num = 25;
-    let shift = 0.4;
-    let centerx = shift * (num as f32) / 2.0;
+    let shift = r!(0.4);
+    let centerx = shift * r!(num as f32) / r!(2.0);
     let centery = shift;
     let mut rng = StdRng::seed_from_u64(0);
     let distribution = Standard;
 
     for i in 0usize..num {
         for j in 0usize..num {
-            let x = i as f32 * shift - centerx;
-            let y = j as f32 * shift + centery;
+            let x = r!(i as f32) * shift - centerx;
+            let y = r!(j as f32) * shift + centery;
 
             let mut pts = Vec::with_capacity(npts);
 
             for _ in 0..npts {
-                let pt: Point2<f32> = distribution.sample(&mut rng);
-                pts.push(pt * 0.4);
+                let pt: Point2<Real> = distribution.sample(&mut rng);
+                pts.push(pt * r!(0.4));
             }
 
             // Build the rigid body.
@@ -66,7 +66,7 @@ pub fn init_world(testbed: &mut Testbed) {
             // Build the collider.
             let geom = ShapeHandle::new(ConvexPolygon::try_from_points(&pts).unwrap());
             let co = ColliderDesc::new(geom)
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
         }

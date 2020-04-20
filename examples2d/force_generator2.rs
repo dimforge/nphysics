@@ -8,7 +8,7 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -38,7 +38,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut ground_desc = ColliderDesc::new(ground_shape);
 
     let ground_collider = ground_desc
-        .set_translation(-Vector2::y() * 2.0)
+        .set_translation(-Vector2::y() * r!(2.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(ground_collider);
 
@@ -53,15 +53,15 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 100f64 as usize;
     let rad = 0.2;
     let shift = 2.0 * rad;
-    let centerx = shift * (num as f32) / 2.0;
+    let centerx = shift * r!(num as f32) / r!(2.0);
     let centery = rad * 4.0;
 
     let ball = ShapeHandle::new(Ball::new(rad));
 
     for i in 0usize..num {
         for j in 0usize..2 {
-            let x = i as f32 * 2.5 * rad - centerx;
-            let y = j as f32 * 2.5 * -rad + centery;
+            let x = r!(i as f32) * 2.5 * rad - centerx;
+            let y = r!(j as f32) * 2.5 * -rad + centery;
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
@@ -69,7 +69,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
             // Build the collider.
             let co = ColliderDesc::new(ball.clone())
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
 

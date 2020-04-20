@@ -7,7 +7,7 @@ extern crate nphysics_testbed3d;
 
 use inflector::Inflector;
 
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 mod balls3;
 mod boxes3;

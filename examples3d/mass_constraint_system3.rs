@@ -11,7 +11,7 @@ use nphysics3d::object::{
     Ground, MassConstraintSystemDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 use std::f32;
 use std::path::Path;
 
@@ -19,7 +19,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -29,8 +29,12 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let ground_thickness = 0.2;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(50.0, ground_thickness, 50.0)));
+    let ground_thickness = r!(0.2);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(50.0),
+        ground_thickness,
+        r!(50.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -45,34 +49,43 @@ pub fn init_world(testbed: &mut Testbed) {
     let obj = obj::parse_file(&Path::new(&obj_path), &Path::new(""), "");
 
     if let Ok(model) = obj {
-        let mut meshes: Vec<procedural::TriMesh<f32>> = model
+        let mut meshes: Vec<procedural::TriMesh<Real>> = model
             .into_iter()
-            .map(|mesh| mesh.1.to_trimesh().unwrap())
+            .map(|mesh| {
+                use nphysics_testbed3d::IntoReal;
+                let mesh = mesh.1.to_trimesh().unwrap();
+                procedural::TriMesh {
+                    coords: mesh.coords.into_real(),
+                    normals: mesh.normals.map(|n| n.into_real()),
+                    uvs: mesh.uvs.map(|u| u.into_real()),
+                    indices: mesh.indices,
+                }
+            })
             .collect();
         meshes[0].split_index_buffer(true);
 
-        let rot = Vector3::x() * f32::consts::FRAC_PI_2;
+        let rot = Vector3::x() * r!(f32::consts::FRAC_PI_2);
         let trimesh1 = TriMesh::from(meshes[0].clone())
-            .scaled(&Vector3::repeat(0.5))
-            .transformed(&Isometry3::new(Vector3::y() * 5.0, rot));
+            .scaled(&Vector3::repeat(r!(0.5)))
+            .transformed(&Isometry3::new(Vector3::y() * r!(5.0), rot));
         let trimesh2 = TriMesh::from(meshes[0].clone())
-            .scaled(&Vector3::repeat(0.5))
-            .transformed(&Isometry3::new(Vector3::y() * 9.5, rot));
+            .scaled(&Vector3::repeat(r!(0.5)))
+            .transformed(&Isometry3::new(Vector3::y() * r!(9.5), rot));
 
         let mut deformable1 = MassConstraintSystemDesc::from_trimesh(&trimesh1)
-            .stiffness(Some(0.1))
+            .stiffness(Some(r!(0.1)))
             .build();
-        deformable1.generate_neighbor_constraints(Some(0.1));
-        deformable1.generate_neighbor_constraints(Some(0.1));
+        deformable1.generate_neighbor_constraints(Some(r!(0.1)));
+        deformable1.generate_neighbor_constraints(Some(r!(0.1)));
         let deformable1_handle = bodies.insert(deformable1);
         let co1 = DeformableColliderDesc::new(ShapeHandle::new(trimesh1)).build(deformable1_handle);
         colliders.insert(co1);
 
         let mut deformable2 = MassConstraintSystemDesc::from_trimesh(&trimesh2)
-            .set_stiffness(Some(100.0))
+            .set_stiffness(Some(r!(100.0)))
             .build();
-        deformable2.generate_neighbor_constraints(Some(100.0));
-        deformable2.generate_neighbor_constraints(Some(100.0));
+        deformable2.generate_neighbor_constraints(Some(r!(100.0)));
+        deformable2.generate_neighbor_constraints(Some(r!(100.0)));
         let deformable2_handle = bodies.insert(deformable2);
         let co2 = DeformableColliderDesc::new(ShapeHandle::new(trimesh2)).build(deformable2_handle);
         colliders.insert(co2);

@@ -9,13 +9,13 @@ use nphysics2d::object::{
     Ground, MassConstraintSystemDesc, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -28,16 +28,16 @@ pub fn init_world(testbed: &mut Testbed) {
     // Ground body shared to which both obstacle colliders will be attached.
     let ground_handle = bodies.insert(Ground::new());
 
-    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.2)));
+    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(r!(0.2))));
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 
     let co = obstacle_desc
-        .set_translation(Vector2::x() * 4.0)
+        .set_translation(Vector2::x() * r!(4.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = obstacle_desc
-        .set_translation(Vector2::x() * -4.0)
+        .set_translation(Vector2::x() * r!(-4.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -45,16 +45,16 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the deformable body and a collider for its boundary.
      */
     let polyline = Polyline::quad(50, 1)
-        .scaled(&Vector2::new(10.0, 1.0))
-        .transformed(&Isometry2::translation(0.0, 1.0));
+        .scaled(&Vector2::new(r!(10.0), r!(1.0)))
+        .transformed(&Isometry2::translation(r!(0.0), r!(1.0)));
 
     let mut deformable = MassConstraintSystemDesc::from_polyline(&polyline)
-        .stiffness(Some(1.0e4))
+        .stiffness(Some(r!(1.0e4)))
         .build();
 
     // Add other constraints for volume stiffness.
-    deformable.generate_neighbor_constraints(Some(1.0e4));
-    deformable.generate_neighbor_constraints(Some(1.0e4));
+    deformable.generate_neighbor_constraints(Some(r!(1.0e4)));
+    deformable.generate_neighbor_constraints(Some(r!(1.0e4)));
 
     let nnodes = deformable.num_nodes();
     let extra_constraints1 = (0..)
@@ -63,7 +63,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let extra_constraints2 = (1..).map(|i| Point2::new(i, nnodes - i)).take(nnodes / 2);
 
     for constraint in extra_constraints1.chain(extra_constraints2) {
-        deformable.add_constraint(constraint.x, constraint.y, Some(1.0e4));
+        deformable.add_constraint(constraint.x, constraint.y, Some(r!(1.0e4)));
     }
 
     let deformable_handle = bodies.insert(deformable);
@@ -77,20 +77,20 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create a pyramid on top of the deformable body.
      */
     let num = 20;
-    let rad = 0.1;
-    let shift = 2.0 * rad;
-    let centerx = shift * (num as f32) / 2.0;
+    let rad = r!(0.1);
+    let shift = r!(2.0) * rad;
+    let centerx = shift * r!(num as f32) / r!(2.0);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
 
     for i in 0usize..num {
         for j in i..num {
-            let fj = j as f32;
-            let fi = i as f32;
-            let x = (fi * shift / 2.0)
-                + (fj - fi) * 2.0 * (rad + ColliderDesc::<f32>::default_margin())
+            let fj = r!(j as f32);
+            let fi = r!(i as f32);
+            let x = (fi * shift / r!(2.0))
+                + (fj - fi) * r!(2.0) * (rad + ColliderDesc::<Real>::default_margin())
                 - centerx;
-            let y = fi * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) + rad + 2.0;
+            let y = fi * r!(2.0) * (rad + ColliderDesc::<Real>::default_margin()) + rad + r!(2.0);
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();

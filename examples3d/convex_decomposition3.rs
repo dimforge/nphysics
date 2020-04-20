@@ -5,31 +5,29 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 extern crate rand;
 
-use std::path::Path;
-use na::{Isometry3, Point3, Translation3, Vector3};
 use kiss3d::loader::obj;
-use ncollide3d::shape::{Compound, ConvexHull, Cuboid, ShapeHandle};
-use ncollide3d::procedural::TriMesh;
-use ncollide3d::transformation;
+use na::{Isometry3, Point3, Translation3, Vector3};
 use ncollide3d::bounding_volume::{self, BoundingVolume, AABB};
-use nphysics3d::world::World;
+use ncollide3d::procedural::TriMesh;
+use ncollide3d::shape::{Compound, ConvexHull, Cuboid, ShapeHandle};
+use ncollide3d::transformation;
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
-use nphysics_testbed3d::Testbed;
-
+use nphysics3d::world::World;
+use nphysics_testbed3d::{r, Real, Testbed};
+use std::path::Path;
 
 fn main() {
     /*
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+    world.set_gravity(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
 
     /*
      * Ground
      */
     let ground_size = 50.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
         .translation(Vector3::y() * -ground_size)
@@ -62,7 +60,10 @@ fn main() {
             let mut aabb = bounding_volume::point_cloud_aabb(&deltas, &meshes[0].coords[..]);
 
             for mesh in meshes[1..].iter() {
-                aabb.merge(&bounding_volume::point_cloud_aabb(&deltas, &mesh.coords[..]));
+                aabb.merge(&bounding_volume::point_cloud_aabb(
+                    &deltas,
+                    &mesh.coords[..],
+                ));
             }
 
             let center = aabb.center().coords;
@@ -76,7 +77,8 @@ fn main() {
                 let (decomp, _) = transformation::hacd(trimesh, 0.03, 1);
 
                 for hull in decomp.into_iter() {
-                    let indices: Vec<usize> = hull.flat_indices()
+                    let indices: Vec<usize> = hull
+                        .flat_indices()
                         .into_iter()
                         .map(|i| i as usize)
                         .collect();
@@ -91,19 +93,15 @@ fn main() {
 
             let compound = Compound::new(geom_data);
             let geom = ShapeHandle::new(compound);
-            let collider_desc = ColliderDesc::new(geom)
-                .density(1.0);
-            let mut rb_desc = RigidBodyDesc::new()
-                .collider(&collider_desc);
+            let collider_desc = ColliderDesc::new(geom).density(r!(1.0));
+            let mut rb_desc = RigidBodyDesc::new().collider(&collider_desc);
 
             for k in 1..num_duplications + 1 {
                 let i = igeom % width;
                 let j = igeom / width;
                 let pos = Vector3::new(i as f32, k as f32, j as f32) * shift;
 
-                rb_desc
-                    .set_translation(pos)
-                    .build(&mut world);
+                rb_desc.set_translation(pos).build(&mut world);
             }
         }
     }

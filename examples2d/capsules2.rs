@@ -8,13 +8,13 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -37,20 +37,20 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the boxes
      */
     let num = 15;
-    let rad = 0.1;
+    let rad = r!(0.1);
     let half_height = 0.1;
 
     let capsule = ShapeHandle::new(Capsule::new(half_height, rad));
 
-    let shiftx = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
-    let shifty = (half_height + rad) * 2.0;
-    let centerx = shiftx * (num as f32) / 2.0;
-    let centery = shifty / 2.0;
+    let shiftx = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
+    let shifty = (half_height + rad) * r!(2.0);
+    let centerx = shiftx * r!(num as f32) / r!(2.0);
+    let centery = shifty / r!(2.0);
 
     for i in 0usize..num {
         for j in 0..num {
-            let x = i as f32 * shiftx - centerx;
-            let y = j as f32 * shifty + centery;
+            let x = r!(i as f32) * shiftx - centerx;
+            let y = r!(j as f32) * shifty + centery;
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
@@ -58,7 +58,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
             // Build the collider.
             let co = ColliderDesc::new(capsule.clone())
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
         }

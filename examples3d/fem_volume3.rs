@@ -8,13 +8,13 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, FEMVolumeDesc, Ground,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -27,7 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
     // Static body to which all the obstacles and the ground will be attached.
     let ground_handle = bodies.insert(Ground::new());
 
-    let ground_thickness = 0.2;
+    let ground_thickness = r!(0.2);
     let ground = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let co = ColliderDesc::new(ground)

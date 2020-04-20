@@ -9,7 +9,7 @@ use nphysics2d::object::{
     RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -54,7 +54,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let mut deformable = FEMSurfaceDesc::quad(20, 1)
         .scale(Vector2::new(1.1, 0.1))
-        .density(1.0)
+        .density(r!(1.0))
         .young_modulus(1.0e2)
         .mass_damping(0.2)
         .plasticity(0.1, 5.0, 10.0)

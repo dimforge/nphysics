@@ -8,7 +8,7 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -45,9 +45,9 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the balls
      */
     let num = 1000f64.sqrt() as usize;
-    let rad = 0.1;
+    let rad = r!(0.1);
     let shift = 0.25 * rad;
-    let centerx = shift * (num as f32) / 2.0;
+    let centerx = shift * r!(num as f32) / r!(2.0);
     let centery = 0.5;
 
     let ball = ShapeHandle::new(Ball::new(rad));
@@ -55,9 +55,9 @@ pub fn init_world(testbed: &mut Testbed) {
     for i in 0usize..num {
         for j in 0usize..2 {
             for k in 0usize..num {
-                let x = i as f32 * 2.5 * rad - centerx;
-                let y = 1.0 + j as f32 * 2.5 * rad + centery;
-                let z = k as f32 * 2.5 * rad - centerx;
+                let x = r!(i as f32) * 2.5 * rad - centerx;
+                let y = 1.0 + r!(j as f32) * 2.5 * rad + centery;
+                let z = r!(k as f32) * 2.5 * rad - centerx;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -67,7 +67,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
                 // Build the collider.
                 let co = ColliderDesc::new(ball.clone())
-                    .density(1.0)
+                    .density(r!(1.0))
                     .build(BodyPartHandle(rb_handle, 0));
                 colliders.insert(co);
 

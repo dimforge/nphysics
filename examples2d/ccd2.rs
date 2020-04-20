@@ -10,13 +10,13 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -39,12 +39,12 @@ pub fn init_world(testbed: &mut Testbed) {
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
-        .position(Isometry2::new(Vector2::new(-3.0, 0.0), 3.14 / 2.0))
+        .position(Isometry2::new(Vector2::new(-3.0, 0.0), 3.14 / r!(2.0)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
-        .position(Isometry2::new(Vector2::new(6.0, 0.0), 3.14 / 2.0))
+        .position(Isometry2::new(Vector2::new(6.0, 0.0), 3.14 / r!(2.0)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -55,7 +55,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     // Add a sensor, to show that CCD works on sensors too.
     let co = ColliderDesc::new(ground_shape)
-        .position(Isometry2::new(Vector2::new(2.5, 0.0), 3.14 / 2.0))
+        .position(Isometry2::new(Vector2::new(2.5, 0.0), 3.14 / r!(2.0)))
         .sensor(true)
         .build(BodyPartHandle(ground_handle, 0));
     let sensor_handle = colliders.insert(co);
@@ -90,15 +90,15 @@ pub fn init_world(testbed: &mut Testbed) {
     //    };
 
     let shape = {
-        let large_rad = 0.4f32;
-        let small_rad = 0.05f32;
+        let large_rad = r!(0.4);
+        let small_rad = r!(0.05);
 
         radx = large_rad;
         rady = large_rad;
 
-        let delta1 = Isometry2::new(Vector2::new(0.0, large_rad - small_rad), na::zero());
-        let delta2 = Isometry2::new(Vector2::new(-large_rad + small_rad, 0.0), na::zero());
-        let delta3 = Isometry2::new(Vector2::new(large_rad - small_rad, 0.0), na::zero());
+        let delta1 = Isometry2::new(Vector2::new(r!(0.0), large_rad - small_rad), na::zero());
+        let delta2 = Isometry2::new(Vector2::new(-large_rad + small_rad, r!(0.0)), na::zero());
+        let delta3 = Isometry2::new(Vector2::new(large_rad - small_rad, r!(0.0)), na::zero());
 
         let mut compound_geoms = Vec::new();
         let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(small_rad, large_rad)));
@@ -114,27 +114,27 @@ pub fn init_world(testbed: &mut Testbed) {
     //    let shape = ShapeHandle::new(Cuboid::new(Vector2::new(radx, rady)));
     //    let shape = ShapeHandle::new(Ball::new(rady));
 
-    let shiftx = (radx + ColliderDesc::<f32>::default_margin() + 0.005) * 2.0;
-    let shifty = (rady + ColliderDesc::<f32>::default_margin() + 0.005) * 2.0;
-    let centerx = shiftx * (num as f32) / 2.0 - 0.5;
-    let centery = shifty / 2.0 + 4.0;
+    let shiftx = (radx + ColliderDesc::<Real>::default_margin() + r!(0.005)) * r!(2.0);
+    let shifty = (rady + ColliderDesc::<Real>::default_margin() + r!(0.005)) * r!(2.0);
+    let centerx = shiftx * r!(num as f32) / r!(2.0) - r!(0.5);
+    let centery = shifty / r!(2.0) + r!(4.0);
 
     for i in 0usize..num {
         for j in 0..num {
-            let x = i as f32 * shiftx - centerx;
-            let y = j as f32 * shifty + centery;
+            let x = r!(i as f32) * shiftx - centerx;
+            let y = r!(j as f32) * shifty + centery;
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new()
                 .translation(Vector2::new(x, y))
-                .velocity(Velocity::linear(100.0, -10.0))
+                .velocity(Velocity::linear(r!(100.0), r!(-10.0)))
                 .build();
             let rb_handle = bodies.insert(rb);
 
             // Build the collider.
             let co = ColliderDesc::new(shape.clone())
                 .ccd_enabled(true)
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
 

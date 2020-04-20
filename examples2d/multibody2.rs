@@ -9,13 +9,13 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, MultibodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -39,7 +39,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let rad = 0.2;
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let collider_desc = ColliderDesc::new(cuboid.clone()).density(1.0);
+    let collider_desc = ColliderDesc::new(cuboid.clone()).density(r!(1.0));
 
     /*
      * Revolute joint.
@@ -72,7 +72,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let mut prism = PrismaticJoint::new(Vector2::y_axis(), 0.0);
     // Joint limit so that it does not fall indefinitely.
-    prism.enable_min_offset(-rad * 2.0);
+    prism.enable_min_offset(-rad * r!(2.0));
     let mut multibody_desc = MultibodyDesc::new(prism).parent_shift(Vector2::new(5.0, 5.0));
 
     let mut curr = &mut multibody_desc;
@@ -100,11 +100,11 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0..7 {
         for j in 0..7 {
-            let mut x = i as f32 * rad * 4.0 - width / 2.0;
-            let y = j as f32 * rad * 4.0 - width / 2.0 + 4.0;
+            let mut x = r!(i as f32) * rad * 4.0 - width / r!(2.0);
+            let y = r!(j as f32) * rad * 4.0 - width / r!(2.0) + 4.0;
 
             if j % 2 == 0 {
-                x += rad * 2.0;
+                x += rad * r!(2.0);
             }
 
             let cart = CartesianJoint::new(Vector2::new(x, y));

@@ -10,13 +10,13 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -43,14 +43,14 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut parent = BodyPartHandle(ground_handle, 0);
 
     let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let collider_desc = ColliderDesc::new(geom).density(1.0);
+    let collider_desc = ColliderDesc::new(geom).density(r!(1.0));
 
     for j in 0usize..num {
         /*
          * Create the rigid body.
          */
         let rb = RigidBodyDesc::new()
-            .translation(Vector2::x() * (j + 1) as f32 * rad * 3.0)
+            .translation(Vector2::x() * r!(j + 1) * rad * r!(3.0))
             .build();
         let rb_handle = bodies.insert(rb);
         let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
@@ -60,7 +60,7 @@ pub fn init_world(testbed: &mut Testbed) {
             parent,
             BodyPartHandle(rb_handle, 0),
             Point2::origin(),
-            Point2::new(-rad * 3.0, 0.0),
+            Point2::new(-rad * r!(3.0), r!(0.0)),
         );
 
         joint_constraints.insert(revolute_constraint);
@@ -75,8 +75,8 @@ pub fn init_world(testbed: &mut Testbed) {
      * Prismatic constraints.
      */
     parent = BodyPartHandle(ground_handle, 0);
-    let first_anchor = Point2::new(-1.0, 0.0);
-    let other_anchor = Point2::new(-3.0 * rad, 0.0);
+    let first_anchor = Point2::new(r!(-1.0), r!(0.0));
+    let other_anchor = Point2::new(r!(-3.0) * rad, r!(0.0));
     let mut translation = first_anchor.coords;
 
     for j in 0usize..3 {
@@ -96,7 +96,7 @@ pub fn init_world(testbed: &mut Testbed) {
             Point2::origin(),
         );
 
-        constraint.enable_min_offset(-rad * 2.0);
+        constraint.enable_min_offset(-rad * r!(2.0));
         joint_constraints.insert(constraint);
 
         /*
@@ -110,16 +110,16 @@ pub fn init_world(testbed: &mut Testbed) {
      * Cartesian constraint.
      */
     let num = 10;
-    let shift = Vector2::new(0.0, 2.0);
-    let width = 20.0 * rad;
+    let shift = Vector2::new(r!(0.0), r!(2.0));
+    let width = r!(20.0) * rad;
 
     for i in 0..num {
         for j in 0..num {
-            let mut x = i as f32 * rad * 3.0 - width / 2.0 + 5.0;
-            let y = j as f32 * rad * -3.0 + width / 2.0 + 4.0;
+            let mut x = r!(i as f32) * rad * 3.0 - width / r!(2.0) + r!(5.0);
+            let y = r!(j as f32) * rad * -3.0 + width / r!(2.0) + r!(4.0);
 
             if j % 2 == 0 {
-                x += rad * 2.0;
+                x += rad * r!(2.0);
             }
 
             let rb = RigidBodyDesc::new()

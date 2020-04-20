@@ -4,7 +4,7 @@ extern crate nalgebra as na;
 
 use inflector::Inflector;
 
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 mod balls2;
 mod boxes2;

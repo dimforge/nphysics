@@ -149,7 +149,7 @@ impl Box2dWorld {
             body.create_fixture(&b2_shape, &mut fixture_def);
         } else if let Some(_s) = shape.as_shape::<shape::Capsule<f32>>() {
             //            let geom = PhysicsGeometry::from(&ColliderDesc::Capsule(s.radius(), s.height()));
-            //            result.push((geom, Isometry3::rotation(Vector3::z() * f32::consts::PI / 2.0)))
+            //            result.push((geom, Isometry3::rotation(Vector3::z() * f32::consts::PI / r!(2.0))))
         } else if let Some(cp) = shape.as_shape::<shape::Compound<f32>>() {
             for (shift, shape) in cp.shapes() {
                 Self::create_fixtures(collider, &**shape, &(dpos * shift), body)

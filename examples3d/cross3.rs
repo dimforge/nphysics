@@ -8,13 +8,13 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -24,7 +24,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let ground_thickness = 0.2;
+    let ground_thickness = r!(0.2);
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let ground_handle = bodies.insert(Ground::new());
@@ -38,8 +38,8 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let mut cross_geoms = Vec::new();
 
-    let large_rad = 0.25f32;
-    let small_rad = 0.01f32;
+    let large_rad = r!(0.25);
+    let small_rad = r!(0.01);
 
     let edge_x = Cuboid::new(Vector3::new(large_rad, small_rad, small_rad));
     let edge_y = Cuboid::new(Vector3::new(small_rad, large_rad, small_rad));
@@ -56,17 +56,17 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the crosses
      */
     let num = 5;
-    let shift = (large_rad + 0.08) * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = 3.0 + shift / 2.0;
-    let centerz = shift * (num as f32) / 2.0;
+    let shift = (large_rad + r!(0.08)) * r!(2.0);
+    let centerx = shift * r!(num as f32) / r!(2.0);
+    let centery = 3.0 + shift / r!(2.0);
+    let centerz = shift * r!(num as f32) / r!(2.0);
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery;
-                let z = k as f32 * shift - centerz;
+                let x = r!(i as f32) * shift - centerx;
+                let y = r!(j as f32) * shift + centery;
+                let z = r!(k as f32) * shift - centerz;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -76,7 +76,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
                 // Build the collider.
                 let co = ColliderDesc::new(cross.clone())
-                    .density(1.0)
+                    .density(r!(1.0))
                     .build(BodyPartHandle(rb_handle, 0));
                 colliders.insert(co);
             }

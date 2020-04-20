@@ -9,13 +9,13 @@ use nphysics3d::object::{
     MultibodyDesc, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -25,7 +25,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let ground_thickness = 0.2;
+    let ground_thickness = r!(0.2);
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(10.0, ground_thickness, 10.0)));
 
     let ground_handle = bodies.insert(Ground::new());
@@ -41,19 +41,19 @@ pub fn init_world(testbed: &mut Testbed) {
     let rad = 0.2;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
-    let cuboid_collider_desc = ColliderDesc::new(cuboid).density(1.0);
+    let cuboid_collider_desc = ColliderDesc::new(cuboid).density(r!(1.0));
 
-    let shift = (rad + cuboid_collider_desc.get_margin()) * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0 + 3.04;
-    let centerz = shift * (num as f32) / 2.0;
+    let shift = (rad + cuboid_collider_desc.get_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f32) / r!(2.0);
+    let centery = shift / r!(2.0) + 3.04;
+    let centerz = shift * r!(num as f32) / r!(2.0);
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery;
-                let z = k as f32 * shift - centerz;
+                let x = r!(i as f32) * shift - centerx;
+                let y = r!(j as f32) * shift + centery;
+                let z = r!(k as f32) * shift - centerz;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -80,7 +80,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 10.0, rad, rad * 10.0)));
     let platform_collider = ColliderDesc::new(geom)
-        .density(1.0)
+        .density(r!(1.0))
         .build(BodyPartHandle(platform_handle, 0));
     colliders.insert(platform_collider);
 
@@ -90,7 +90,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let joint = RevoluteJoint::new(Vector3::x_axis(), 0.0);
 
     let mut mb = MultibodyDesc::new(joint)
-        .body_shift(Vector3::z() * 2.0)
+        .body_shift(Vector3::z() * r!(2.0))
         .parent_shift(Vector3::new(0.0, 2.0, 5.0))
         .build();
 
@@ -110,13 +110,13 @@ pub fn init_world(testbed: &mut Testbed) {
     joint.enable_angular_motor();
 
     let mb = MultibodyDesc::new(joint)
-        .body_shift(Vector3::z() * 2.0)
+        .body_shift(Vector3::z() * r!(2.0))
         .parent_shift(Vector3::new(0.0, 3.0, -4.0))
         .build();
 
     let mb_handle = bodies.insert(mb);
     let geom = ShapeHandle::new(Ball::new(2.0 * rad));
-    let ball_collider_desc = ColliderDesc::new(geom).density(1.0);
+    let ball_collider_desc = ColliderDesc::new(geom).density(r!(1.0));
     let mb_collider = ball_collider_desc.build(BodyPartHandle(mb_handle, 0));
     colliders.insert(mb_collider);
 

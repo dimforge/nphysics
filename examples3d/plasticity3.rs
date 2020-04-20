@@ -9,7 +9,7 @@ use nphysics3d::object::{
     Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -55,7 +55,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let mut deformable = FEMVolumeDesc::cube(20, 1, 1)
         .scale(Vector3::new(1.1, 0.1, 0.1))
-        .density(1.0)
+        .density(r!(1.0))
         .young_modulus(1.0e2)
         .mass_damping(0.2)
         .plasticity(0.1, 5.0, 10.0)

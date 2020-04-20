@@ -8,7 +8,7 @@ use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::math::Velocity;
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
-use nphysics_testbed2d::Testbed;
+use nphysics_testbed2d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
@@ -20,9 +20,9 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Create the box that will be deactivated.
      */
-    let rad = 0.1;
+    let rad = r!(0.1);
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::new(rad, rad)));
-    let collider_desc = ColliderDesc::new(cuboid).density(1.0);
+    let collider_desc = ColliderDesc::new(cuboid).density(r!(1.0));
 
     /*
      * Create the body that will be deactivated.

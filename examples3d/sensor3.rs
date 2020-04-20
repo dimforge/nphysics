@@ -9,13 +9,13 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::Testbed;
+use nphysics_testbed3d::{r, Real, Testbed};
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -25,7 +25,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let ground_thickness = 0.2;
+    let ground_thickness = r!(0.2);
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let ground_handle = bodies.insert(Ground::new());
@@ -42,14 +42,14 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
-    let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
-    let centerz = shift * (num as f32) / 2.0;
+    let shift = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f32) / r!(2.0);
+    let centerz = shift * r!(num as f32) / r!(2.0);
 
     for i in 0usize..num {
         for k in 0usize..num {
-            let x = i as f32 * shift - centerx;
-            let z = k as f32 * shift - centerz;
+            let x = r!(i as f32) * shift - centerx;
+            let z = r!(k as f32) * shift - centerz;
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new()
@@ -59,7 +59,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
             // Build the collider.
             let co = ColliderDesc::new(cuboid.clone())
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
 
@@ -80,7 +80,7 @@ pub fn init_world(testbed: &mut Testbed) {
     // Solid cube attached to the sensor which
     // other colliders can touch.
     let co = ColliderDesc::new(cuboid.clone())
-        .density(1.0)
+        .density(r!(1.0))
         .build(BodyPartHandle(sensor_handle, 0));
     colliders.insert(co);
 
