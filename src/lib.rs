@@ -253,6 +253,12 @@ pub mod volumetric;
 pub mod world;
 // mod tests;
 
+pub use nalgebra;
+#[cfg(feature = "dim2")]
+pub use ncollide2d;
+#[cfg(feature = "dim3")]
+pub use ncollide3d;
+
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim3")]
 pub mod math {
