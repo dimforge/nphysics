@@ -1,6 +1,6 @@
 use crate::objects::node::GraphicsNode;
 use kiss3d::window::Window;
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use nphysics::math::{Point, Vector};
 use salva::object::{Boundary, Fluid as SalvaFluid};
 
@@ -106,7 +106,7 @@ impl Fluid {
         }
     }
 
-    pub fn update_with_boundary(&mut self, boundary: &Boundary<f32>) {
+    pub fn update_with_boundary(&mut self, boundary: &Boundary<N>) {
         self.update(&boundary.positions, &[], FluidRenderingMode::StaticColor)
     }
 

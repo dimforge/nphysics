@@ -1,7 +1,9 @@
+use alga::general::{SubsetOf, SupersetOf};
 use kiss3d::conrod::{self, Borderable, Colorable, Labelable, Positionable, Sizeable, Widget};
 use kiss3d::window::Window;
 
 use crate::testbed::{RunMode, TestbedActionFlags, TestbedState, TestbedStateFlags};
+use na::RealField;
 use nphysics::world::DefaultMechanicalWorld;
 
 const SIDEBAR_W: f64 = 200.0;
@@ -86,11 +88,11 @@ impl TestbedUi {
         }
     }
 
-    pub fn update(
+    pub fn update<N: RealField + SubsetOf<f32> + SupersetOf<f32>>(
         &mut self,
         window: &mut Window,
-        world: &mut DefaultMechanicalWorld<f32>,
-        state: &mut TestbedState,
+        world: &mut DefaultMechanicalWorld<N>,
+        state: &mut TestbedState<N>,
     ) {
         let ui_root = window.conrod_ui().window;
         let mut ui = window.conrod_ui_mut().set_widgets();
@@ -230,7 +232,8 @@ impl TestbedUi {
         let curr_pos_iters = world.integration_parameters.max_position_iterations;
         let curr_max_ccd_substeps = world.integration_parameters.max_ccd_substeps;
         let curr_warmstart_coeff = world.integration_parameters.warmstart_coeff;
-        let curr_frequency = world.integration_parameters.inv_dt().round() as usize;
+        let curr_frequency =
+            na::convert::<_, f32>(world.integration_parameters.inv_dt().round()) as usize;
 
         conrod::widget::Text::new("Vel. Iters.:")
             .down_from(self.ids.separator1, VSPACE)
@@ -278,14 +281,14 @@ impl TestbedUi {
             .down_from(self.ids.slider_ccd_substeps, VSPACE)
             .set(self.ids.title_warmstart_coeff, &mut ui);
 
-        for val in conrod::widget::Slider::new(curr_warmstart_coeff as f32, 0.0, 1.0)
+        for val in conrod::widget::Slider::new(na::convert(curr_warmstart_coeff), 0.0, 1.0)
             .label(&format!("{:.2}", curr_warmstart_coeff))
             .align_middle_x_of(self.ids.canvas)
             .down_from(self.ids.title_warmstart_coeff, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_warmstart_coeff, &mut ui)
         {
-            world.integration_parameters.warmstart_coeff = val;
+            world.integration_parameters.warmstart_coeff = na::convert(val);
         }
 
         conrod::widget::Text::new("Frequency:")
@@ -299,7 +302,9 @@ impl TestbedUi {
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_frequency, &mut ui)
         {
-            world.integration_parameters.set_inv_dt(val.round());
+            world
+                .integration_parameters
+                .set_inv_dt(na::convert(val.round()));
         }
 
         let toggle_list = [

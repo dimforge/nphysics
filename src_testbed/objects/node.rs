@@ -8,8 +8,9 @@ use crate::objects::mesh::Mesh;
 use crate::objects::plane::Plane;
 #[cfg(feature = "dim2")]
 use crate::objects::polyline::Polyline;
+use alga::general::SubsetOf;
 use kiss3d::window::Window;
-use na::Point3;
+use na::{Point3, RealField};
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 
@@ -62,7 +63,7 @@ impl Node {
         }
     }
 
-    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
+    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
         match *self {
             Node::Plane(ref mut n) => n.update(colliders),
             Node::Ball(ref mut n) => n.update(colliders),
@@ -154,15 +155,16 @@ impl Node {
     }
 }
 
-pub fn update_scene_node(
+pub fn update_scene_node<N: RealField + SubsetOf<f32>>(
     node: &mut GraphicsNode,
-    colliders: &DefaultColliderSet<f32>,
+    colliders: &DefaultColliderSet<N>,
     coll: DefaultColliderHandle,
     color: &Point3<f32>,
     delta: &Isometry<f32>,
 ) {
     if let Some(co) = colliders.get(coll) {
-        node.set_local_transformation(co.position() * delta);
+        let pos: Isometry<f32> = na::convert(*co.position());
+        node.set_local_transformation(pos * delta);
         node.set_color(color.x, color.y, color.z);
     } else {
         node.set_color(color.x * 0.25, color.y * 0.25, color.z * 0.25);

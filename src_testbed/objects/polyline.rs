@@ -1,5 +1,6 @@
+use alga::general::SubsetOf;
 use kiss3d::window::Window;
-use na::{Isometry2, Point2, Point3};
+use na::{Isometry2, Point2, Point3, RealField};
 use ncollide2d::shape;
 use nphysics2d::object::{ColliderAnchor, DefaultColliderHandle, DefaultColliderSet};
 
@@ -13,9 +14,9 @@ pub struct Polyline {
 }
 
 impl Polyline {
-    pub fn new(
+    pub fn new<N: RealField + SubsetOf<f32>>(
         collider: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         _: Isometry2<f32>,
         vertices: Vec<Point2<f32>>,
         indices: Vec<Point2<usize>>,
@@ -48,14 +49,14 @@ impl Polyline {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
+    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
         // Update if some deformation occurred.
         // FIXME: don't update if it did not move.
         if let Some(c) = colliders.get(self.collider) {
-            self.pos = *c.position();
+            self.pos = na::convert(*c.position());
             if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
-                let shape = c.shape().as_shape::<shape::Polyline<f32>>().unwrap();
-                self.vertices = shape.points().to_vec();
+                let shape = c.shape().as_shape::<shape::Polyline<N>>().unwrap();
+                self.vertices = shape.points().iter().map(|p| na::convert(*p)).collect();
                 self.indices.clear();
 
                 for e in shape.edges() {

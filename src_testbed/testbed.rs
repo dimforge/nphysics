@@ -1,3 +1,4 @@
+use alga::general::{SubsetOf, SupersetOf};
 #[cfg(feature = "dim3")]
 use num::Bounded;
 use std::collections::HashMap;
@@ -19,7 +20,7 @@ use kiss3d::planar_camera::PlanarCamera;
 use kiss3d::post_processing::PostProcessingEffect;
 use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
-use na::{self, Point2, Point3, Vector3};
+use na::{self, Point2, Point3, RealField, Vector3};
 use ncollide::pipeline::CollisionGroups;
 #[cfg(feature = "dim3")]
 use ncollide::query;
@@ -98,14 +99,14 @@ bitflags! {
     }
 }
 
-pub struct TestbedState {
+pub struct TestbedState<N: RealField> {
     pub running: RunMode,
     pub draw_colls: bool,
     pub grabbed_object: Option<DefaultBodyPartHandle>,
     pub grabbed_object_constraint: Option<DefaultJointConstraintHandle>,
-    pub grabbed_object_plane: (Point3<f32>, Vector3<f32>),
+    pub grabbed_object_plane: (Point3<N>, Vector3<N>),
     pub can_grab_behind_ground: bool,
-    pub drawing_ray: Option<Point2<f32>>,
+    pub drawing_ray: Option<Point2<N>>,
     pub prev_flags: TestbedStateFlags,
     pub flags: TestbedStateFlags,
     pub action_flags: TestbedActionFlags,
@@ -121,66 +122,66 @@ struct FluidsState {
     coupling: ColliderCouplingSet<f32, DefaultBodyHandle>,
 }
 
-pub struct Testbed {
-    builders: Vec<(&'static str, fn(&mut Testbed))>,
+pub struct Testbed<N: RealField = f32> {
+    builders: Vec<(&'static str, fn(&mut Testbed<N>))>,
     #[cfg(feature = "fluids")]
     fluids: Option<FluidsState>,
-    mechanical_world: DefaultMechanicalWorld<f32>,
-    geometrical_world: DefaultGeometricalWorld<f32>,
-    bodies: DefaultBodySet<f32>,
-    colliders: DefaultColliderSet<f32>,
-    forces: DefaultForceGeneratorSet<f32>,
-    constraints: DefaultJointConstraintSet<f32>,
+    mechanical_world: DefaultMechanicalWorld<N>,
+    geometrical_world: DefaultGeometricalWorld<N>,
+    bodies: DefaultBodySet<N>,
+    colliders: DefaultColliderSet<N>,
+    forces: DefaultForceGeneratorSet<N>,
+    constraints: DefaultJointConstraintSet<N>,
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
     camera_locked: bool, // Used so that the camera can remain the same before and after we change backend or press the restart button.
-    callbacks: Callbacks,
+    callbacks: Callbacks<N>,
     #[cfg(feature = "fluids")]
     callbacks_fluids: CallbacksFluids,
-    time: f32,
+    time: N,
     hide_counters: bool,
     persistant_contacts: HashMap<ContactId, bool>,
     font: Rc<Font>,
-    cursor_pos: Point2<f32>,
+    cursor_pos: Point2<N>,
     ground_handle: Option<DefaultBodyHandle>,
     ui: TestbedUi,
-    state: TestbedState,
+    state: TestbedState<N>,
     #[cfg(feature = "box2d-backend")]
     box2d: Option<Box2dWorld>,
 }
 
-type Callbacks = Vec<
+type Callbacks<N> = Vec<
     Box<
         dyn Fn(
-            &mut DefaultMechanicalWorld<f32>,
-            &mut DefaultGeometricalWorld<f32>,
-            &mut DefaultBodySet<f32>,
-            &mut DefaultColliderSet<f32>,
+            &mut DefaultMechanicalWorld<N>,
+            &mut DefaultGeometricalWorld<N>,
+            &mut DefaultBodySet<N>,
+            &mut DefaultColliderSet<N>,
             &mut GraphicsManager,
-            f32,
+            N,
         ),
     >,
 >;
 
 #[cfg(feature = "fluids")]
-type CallbacksFluids = Vec<
+type CallbacksFluids<N> = Vec<
     Box<
         dyn FnMut(
-            &mut LiquidWorld<f32>,
-            &mut ColliderCouplingSet<f32, DefaultBodyHandle>,
-            &mut DefaultMechanicalWorld<f32>,
-            &mut DefaultGeometricalWorld<f32>,
-            &mut DefaultBodySet<f32>,
-            &mut DefaultColliderSet<f32>,
+            &mut LiquidWorld<N>,
+            &mut ColliderCouplingSet<N, DefaultBodyHandle>,
+            &mut DefaultMechanicalWorld<N>,
+            &mut DefaultGeometricalWorld<N>,
+            &mut DefaultBodySet<N>,
+            &mut DefaultColliderSet<N>,
             &mut GraphicsManager,
-            f32,
+            N,
         ),
     >,
 >;
 
-impl Testbed {
-    pub fn new_empty() -> Testbed {
+impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
+    pub fn new_empty() -> Self {
         let graphics = GraphicsManager::new();
 
         #[cfg(feature = "dim3")]
@@ -240,11 +241,11 @@ impl Testbed {
             graphics,
             nsteps: 1,
             camera_locked: false,
-            time: 0.0,
+            time: N::zero(),
             hide_counters: true,
             persistant_contacts: HashMap::new(),
             font: Font::default(),
-            cursor_pos: Point2::new(0.0f32, 0.0),
+            cursor_pos: Point2::new(N::zero(), N::zero()),
             ground_handle: None,
             ui,
             state,
@@ -254,12 +255,12 @@ impl Testbed {
     }
 
     pub fn new(
-        mechanical_world: DefaultMechanicalWorld<f32>,
-        geometrical_world: DefaultGeometricalWorld<f32>,
-        bodies: DefaultBodySet<f32>,
-        colliders: DefaultColliderSet<f32>,
-        constraints: DefaultJointConstraintSet<f32>,
-        forces: DefaultForceGeneratorSet<f32>,
+        mechanical_world: DefaultMechanicalWorld<N>,
+        geometrical_world: DefaultGeometricalWorld<N>,
+        bodies: DefaultBodySet<N>,
+        colliders: DefaultColliderSet<N>,
+        constraints: DefaultJointConstraintSet<N>,
+        forces: DefaultForceGeneratorSet<N>,
     ) -> Self {
         let mut res = Self::new_empty();
         res.set_world(
@@ -306,12 +307,12 @@ impl Testbed {
 
     pub fn set_world(
         &mut self,
-        mut mechanical_world: DefaultMechanicalWorld<f32>,
-        geometrical_world: DefaultGeometricalWorld<f32>,
-        bodies: DefaultBodySet<f32>,
-        colliders: DefaultColliderSet<f32>,
-        joint_constraints: DefaultJointConstraintSet<f32>,
-        force_generators: DefaultForceGeneratorSet<f32>,
+        mut mechanical_world: DefaultMechanicalWorld<N>,
+        geometrical_world: DefaultGeometricalWorld<N>,
+        bodies: DefaultBodySet<N>,
+        colliders: DefaultColliderSet<N>,
+        joint_constraints: DefaultJointConstraintSet<N>,
+        force_generators: DefaultForceGeneratorSet<N>,
     ) {
         mechanical_world.integration_parameters =
             self.mechanical_world.integration_parameters.clone();
@@ -343,19 +344,19 @@ impl Testbed {
         }
     }
 
-    pub fn mechanical_world(&self) -> &DefaultMechanicalWorld<f32> {
+    pub fn mechanical_world(&self) -> &DefaultMechanicalWorld<N> {
         &self.mechanical_world
     }
 
-    pub fn mechanical_world_mut(&mut self) -> &mut DefaultMechanicalWorld<f32> {
+    pub fn mechanical_world_mut(&mut self) -> &mut DefaultMechanicalWorld<N> {
         &mut self.mechanical_world
     }
 
     #[cfg(feature = "fluids")]
     pub fn set_liquid_world(
         &mut self,
-        mut liquid_world: LiquidWorld<f32>,
-        coupling: ColliderCouplingSet<f32, DefaultBodyHandle>,
+        mut liquid_world: LiquidWorld<N>,
+        coupling: ColliderCouplingSet<N, DefaultBodyHandle>,
     ) {
         liquid_world.counters.enable();
         self.fluids = Some(FluidsState {
@@ -464,12 +465,12 @@ impl Testbed {
 
     pub fn add_callback<
         F: Fn(
-                &mut DefaultMechanicalWorld<f32>,
-                &mut DefaultGeometricalWorld<f32>,
-                &mut DefaultBodySet<f32>,
-                &mut DefaultColliderSet<f32>,
+                &mut DefaultMechanicalWorld<N>,
+                &mut DefaultGeometricalWorld<N>,
+                &mut DefaultBodySet<N>,
+                &mut DefaultColliderSet<N>,
                 &mut GraphicsManager,
-                f32,
+                N,
             ) + 'static,
     >(
         &mut self,
@@ -594,7 +595,7 @@ impl Testbed {
                                 body,
                                 attach1,
                                 attach2,
-                                1.0,
+                                N::one(),
                             );
                             self.state.grabbed_object_constraint =
                                 Some(self.constraints.insert(joint));
@@ -622,8 +623,10 @@ impl Testbed {
                 }
 
                 if let Some(start) = self.state.drawing_ray {
-                    self.graphics
-                        .add_ray(Ray::new(start, self.cursor_pos - start));
+                    self.graphics.add_ray(Ray::new(
+                        na::convert(start),
+                        na::convert(self.cursor_pos - start),
+                    ));
                 }
 
                 self.state.drawing_ray = None;
@@ -631,13 +634,14 @@ impl Testbed {
                 self.state.grabbed_object_constraint = None;
             }
             WindowEvent::CursorPos(x, y, modifiers) => {
-                self.cursor_pos.x = x as f32;
-                self.cursor_pos.y = y as f32;
+                self.cursor_pos.x = na::convert(x as f32);
+                self.cursor_pos.y = na::convert(y as f32);
 
-                self.cursor_pos = self
-                    .graphics
-                    .camera()
-                    .unproject(&self.cursor_pos, &na::convert(window.size()));
+                self.cursor_pos = na::convert(
+                    self.graphics
+                        .camera()
+                        .unproject(&na::convert(self.cursor_pos), &na::convert(window.size())),
+                );
 
                 let attach2 = self.cursor_pos;
                 if self.state.grabbed_object.is_some() {
@@ -646,7 +650,7 @@ impl Testbed {
                         .grabbed_object_constraint
                         .and_then(|joint| self.constraints.get_mut(joint))
                         .and_then(|joint| {
-                            joint.downcast_mut::<MouseConstraint<f32, DefaultBodyHandle>>()
+                            joint.downcast_mut::<MouseConstraint<N, DefaultBodyHandle>>()
                         })
                     {
                         constraint.set_anchor_1(attach2);
@@ -673,7 +677,7 @@ impl Testbed {
                     let (pos, dir) = self
                         .graphics
                         .camera()
-                        .unproject(&self.cursor_pos, &na::convert(size));
+                        .unproject(&na::convert(self.cursor_pos), &na::convert(size));
                     let ray = Ray::new(pos, dir);
                     self.graphics.add_ray(ray);
 
@@ -684,8 +688,8 @@ impl Testbed {
                     let (pos, dir) = self
                         .graphics
                         .camera()
-                        .unproject(&self.cursor_pos, &na::convert(size));
-                    let ray = Ray::new(pos, dir);
+                        .unproject(&na::convert(self.cursor_pos), &na::convert(size));
+                    let ray = Ray::new(na::convert(pos), na::convert(dir));
 
                     // cast the ray
                     let mut mintoi = Bounded::max_value();
@@ -695,7 +699,7 @@ impl Testbed {
                     for (_, b, inter) in self.geometrical_world.interferences_with_ray(
                         &self.colliders,
                         &ray,
-                        std::f32::MAX,
+                        N::max_value(),
                         &all_groups,
                     ) {
                         if !b.query_type().is_proximity_query() && inter.toi < mintoi {
@@ -718,7 +722,7 @@ impl Testbed {
                                 .unwrap()
                                 .apply_force_at_point(
                                     body_part.1,
-                                    &(ray.dir.normalize() * 0.01),
+                                    &(ray.dir.normalize() * na::convert::<f32, N>(0.01)),
                                     &ray.point_at(mintoi),
                                     ForceType::Impulse,
                                     true,
@@ -742,8 +746,8 @@ impl Testbed {
                     let (pos, dir) = self
                         .graphics
                         .camera()
-                        .unproject(&self.cursor_pos, &na::convert(size));
-                    let ray = Ray::new(pos, dir);
+                        .unproject(&na::convert(self.cursor_pos), &na::convert(size));
+                    let ray = Ray::new(na::convert(pos), na::convert(dir));
 
                     // cast the ray
                     let mut mintoi = Bounded::max_value();
@@ -753,7 +757,7 @@ impl Testbed {
                     for (_, b, inter) in self.geometrical_world.interferences_with_ray(
                         &self.colliders,
                         &ray,
-                        std::f32::MAX,
+                        N::max_value(),
                         &all_groups,
                     ) {
                         if ((Some(b.body()) != self.ground_handle)
@@ -804,7 +808,7 @@ impl Testbed {
                                         body_part_handle,
                                         attach1,
                                         attach2,
-                                        1.0,
+                                        N::one(),
                                     );
                                     self.state.grabbed_object_plane = (attach1, -ray.dir);
                                     self.state.grabbed_object_constraint =
@@ -842,8 +846,8 @@ impl Testbed {
                 self.state.grabbed_object_constraint = None;
             }
             WindowEvent::CursorPos(x, y, modifiers) => {
-                self.cursor_pos.x = x as f32;
-                self.cursor_pos.y = y as f32;
+                self.cursor_pos.x = na::convert(x as f32);
+                self.cursor_pos.y = na::convert(y as f32);
 
                 // update the joint
                 if let Some(joint) = self.state.grabbed_object_constraint {
@@ -851,8 +855,11 @@ impl Testbed {
                     let (pos, dir) = self
                         .graphics
                         .camera()
-                        .unproject(&self.cursor_pos, &na::convert(size));
+                        .unproject(&na::convert(self.cursor_pos), &na::convert(size));
                     let (ref ppos, ref pdir) = self.state.grabbed_object_plane;
+
+                    let pos = na::convert(pos);
+                    let dir = na::convert(dir);
 
                     if let Some(inter) = query::ray_toi_with_plane(ppos, pdir, &Ray::new(pos, dir))
                     {
@@ -860,7 +867,7 @@ impl Testbed {
                             .constraints
                             .get_mut(joint)
                             .unwrap()
-                            .downcast_mut::<MouseConstraint<f32, DefaultBodyHandle>>()
+                            .downcast_mut::<MouseConstraint<N, DefaultBodyHandle>>()
                             .unwrap();
                         joint.set_anchor_1(pos + dir * inter)
                     }
@@ -879,7 +886,7 @@ type CameraEffects<'a> = (
     Option<&'a mut dyn PostProcessingEffect>,
 );
 
-impl State for Testbed {
+impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> State for Testbed<N> {
     fn cameras_and_effect(&mut self) -> CameraEffects<'_> {
         #[cfg(feature = "dim2")]
         let result = (
@@ -1227,10 +1234,10 @@ Fluids: {:.2}ms
     }
 }
 
-fn draw_collisions(
+fn draw_collisions<N: RealField + SubsetOf<f32>>(
     window: &mut Window,
-    geometrical_world: &DefaultGeometricalWorld<f32>,
-    colliders: &DefaultColliderSet<f32>,
+    geometrical_world: &DefaultGeometricalWorld<N>,
+    colliders: &DefaultColliderSet<N>,
     existing: &mut HashMap<ContactId, bool>,
     running: bool,
 ) {
@@ -1245,14 +1252,18 @@ fn draw_collisions(
                 })
                 .or_insert(false);
 
-            let color = if c.contact.depth < 0.0 {
+            let color = if c.contact.depth < N::zero() {
                 // existing[&c.id] {
                 Point3::new(0.0, 0.0, 1.0)
             } else {
                 Point3::new(1.0, 0.0, 0.0)
             };
 
-            window.draw_graphics_line(&(c.contact.world1), &c.contact.world2, &color);
+            window.draw_graphics_line(
+                &na::convert(c.contact.world1),
+                &na::convert(c.contact.world2),
+                &color,
+            );
         }
     }
 }
