@@ -1,6 +1,7 @@
 use crate::objects::node::GraphicsNode;
+use alga::general::SubsetOf;
 use kiss3d::window::Window;
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use nphysics::math::{Point, Vector};
 use salva::object::{Boundary, Fluid as SalvaFluid};
 
@@ -19,9 +20,9 @@ pub struct Fluid {
 }
 
 impl Fluid {
-    pub fn new(
+    pub fn new<N: RealField + SubsetOf<f32>>(
         radius: f32,
-        centers: &[Point<f32>],
+        centers: &[Point<N>],
         color: Point3<f32>,
         window: &mut Window,
     ) -> Fluid {
@@ -37,7 +38,8 @@ impl Fluid {
             let mut ball_gfx = gfx.add_circle(radius);
             #[cfg(feature = "dim3")]
             let mut ball_gfx = gfx.add_sphere(radius);
-            ball_gfx.set_local_translation(c.coords.into());
+            let c: Vector<f32> = na::convert(c.coords);
+            ball_gfx.set_local_translation(c.into());
             balls_gfx.push(ball_gfx);
         }
 
@@ -67,10 +69,10 @@ impl Fluid {
         self.base_color = color;
     }
 
-    fn update(
+    fn update<N: RealField + SubsetOf<f32>>(
         &mut self,
-        centers: &[Point<f32>],
-        velocities: &[Vector<f32>],
+        centers: &[Point<N>],
+        velocities: &[Vector<N>],
         mode: FluidRenderingMode,
     ) {
         if centers.len() > self.balls_gfx.len() {
@@ -89,14 +91,15 @@ impl Fluid {
 
         for (i, (pt, ball)) in centers.iter().zip(self.balls_gfx.iter_mut()).enumerate() {
             ball.set_visible(true);
-            ball.set_local_translation(pt.coords.into());
+            let c: Vector<f32> = na::convert(pt.coords);
+            ball.set_local_translation(c.into());
 
             let color = match mode {
                 FluidRenderingMode::StaticColor => self.base_color,
                 FluidRenderingMode::VelocityColor { min, max } => {
                     let start = self.base_color.coords;
                     let end = Vector3::new(1.0, 0.0, 0.0);
-                    let vel = velocities[i];
+                    let vel: Vector<f32> = na::convert(velocities[i]);
                     let t = (vel.norm() - min) / (max - min);
                     start.lerp(&end, na::clamp(t, 0.0, 1.0)).into()
                 }
@@ -106,13 +109,13 @@ impl Fluid {
         }
     }
 
-    pub fn update_with_boundary(&mut self, boundary: &Boundary<f32>) {
+    pub fn update_with_boundary<N: RealField + SubsetOf<f32>>(&mut self, boundary: &Boundary<N>) {
         self.update(&boundary.positions, &[], FluidRenderingMode::StaticColor)
     }
 
-    pub fn update_with_fluid(
+    pub fn update_with_fluid<N: RealField + SubsetOf<f32>>(
         &mut self,
-        fluid: &SalvaFluid<f32>,
+        fluid: &SalvaFluid<N>,
         rendering_mode: FluidRenderingMode,
     ) {
         self.update(&fluid.positions, &fluid.velocities, rendering_mode)

@@ -1,9 +1,9 @@
 #[cfg(feature = "dim3")]
 use crate::objects::node::GraphicsNode;
 use kiss3d::window::Window;
-use na::Point3;
 #[cfg(feature = "dim3")]
 use na::Vector3;
+use na::{Point3, RealField};
 #[cfg(feature = "dim2")]
 use nphysics::math::{Point, Vector};
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
@@ -27,9 +27,9 @@ pub struct Plane {
 
 impl Plane {
     #[cfg(feature = "dim2")]
-    pub fn new(
+    pub fn new<N: RealField>(
         collider: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         position: &Point<f32>,
         normal: &Vector<f32>,
         color: Point3<f32>,
@@ -48,9 +48,9 @@ impl Plane {
     }
 
     #[cfg(feature = "dim3")]
-    pub fn new(
+    pub fn new<N: RealField>(
         collider: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         world_pos: &Point3<f32>,
         world_normal: &Vector3<f32>,
         color: Point3<f32>,
@@ -91,7 +91,7 @@ impl Plane {
 
     pub fn unselect(&mut self) {}
 
-    pub fn update(&mut self, _: &DefaultColliderSet<f32>) {
+    pub fn update<N: RealField>(&mut self, _: &DefaultColliderSet<N>) {
         // FIXME: atm we assume the plane does not move
     }
 

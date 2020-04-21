@@ -1,6 +1,7 @@
 use crate::objects::node::{self, GraphicsNode};
+use alga::general::SubsetOf;
 use kiss3d::window::Window;
-use na::Point3;
+use na::{Point3, RealField};
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 
@@ -13,9 +14,9 @@ pub struct Ball {
 }
 
 impl Ball {
-    pub fn new(
+    pub fn new<N: RealField + SubsetOf<f32>>(
         collider: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
         radius: f32,
         color: Point3<f32>,
@@ -44,10 +45,11 @@ impl Ball {
             res.gfx.set_lines_width(1.0);
         }
 
+        let pos: Isometry<f32> = na::convert(*colliders.get(collider).unwrap().position());
+
         // res.gfx.set_texture_from_file(&Path::new("media/kitten.png"), "kitten");
         res.gfx.set_color(color.x, color.y, color.z);
-        res.gfx
-            .set_local_transformation(colliders.get(collider).unwrap().position() * res.delta);
+        res.gfx.set_local_transformation(pos * res.delta);
         res.update(colliders);
 
         res
@@ -67,7 +69,7 @@ impl Ball {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
+    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
         node::update_scene_node(
             &mut self.gfx,
             colliders,

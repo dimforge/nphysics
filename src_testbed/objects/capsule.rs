@@ -1,6 +1,7 @@
 use crate::objects::node::{self, GraphicsNode};
+use alga::general::SubsetOf;
 use kiss3d::window;
-use na::Point3;
+use na::{Point3, RealField};
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 
@@ -13,9 +14,9 @@ pub struct Capsule {
 }
 
 impl Capsule {
-    pub fn new(
+    pub fn new<N: RealField + SubsetOf<f32>>(
         collider: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
         r: f32,
         h: f32,
@@ -35,6 +36,8 @@ impl Capsule {
             collider,
         };
 
+        let pos: Isometry<f32> = na::convert(*colliders.get(collider).unwrap().position());
+
         if colliders
             .get(collider)
             .unwrap()
@@ -45,8 +48,7 @@ impl Capsule {
             res.gfx.set_lines_width(1.0);
         }
         res.gfx.set_color(color.x, color.y, color.z);
-        res.gfx
-            .set_local_transformation(colliders.get(collider).unwrap().position() * res.delta);
+        res.gfx.set_local_transformation(pos * res.delta);
         res.update(colliders);
 
         res
@@ -60,7 +62,7 @@ impl Capsule {
         self.color = self.base_color;
     }
 
-    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
+    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
         node::update_scene_node(
             &mut self.gfx,
             colliders,

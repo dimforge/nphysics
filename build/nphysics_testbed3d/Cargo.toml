@@ -22,6 +22,7 @@ fluids = [ "salva3d" ]
 parallel = [ "salva3d/parallel" ]
 
 [dependencies]
+alga       = "0.9"
 log        = { version = "0.4", optional = true }
 bitflags   = "1"
 num-traits = "0.2"

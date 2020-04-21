@@ -1,7 +1,10 @@
 #[cfg(feature = "dim3")]
 use crate::objects::node::{self, GraphicsNode};
+use alga::general::SubsetOf;
 use kiss3d::window::Window;
-use na::{self, Point3};
+use na::{self, Point3, RealField};
+#[cfg(feature = "dim3")]
+use ncollide::procedural::TriMesh;
 use ncollide::shape;
 #[cfg(feature = "dim3")]
 use ncollide::transformation::ToTriMesh;
@@ -26,19 +29,19 @@ pub struct HeightField {
 
 impl HeightField {
     #[cfg(feature = "dim2")]
-    pub fn new(
+    pub fn new<N: RealField + SubsetOf<f32>>(
         collider: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         _: Isometry<f32>,
-        heightfield: &shape::HeightField<f32>,
+        heightfield: &shape::HeightField<N>,
         color: Point3<f32>,
         _: &mut Window,
     ) -> HeightField {
         let mut vertices = Vec::new();
 
         for seg in heightfield.segments() {
-            vertices.push(*seg.a());
-            vertices.push(*seg.b());
+            vertices.push(na::convert(*seg.a()));
+            vertices.push(na::convert(*seg.b()));
         }
 
         let mut res = HeightField {
@@ -53,15 +56,24 @@ impl HeightField {
     }
 
     #[cfg(feature = "dim3")]
-    pub fn new(
+    pub fn new<N: RealField + SubsetOf<f32>>(
         collider: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        heightfield: &shape::HeightField<f32>,
+        heightfield: &shape::HeightField<N>,
         color: Point3<f32>,
         window: &mut Window,
     ) -> HeightField {
         let mesh = heightfield.to_trimesh(());
+
+        let mesh = TriMesh {
+            coords: mesh.coords.into_iter().map(na::convert).collect(),
+            normals: mesh
+                .normals
+                .map(|v| v.into_iter().map(na::convert).collect()),
+            uvs: mesh.uvs.map(|v| v.into_iter().map(na::convert).collect()),
+            indices: mesh.indices,
+        };
 
         let mut res = HeightField {
             color: color,
@@ -81,10 +93,11 @@ impl HeightField {
             res.gfx.set_lines_width(1.0);
         }
 
+        let pos: Isometry<f32> = na::convert(*colliders.get(collider).unwrap().position());
+
         res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
-        res.gfx
-            .set_local_transformation(colliders.get(collider).unwrap().position() * res.delta);
+        res.gfx.set_local_transformation(pos * res.delta);
         res.update(colliders);
 
         res
@@ -105,7 +118,7 @@ impl HeightField {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, _colliders: &DefaultColliderSet<f32>) {
+    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, _colliders: &DefaultColliderSet<N>) {
         #[cfg(feature = "dim3")]
         node::update_scene_node(
             &mut self.gfx,

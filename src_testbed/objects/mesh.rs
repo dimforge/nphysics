@@ -1,8 +1,9 @@
 use crate::objects::node;
+use alga::general::SubsetOf;
 use kiss3d::resource;
 use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
-use na::{self, Isometry3, Point3, Vector3};
+use na::{self, Isometry3, Point3, RealField, Vector3};
 use ncollide::shape::TriMesh;
 use nphysics::object::{ColliderAnchor, DefaultColliderHandle, DefaultColliderSet};
 use std::cell::RefCell;
@@ -17,9 +18,9 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn new(
+    pub fn new<N: RealField + SubsetOf<f32>>(
         collider: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry3<f32>,
         vertices: Vec<Point3<f32>>,
         indices: Vec<Point3<u32>>,
@@ -49,10 +50,11 @@ impl Mesh {
             res.gfx.set_lines_width(1.0);
         }
 
+        let pos: Isometry3<f32> = na::convert(*colliders.get(collider).unwrap().position());
+
         res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
-        res.gfx
-            .set_local_transformation(colliders.get(collider).unwrap().position() * res.delta);
+        res.gfx.set_local_transformation(pos * res.delta);
         res.update(colliders);
 
         res
@@ -72,7 +74,7 @@ impl Mesh {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
+    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
         node::update_scene_node(
             &mut self.gfx,
             colliders,
@@ -85,12 +87,12 @@ impl Mesh {
         // FIXME: don't update if it did not move.
         if let Some(c) = colliders.get(self.collider) {
             if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
-                let shape = c.shape().as_shape::<TriMesh<f32>>().unwrap();
+                let shape = c.shape().as_shape::<TriMesh<N>>().unwrap();
                 let vtx = shape.points();
 
                 self.gfx.modify_vertices(&mut |vertices| {
                     for (v, new_v) in vertices.iter_mut().zip(vtx.iter()) {
-                        *v = *new_v
+                        *v = na::convert(*new_v);
                     }
                 });
                 self.gfx.recompute_normals();

@@ -1,14 +1,15 @@
+use alga::general::{SubsetOf, SupersetOf};
 #[cfg(feature = "dim3")]
 use kiss3d::camera::ArcBall as Camera;
 #[cfg(feature = "dim2")]
 use kiss3d::planar_camera::Sidescroll as Camera;
 use kiss3d::window::Window;
 use na;
-use na::Point3;
 #[cfg(feature = "dim2")]
 use na::Translation2 as Translation;
 #[cfg(feature = "dim3")]
 use na::Translation3 as Translation;
+use na::{Point3, RealField};
 use ncollide::shape::{self, Compound, Cuboid, Shape};
 
 use crate::objects::ball::Ball;
@@ -193,9 +194,9 @@ impl GraphicsManager {
         self.b2sn.remove(&body);
     }
 
-    pub fn remove_body_part_nodes(
+    pub fn remove_body_part_nodes<N: RealField>(
         &mut self,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         window: &mut Window,
         part: DefaultBodyPartHandle,
     ) -> DefaultBodyPartHandle {
@@ -312,7 +313,11 @@ impl GraphicsManager {
         color
     }
 
-    pub fn toggle_wireframe_mode(&mut self, colliders: &DefaultColliderSet<f32>, enabled: bool) {
+    pub fn toggle_wireframe_mode<N: RealField>(
+        &mut self,
+        colliders: &DefaultColliderSet<N>,
+        enabled: bool,
+    ) {
         for n in self.b2sn.values_mut().flat_map(|val| val.iter_mut()) {
             let force_wireframe = if let Some(collider) = colliders.get(n.collider()) {
                 collider.is_sensor()
@@ -342,12 +347,12 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn add_fluid(
+    pub fn add_fluid<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         handle: FluidHandle,
-        fluid: &Fluid<f32>,
-        particle_radius: f32,
+        fluid: &Fluid<N>,
+        particle_radius: N,
     ) {
         let rand = &mut self.rand;
         let color = *self
@@ -359,36 +364,46 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn add_boundary(
+    pub fn add_boundary<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         handle: BoundaryHandle,
-        boundary: &Boundary<f32>,
-        particle_radius: f32,
+        boundary: &Boundary<N>,
+        particle_radius: N,
     ) {
         let color = self.ground_color;
-        let node = FluidNode::new(particle_radius, &boundary.positions, color, window);
+        let node = FluidNode::new(
+            na::convert(particle_radius),
+            &boundary.positions,
+            color,
+            window,
+        );
         self.boundary2sn.insert(handle, node);
     }
 
     #[cfg(feature = "fluids")]
-    pub fn add_fluid_with_color(
+    pub fn add_fluid_with_color<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         handle: FluidHandle,
-        fluid: &Fluid<f32>,
-        particle_radius: f32,
+        fluid: &Fluid<N>,
+        particle_radius: N,
         color: Point3<f32>,
     ) {
-        let node = FluidNode::new(particle_radius, &fluid.positions, color, window);
+        let node = FluidNode::new(
+            na::convert(particle_radius),
+            &fluid.positions,
+            color,
+            window,
+        );
         self.f2sn.insert(handle, node);
     }
 
-    pub fn add(
+    pub fn add<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         id: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
     ) {
         let collider = colliders.get(id).unwrap();
 
@@ -403,11 +418,11 @@ impl GraphicsManager {
         self.add_with_color(window, id, colliders, color)
     }
 
-    pub fn add_with_color(
+    pub fn add_with_color<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         id: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         color: Point3<f32>,
     ) {
         let collider = colliders.get(id).unwrap();
@@ -447,65 +462,66 @@ impl GraphicsManager {
         }
     }
 
-    fn add_shape(
+    fn add_shape<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        shape: &dyn Shape<f32>,
+        shape: &dyn Shape<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        if let Some(s) = shape.as_shape::<shape::Plane<f32>>() {
+        if let Some(s) = shape.as_shape::<shape::Plane<N>>() {
             self.add_plane(window, object, colliders, s, color, out)
-        } else if let Some(s) = shape.as_shape::<shape::Ball<f32>>() {
+        } else if let Some(s) = shape.as_shape::<shape::Ball<N>>() {
             self.add_ball(window, object, colliders, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<Cuboid<f32>>() {
+        } else if let Some(s) = shape.as_shape::<Cuboid<N>>() {
             self.add_box(window, object, colliders, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<shape::Capsule<f32>>() {
+        } else if let Some(s) = shape.as_shape::<shape::Capsule<N>>() {
             self.add_capsule(window, object, colliders, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
+        } else if let Some(s) = shape.as_shape::<Compound<N>>() {
             for &(t, ref s) in s.shapes().iter() {
+                let t: Isometry<f32> = na::convert(t);
                 self.add_shape(window, object, colliders, delta * t, s.as_ref(), color, out)
             }
         }
 
         #[cfg(feature = "dim2")]
         {
-            if let Some(s) = shape.as_shape::<ConvexPolygon<f32>>() {
+            if let Some(s) = shape.as_shape::<ConvexPolygon<N>>() {
                 self.add_convex(window, object, colliders, delta, s, color, out)
-            } else if let Some(s) = shape.as_shape::<shape::Polyline<f32>>() {
+            } else if let Some(s) = shape.as_shape::<shape::Polyline<N>>() {
                 self.add_polyline(window, object, colliders, delta, s, color, out);
-            } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
+            } else if let Some(s) = shape.as_shape::<shape::HeightField<N>>() {
                 self.add_heightfield(window, object, colliders, delta, s, color, out);
             }
         }
 
         #[cfg(feature = "dim3")]
         {
-            if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
+            if let Some(s) = shape.as_shape::<ConvexHull<N>>() {
                 self.add_convex(window, object, colliders, delta, s, color, out)
-            } else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
+            } else if let Some(s) = shape.as_shape::<TriMesh<N>>() {
                 self.add_mesh(window, object, colliders, delta, s, color, out);
-            } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
+            } else if let Some(s) = shape.as_shape::<shape::HeightField<N>>() {
                 self.add_heightfield(window, object, colliders, delta, s, color, out);
             }
         }
     }
 
-    fn add_plane(
+    fn add_plane<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
-        shape: &shape::Plane<f32>,
+        colliders: &DefaultColliderSet<N>,
+        shape: &shape::Plane<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
         let pos = colliders.get(object).unwrap().position();
-        let position = Point::from(pos.translation.vector);
-        let normal = pos * shape.normal();
+        let position = na::convert(Point::from(pos.translation.vector));
+        let normal = na::convert(pos * shape.normal().into_inner());
 
         out.push(Node::Plane(Plane::new(
             object, colliders, &position, &normal, color, window,
@@ -513,17 +529,17 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "dim2")]
-    fn add_polyline(
+    fn add_polyline<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        shape: &shape::Polyline<f32>,
+        shape: &shape::Polyline<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let vertices = shape.points().to_vec();
+        let vertices = shape.points().iter().map(|p| na::convert(*p)).collect();
         let indices = shape.edges().iter().map(|e| e.indices).collect();
 
         out.push(Node::Polyline(Polyline::new(
@@ -532,42 +548,42 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "dim3")]
-    fn add_mesh(
+    fn add_mesh<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        shape: &TriMesh<f32>,
+        shape: &TriMesh<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let points = shape.points();
-        let faces = shape.faces();
-
-        let is = faces
+        let is = shape
+            .faces()
             .iter()
-            .map(|f| Point3::new(f.indices.x as u32, f.indices.y as u32, f.indices.z as u32))
+            .map(|f| {
+                na::convert(Point3::new(
+                    f.indices.x as u32,
+                    f.indices.y as u32,
+                    f.indices.z as u32,
+                ))
+            })
             .collect();
 
+        let points = shape.points().iter().map(|&p| na::convert(p)).collect();
+
         out.push(Node::Mesh(Mesh::new(
-            object,
-            colliders,
-            delta,
-            points.to_vec(),
-            is,
-            color,
-            window,
+            object, colliders, delta, points, is, color, window,
         )))
     }
 
-    fn add_heightfield(
+    fn add_heightfield<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        heightfield: &shape::HeightField<f32>,
+        heightfield: &shape::HeightField<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -581,13 +597,13 @@ impl GraphicsManager {
         )))
     }
 
-    fn add_capsule(
+    fn add_capsule<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        shape: &shape::Capsule<f32>,
+        shape: &shape::Capsule<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -596,20 +612,20 @@ impl GraphicsManager {
             object,
             colliders,
             delta,
-            shape.radius() + margin,
-            shape.height(),
+            na::convert(shape.radius() + margin),
+            na::convert(shape.height()),
             color,
             window,
         )))
     }
 
-    fn add_ball(
+    fn add_ball<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        shape: &shape::Ball<f32>,
+        shape: &shape::Ball<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -618,19 +634,19 @@ impl GraphicsManager {
             object,
             colliders,
             delta,
-            shape.radius() + margin,
+            na::convert(shape.radius() + margin),
             color,
             window,
         )))
     }
 
-    fn add_box(
+    fn add_box<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        shape: &Cuboid<f32>,
+        shape: &Cuboid<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -640,47 +656,43 @@ impl GraphicsManager {
             object,
             colliders,
             delta,
-            shape.half_extents() + Vector::repeat(margin),
+            na::convert(shape.half_extents() + Vector::repeat(margin)),
             color,
             window,
         )))
     }
 
     #[cfg(feature = "dim2")]
-    fn add_convex(
+    fn add_convex<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        shape: &ConvexPolygon<f32>,
+        shape: &ConvexPolygon<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let points = shape.points();
+        let points: Vec<_> = shape.points().iter().map(|p| na::convert(*p)).collect();
 
         out.push(Node::Convex(Convex::new(
-            object,
-            colliders,
-            delta,
-            points.to_vec(),
-            color,
-            window,
+            object, colliders, delta, points, color, window,
         )))
     }
 
     #[cfg(feature = "dim3")]
-    fn add_convex(
+    fn add_convex<N: RealField + SubsetOf<f32>>(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,
-        colliders: &DefaultColliderSet<f32>,
+        colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
-        shape: &ConvexHull<f32>,
+        shape: &ConvexHull<N>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let mut chull = transformation::convex_hull(shape.points());
+        let points: Vec<_> = shape.points().iter().map(|p| na::convert(*p)).collect();
+        let mut chull = transformation::convex_hull(&points);
         chull.replicate_vertices();
         chull.recompute_normals();
 
@@ -689,10 +701,10 @@ impl GraphicsManager {
         )))
     }
 
-    pub fn show_aabbs(
+    pub fn show_aabbs<N: RealField>(
         &mut self,
-        _geometrical_world: &DefaultGeometricalWorld<f32>,
-        colliders: &DefaultColliderSet<f32>,
+        _geometrical_world: &DefaultGeometricalWorld<N>,
+        colliders: &DefaultColliderSet<N>,
         window: &mut Window,
     ) {
         for (_, ns) in self.b2sn.iter() {
@@ -725,7 +737,7 @@ impl GraphicsManager {
     }
 
     #[cfg(feature = "fluids")]
-    pub fn draw_fluids(&mut self, liquid_world: &LiquidWorld<f32>) {
+    pub fn draw_fluids<N: RealField + SubsetOf<f32>>(&mut self, liquid_world: &LiquidWorld<N>) {
         for (i, fluid) in liquid_world.fluids().iter() {
             if let Some(node) = self.f2sn.get_mut(&i) {
                 node.update_with_fluid(fluid, self.fluid_rendering_mode)
@@ -741,10 +753,10 @@ impl GraphicsManager {
         }
     }
 
-    pub fn draw(
+    pub fn draw<N: RealField + SubsetOf<f32> + SupersetOf<f32>>(
         &mut self,
-        geometrical_world: &DefaultGeometricalWorld<f32>,
-        colliders: &DefaultColliderSet<f32>,
+        geometrical_world: &DefaultGeometricalWorld<N>,
+        colliders: &DefaultColliderSet<N>,
         window: &mut Window,
     ) {
         //        use crate::kiss3d::camera::Camera;
@@ -770,25 +782,33 @@ impl GraphicsManager {
                     .map(|p| p.0);
 
                 if let Some(aabb) = aabb {
-                    let w = aabb.half_extents() * 2.0;
+                    let mut w = aabb.half_extents();
+                    w += w;
 
-                    node.set_local_translation(Translation::from(aabb.center().coords));
+                    let center: Vector<_> = na::convert(aabb.center().coords);
+                    node.set_local_translation(Translation::from(center));
 
                     #[cfg(feature = "dim2")]
-                    node.set_local_scale(w.x, w.y);
+                    node.set_local_scale(na::convert(w.x), na::convert(w.y));
                     #[cfg(feature = "dim3")]
-                    node.set_local_scale(w.x, w.y, w.z);
+                    node.set_local_scale(na::convert(w.x), na::convert(w.y), na::convert(w.z));
                 }
             }
         }
 
-        for ray in &self.rays {
+        for &Ray { origin, dir } in &self.rays {
+            let ray = Ray {
+                origin: na::convert(origin),
+                dir: na::convert(dir),
+            };
             let groups = CollisionGroups::new();
             let inter =
-                geometrical_world.interferences_with_ray(colliders, ray, std::f32::MAX, &groups);
-            let hit = inter.fold(1000.0, |t, (_, _, hit)| hit.toi.min(t));
-            let p1 = ray.origin;
-            let p2 = ray.origin + ray.dir * hit;
+                geometrical_world.interferences_with_ray(colliders, &ray, N::max_value(), &groups);
+            let hit = inter.fold(1000.0f32, |t, (_, _, hit)| {
+                na::convert::<N, f32>(hit.toi).min(t)
+            });
+            let p1 = origin;
+            let p2 = p1 + dir * hit;
             window.draw_graphics_line(&p1, &p2, &Point3::new(1.0, 0.0, 0.0));
         }
     }
