@@ -9,3 +9,7 @@ members = [ "build/nphysics2d", "build/nphysics_testbed2d", "examples2d",
 #[patch.crates-io]
 #ncollide2d = { path = "../ncollide/build/ncollide2d" }
 #ncollide3d = { path = "../ncollide/build/ncollide3d" }
+
+[patch.crates-io]
+nphysics2d = { path = "build/nphysics2d" }
+nphysics3d = { path = "build/nphysics3d" }
