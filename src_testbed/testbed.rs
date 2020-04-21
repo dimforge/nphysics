@@ -153,7 +153,7 @@ pub struct Testbed<N: RealField = f32> {
 
 type Callbacks<N> = Vec<
     Box<
-        dyn Fn(
+        dyn FnMut(
             &mut DefaultMechanicalWorld<N>,
             &mut DefaultGeometricalWorld<N>,
             &mut DefaultBodySet<N>,
@@ -464,7 +464,7 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
     }
 
     pub fn add_callback<
-        F: Fn(
+        F: FnMut(
                 &mut DefaultMechanicalWorld<N>,
                 &mut DefaultGeometricalWorld<N>,
                 &mut DefaultBodySet<N>,
@@ -1108,7 +1108,7 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> State for Testbed<N> {
                     }
                 }
 
-                for f in &self.callbacks {
+                for f in &mut self.callbacks {
                     f(
                         &mut self.mechanical_world,
                         &mut self.geometrical_world,
