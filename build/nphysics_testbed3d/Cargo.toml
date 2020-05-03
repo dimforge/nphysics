@@ -22,15 +22,15 @@ fluids = [ "salva3d" ]
 parallel = [ "salva3d/parallel" ]
 
 [dependencies]
-alga       = "0.9"
 log        = { version = "0.4", optional = true }
 bitflags   = "1"
 num-traits = "0.2"
 rand       = "0.7"
 instant    = { version = "0.1", features = [ "stdweb", "now" ]}
+simba      = "0.1"
 nalgebra   = "0.21"
-kiss3d     = { version = "0.23", features = [ "conrod" ] }
-ncollide3d = "0.22"
+kiss3d     = { version = "0.24", features = [ "conrod" ] }
+ncollide3d = "0.23"
 salva3d = { version = "0.2", features = [ "nphysics" ], optional = true }
 
 [dependencies.nphysics3d]

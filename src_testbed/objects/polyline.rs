@@ -1,8 +1,8 @@
-use alga::general::SubsetOf;
 use kiss3d::window::Window;
 use na::{Isometry2, Point2, Point3, RealField};
 use ncollide2d::shape;
 use nphysics2d::object::{ColliderAnchor, DefaultColliderHandle, DefaultColliderSet};
+use simba::scalar::SubsetOf;
 
 pub struct Polyline {
     color: Point3<f32>,

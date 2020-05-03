@@ -1,11 +1,11 @@
 use crate::objects::node;
-use alga::general::SubsetOf;
 use kiss3d::resource;
 use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 use na::{self, Isometry3, Point3, RealField, Vector3};
 use ncollide::shape::TriMesh;
 use nphysics::object::{ColliderAnchor, DefaultColliderHandle, DefaultColliderSet};
+use simba::scalar::SubsetOf;
 use std::cell::RefCell;
 use std::rc::Rc;
 

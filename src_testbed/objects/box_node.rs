@@ -1,9 +1,9 @@
 use crate::objects::node::{self, GraphicsNode};
-use alga::general::SubsetOf;
 use kiss3d::window;
 use na::{Point3, RealField};
 use nphysics::math::{Isometry, Vector};
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
+use simba::scalar::SubsetOf;
 
 pub struct Box {
     color: Point3<f32>,

@@ -1,5 +1,4 @@
 use crate::objects::node::{self, GraphicsNode};
-use alga::general::SubsetOf;
 use kiss3d::window::Window;
 use na::{Point3, RealField};
 #[cfg(feature = "dim3")]
@@ -8,6 +7,7 @@ use ncollide::procedural::TriMesh;
 use nphysics::math::Point;
 use nphysics::math::{Isometry, Vector};
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
+use simba::scalar::SubsetOf;
 
 pub struct Convex {
     color: Point3<f32>,

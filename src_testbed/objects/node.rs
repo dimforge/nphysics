@@ -8,11 +8,11 @@ use crate::objects::mesh::Mesh;
 use crate::objects::plane::Plane;
 #[cfg(feature = "dim2")]
 use crate::objects::polyline::Polyline;
-use alga::general::SubsetOf;
 use kiss3d::window::Window;
 use na::{Point3, RealField};
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
+use simba::scalar::SubsetOf;
 
 #[cfg(feature = "dim2")]
 pub type GraphicsNode = kiss3d::scene::PlanarSceneNode;

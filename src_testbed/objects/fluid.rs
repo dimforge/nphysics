@@ -1,9 +1,9 @@
 use crate::objects::node::GraphicsNode;
-use alga::general::SubsetOf;
 use kiss3d::window::Window;
 use na::{Point3, RealField, Vector3};
 use nphysics::math::{Point, Vector};
 use salva::object::{Boundary, Fluid as SalvaFluid};
+use simba::scalar::SubsetOf;
 
 #[derive(Copy, Clone, Debug)]
 pub enum FluidRenderingMode {

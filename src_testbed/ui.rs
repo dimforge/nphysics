@@ -1,6 +1,6 @@
-use alga::general::{SubsetOf, SupersetOf};
 use kiss3d::conrod::{self, Borderable, Colorable, Labelable, Positionable, Sizeable, Widget};
 use kiss3d::window::Window;
+use simba::scalar::{SubsetOf, SupersetOf};
 
 use crate::testbed::{RunMode, TestbedActionFlags, TestbedState, TestbedStateFlags};
 use na::RealField;

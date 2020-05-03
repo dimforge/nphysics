@@ -1,6 +1,6 @@
-use alga::general::{SubsetOf, SupersetOf};
 #[cfg(feature = "dim3")]
 use num::Bounded;
+use simba::scalar::{SubsetOf, SupersetOf};
 use std::collections::HashMap;
 use std::env;
 use std::mem;
