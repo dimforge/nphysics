@@ -27,23 +27,17 @@ jobs:
           name: build nphysics3d
           command: cargo build --verbose -p nphysics3d;
       - run:
-          name: build nphysics-examples-2d
-          command: cargo build -j 1 --verbose -p nphysics-examples-2d;
+          name: check nphysics_testbed2d
+          command: cargo check --verbose -p nphysics_testbed2d;
       - run:
-          name: build nphysics-examples-3d
-          command: cargo build -j 1 --verbose -p nphysics-examples-3d;
+          name: check nphysics_testbed3d
+          command: cargo check --verbose -p nphysics_testbed3d;
       - run:
-          name: build nphysics_testbed2d
-          command: cargo build --verbose -p nphysics_testbed2d;
+          name: check nphysics-examples-2d
+          command: cargo check -j 1 --verbose -p nphysics-examples-2d;
       - run:
-          name: build nphysics_testbed3d
-          command: cargo build --verbose -p nphysics_testbed3d;
-      - run:
-          name: build nphysics_testbed2d with fluids
-          command: cd build/nphysics_testbed2d && cargo build --verbose --features=fluids;
-      - run:
-          name: build nphysics_testbed3d with fluids
-          command: cd build/nphysics_testbed3d && cargo build --verbose --features=fluids;
+          name: check nphysics-examples-3d
+          command: cargo check -j 1 --verbose -p nphysics-examples-3d;
       - run:
           name: test nphysics2d
           command: cargo test --verbose -p nphysics2d;
@@ -56,6 +50,12 @@ jobs:
       - run:
           name: test nphysics_testbed3d
           command: cargo test --verbose -p nphysics_testbed3d;
+      - run:
+          name: check nphysics_testbed2d with fluids
+          command: cd build/nphysics_testbed2d && cargo check --verbose --features=fluids;
+      - run:
+          name: check nphysics_testbed3d with fluids
+          command: cd build/nphysics_testbed3d && cargo check --verbose --features=fluids;
   build-wasm:
     executor: rust-executor
     steps:
