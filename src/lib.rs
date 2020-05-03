@@ -258,6 +258,7 @@ pub use nalgebra;
 pub use ncollide2d;
 #[cfg(feature = "dim3")]
 pub use ncollide3d;
+pub use simba;
 
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim3")]

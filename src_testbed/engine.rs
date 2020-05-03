@@ -1,4 +1,3 @@
-use alga::general::{SubsetOf, SupersetOf};
 #[cfg(feature = "dim3")]
 use kiss3d::camera::ArcBall as Camera;
 #[cfg(feature = "dim2")]
@@ -11,6 +10,7 @@ use na::Translation2 as Translation;
 use na::Translation3 as Translation;
 use na::{Point3, RealField};
 use ncollide::shape::{self, Compound, Cuboid, Shape};
+use simba::scalar::{SubsetOf, SupersetOf};
 
 use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;

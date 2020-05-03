@@ -1,6 +1,5 @@
 #[cfg(feature = "dim3")]
 use crate::objects::node::{self, GraphicsNode};
-use alga::general::SubsetOf;
 use kiss3d::window::Window;
 use na::{self, Point3, RealField};
 #[cfg(feature = "dim3")]
@@ -14,6 +13,7 @@ use nphysics::math::Point;
 #[cfg(feature = "dim3")]
 use nphysics::math::Vector;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
+use simba::scalar::SubsetOf;
 
 pub struct HeightField {
     color: Point3<f32>,

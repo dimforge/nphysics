@@ -1,4 +1,3 @@
-use alga::linear::FiniteDimInnerSpace;
 use na::{self, DVector, RealField, Unit};
 use ncollide::query::ContactId;
 use slotmap::Key;

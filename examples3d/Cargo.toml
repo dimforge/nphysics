@@ -9,9 +9,9 @@ rand       = { version = "0.7", features = [ "stdweb" ] }
 rand_distr = "0.2"
 num-traits = "0.2"
 Inflector  = "0.11"
-nalgebra   = "0.20"
-ncollide3d = "0.22"
-kiss3d     = "0.23"
+nalgebra   = "0.21"
+ncollide3d = "0.23"
+kiss3d     = "0.24"
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = "0.4"

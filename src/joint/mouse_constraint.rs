@@ -1,4 +1,3 @@
-use alga::linear::FiniteDimVectorSpace;
 use na::{DVector, RealField, Unit};
 
 use crate::joint::JointConstraint;
@@ -97,8 +96,12 @@ impl<N: RealField, Handle: BodyHandle> JointConstraint<N, Handle> for MouseConst
         let (ext_vels1, ext_vels2) =
             helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
-        let mut i = 0;
-        Vector::canonical_basis(|dir| {
+        #[cfg(feature = "dim2")]
+        let canonical_basis = [Vector::x(), Vector::y()];
+        #[cfg(feature = "dim3")]
+        let canonical_basis = [Vector::x(), Vector::y(), Vector::z()];
+
+        for dir in &canonical_basis {
             let fdir = ForceDirection::Linear(Unit::new_unchecked(*dir));
             let mut rhs = -error.dot(&*dir) * parameters.erp * parameters.inv_dt();
             let geom = helper::constraint_pair_geometry(
@@ -142,11 +145,7 @@ impl<N: RealField, Handle: BodyHandle> JointConstraint<N, Handle> for MouseConst
                     0,
                 ));
             }
-
-            i += 1;
-
-            true
-        });
+        }
     }
 
     fn cache_impulses(&mut self, _: &LinearConstraints<N, usize>, _: N) {}

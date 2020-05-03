@@ -1,9 +1,9 @@
 use crate::objects::node::{self, GraphicsNode};
-use alga::general::SubsetOf;
 use kiss3d::window::Window;
 use na::{Point3, RealField};
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
+use simba::scalar::SubsetOf;
 
 pub struct Ball {
     color: Point3<f32>,
