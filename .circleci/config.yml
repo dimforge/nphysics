@@ -45,12 +45,6 @@ jobs:
           name: test nphysics3d
           command: cargo test --verbose -p nphysics3d;
       - run:
-          name: test nphysics_testbed2d
-          command: cargo test --verbose -p nphysics_testbed2d;
-      - run:
-          name: test nphysics_testbed3d
-          command: cargo test --verbose -p nphysics_testbed3d;
-      - run:
           name: check nphysics_testbed2d with fluids
           command: cd build/nphysics_testbed2d && cargo check --verbose --features=fluids;
       - run:
