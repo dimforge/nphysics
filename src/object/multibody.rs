@@ -1364,14 +1364,14 @@ impl<N: RealField> MultibodyDesc<N> {
     );
 
     desc_setters!(
-//        status, set_status, status: BodyStatus
-        name, set_name, name: String
-        parent_shift, set_parent_shift, parent_shift: Vector<N>
-        body_shift, set_body_shift, body_shift: Vector<N>
-        velocity, set_velocity, velocity: Velocity<N>
-        local_inertia, set_local_inertia, local_inertia: Inertia<N>
-        local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
-    );
+    //        status, set_status, status: BodyStatus
+            name, set_name, name: String
+            parent_shift, set_parent_shift, parent_shift: Vector<N>
+            body_shift, set_body_shift, body_shift: Vector<N>
+            velocity, set_velocity, velocity: Velocity<N>
+            local_inertia, set_local_inertia, local_inertia: Inertia<N>
+            local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
+        );
 
     #[cfg(feature = "dim2")]
     desc_custom_getters!(self.get_angular_inertia: N | { self.local_inertia.angular });

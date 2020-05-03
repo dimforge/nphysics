@@ -970,13 +970,13 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     );
 
     desc_setters!(
-        gravity_enabled, enable_gravity, gravity_enabled: bool
-        stiffness, set_stiffness, stiffness: Option<N>
-        sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
-//        damping_ratio, set_damping_ratio, damping_ratio: N
-        mass, set_mass, mass: N
-        status, set_status, status: BodyStatus
-    );
+            gravity_enabled, enable_gravity, gravity_enabled: bool
+            stiffness, set_stiffness, stiffness: Option<N>
+            sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+    //        damping_ratio, set_damping_ratio, damping_ratio: N
+            mass, set_mass, mass: N
+            status, set_status, status: BodyStatus
+        );
 
     desc_custom_getters!(
         self.get_plasticity_strain_threshold: N | { self.plasticity.0 }
@@ -986,13 +986,13 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     );
 
     desc_getters!(
-        [val] is_gravity_enabled -> gravity_enabled: bool
-        [val] get_stiffness -> stiffness: Option<N>
-        [val] get_sleep_threshold -> sleep_threshold: Option<N>
-//        [val] get_damping_ratio -> damping_ratio: N
-        [val] get_mass -> mass: N
-        [val] get_status -> status: BodyStatus
-    );
+            [val] is_gravity_enabled -> gravity_enabled: bool
+            [val] get_stiffness -> stiffness: Option<N>
+            [val] get_sleep_threshold -> sleep_threshold: Option<N>
+    //        [val] get_damping_ratio -> damping_ratio: N
+            [val] get_mass -> mass: N
+            [val] get_status -> status: BodyStatus
+        );
 
     /// Builds a mass-constraint based deformable body from this description.
     pub fn build(&self) -> MassConstraintSystem<N> {
