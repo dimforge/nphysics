@@ -19,6 +19,8 @@ use kiss3d::planar_camera::PlanarCamera;
 use kiss3d::post_processing::PostProcessingEffect;
 use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
+#[cfg(feature = "dim2")]
+use na::Vector2;
 use na::{self, Point2, Point3, RealField, Vector3};
 use ncollide::pipeline::CollisionGroups;
 #[cfg(feature = "dim3")]
