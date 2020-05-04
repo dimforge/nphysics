@@ -68,7 +68,7 @@ fn demo_name_from_url() -> Option<String> {
 }
 
 fn main() {
-    type Real = f32;
+    type Real = simba::scalar::FixedI16F16;
 
     let demo = demo_name_from_command_line()
         .or_else(|| demo_name_from_url())
