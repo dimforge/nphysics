@@ -6,13 +6,14 @@ edition = "2018"
 
 [features]
 box2d-backend = [ "nphysics_testbed2d/box2d-backend" ]
-
+improved_fixed_point_support = [ "nphysics2d/improved_fixed_point_support" ]
 
 [dependencies]
 rand       = "0.7"
 Inflector  = "0.11"
 nalgebra   = "0.21"
 ncollide2d = "0.23"
+simba      = { version = "0.1", features = [ "partial_fixed_point_support" ]}
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = "0.4"
