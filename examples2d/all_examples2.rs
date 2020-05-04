@@ -65,14 +65,14 @@ fn demo_name_from_url() -> Option<String> {
 }
 
 fn main() {
-    type Real = f32;
+    type Real = simba::scalar::FixedI40F24;
 
     let demo = demo_name_from_command_line()
         .or_else(|| demo_name_from_url())
         .unwrap_or(String::new())
         .to_camel_case();
 
-    let mut builders: Vec<(_, fn(&mut Testbed))> = vec![
+    let mut builders: Vec<(_, fn(&mut Testbed<Real>))> = vec![
         ("Balls", balls2::init_world),
         ("Boxes", boxes2::init_world),
         ("Capsules", capsules2::init_world),
