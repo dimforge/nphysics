@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use kiss3d::loader::obj;
-use na::{Isometry3, Point3, Vector3};
+use na::{Isometry3, Point3, RealField, Vector3};
 use ncollide3d::procedural;
 use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
@@ -11,11 +11,11 @@ use nphysics3d::object::{
     Ground, MassSpringSystemDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::Testbed;
 use std::f32;
 use std::path::Path;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -49,22 +49,31 @@ pub fn init_world(testbed: &mut Testbed) {
     let obj = obj::parse_file(&Path::new(&obj_path), &Path::new(""), "");
 
     if let Ok(model) = obj {
-        let mut meshes: Vec<procedural::TriMesh<Real>> = model
+        let mut meshes: Vec<procedural::TriMesh<N>> = model
             .into_iter()
             .map(|mesh| {
-                use nphysics_testbed3d::IntoReal;
                 let mesh = mesh.1.to_trimesh().unwrap();
                 procedural::TriMesh {
-                    coords: mesh.coords.into_real(),
-                    normals: mesh.normals.map(|n| n.into_real()),
-                    uvs: mesh.uvs.map(|u| u.into_real()),
+                    coords: mesh
+                        .coords
+                        .into_iter()
+                        .map(na::convert::<_, Point3<f64>>)
+                        .map(na::convert::<_, Point3<N>>)
+                        .collect(),
+                    normals: mesh.normals.map(|n| {
+                        n.into_iter()
+                            .map(na::convert::<_, Vector3<f64>>)
+                            .map(na::convert::<_, Vector3<N>>)
+                            .collect()
+                    }),
+                    uvs: None, // We don't care about uvs.
                     indices: mesh.indices,
                 }
             })
             .collect();
         meshes[0].split_index_buffer(true);
 
-        let rot = Vector3::x() * r!(f32::consts::FRAC_PI_2);
+        let rot = Vector3::x() * r!(std::f64::consts::FRAC_PI_2);
         let trimesh1 = TriMesh::from(meshes[0].clone())
             .scaled(&Vector3::repeat(r!(0.5)))
             .transformed(&Isometry3::new(Vector3::y() * r!(5.0), rot));
@@ -109,6 +118,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Mass-spring system", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Mass-spring system", init_world)]);
     testbed.run()
 }

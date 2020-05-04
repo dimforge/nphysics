@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Isometry3, Point3, RealField, Vector3};
 use ncollide3d::shape::{Ball, Capsule, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -9,9 +9,9 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, MultibodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -58,7 +58,10 @@ pub fn init_world(testbed: &mut Testbed) {
     testbed.look_at(Point3::new(-10.0, 5.0, -10.0), Point3::new(0.0, 1.0, 0.0));
 }
 
-fn build_ragdolls(bodies: &mut DefaultBodySet<Real>, colliders: &mut DefaultColliderSet<Real>) {
+fn build_ragdolls<N: RealField>(
+    bodies: &mut DefaultBodySet<N>,
+    colliders: &mut DefaultColliderSet<N>,
+) {
     let body_rady = r!(1.2) / r!(2.0);
     let body_radz = r!(0.4) / r!(2.0);
     let body_radx = r!(0.2) / r!(2.0);
@@ -134,9 +137,9 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<Real>, colliders: &mut DefaultColl
     for i in 0usize..n {
         for j in 0usize..n {
             for k in 0usize..n {
-                let x = r!(i as f32) * shift - r!(n as f32) * shift / r!(2.0);
-                let y = r!(j as f32) * shifty + r!(3.0);
-                let z = r!(k as f32) * shift - r!(n as f32) * shift / r!(2.0);
+                let x = r!(i as f64) * shift - r!(n as f64) * shift / r!(2.0);
+                let y = r!(j as f64) * shifty + r!(3.0);
+                let z = r!(k as f64) * shift - r!(n as f64) * shift / r!(2.0);
 
                 let free = FreeJoint::new(Isometry3::translation(x, y, z));
                 let ragdoll = body.set_joint(free).build();
@@ -154,6 +157,6 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<Real>, colliders: &mut DefaultColl
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Ragdolls", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Ragdolls", init_world)]);
     testbed.run()
 }

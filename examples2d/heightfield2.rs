@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{DVector, Point2, Vector2};
+use na::{DVector, Point2, RealField, Vector2};
 use ncollide2d::shape::{Cuboid, HeightField, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -8,11 +8,11 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, IntoReal, Real, Testbed};
+use nphysics_testbed2d::Testbed;
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -27,7 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Polyline
      */
     let mut rng = StdRng::seed_from_u64(0);
-    let heights = DVector::from_fn(20, |_, _| rng.gen::<f64>().into_real());
+    let heights = DVector::from_fn(20, |_, _| na::convert(rng.gen::<f64>()));
 
     let mut heightfield = HeightField::new(heights, Vector2::new(r!(20.0), r!(1.0)));
 
@@ -49,13 +49,13 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
 
-    let shift = r!(2.0) * (rad + ColliderDesc::<Real>::default_margin());
-    let centerx = shift * r!(width as f32) / r!(2.0);
+    let shift = r!(2.0) * (rad + ColliderDesc::<N>::default_margin());
+    let centerx = shift * r!(width as f64) / r!(2.0);
 
     for i in 0usize..height {
         for j in 0usize..width {
-            let fj = r!(j as f32);
-            let fi = r!(i as f32);
+            let fj = r!(j as f64);
+            let fi = r!(i as f64);
             let x = fj * shift - centerx;
             let y = fi * shift + r!(1.0);
 
@@ -87,6 +87,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Heightfield", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Heightfield", init_world)]);
     testbed.run()
 }

@@ -2,7 +2,7 @@ extern crate nalgebra as na;
 
 use std::f32;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -11,9 +11,9 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -67,19 +67,19 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let co = side_desc
         .set_translation(Vector3::new(conveyor_shift, r!(-0.2), r!(0.0)))
-        .set_rotation(Vector3::y() * r!(f32::consts::FRAC_PI_2))
+        .set_rotation(Vector3::y() * r!(std::f64::consts::FRAC_PI_2))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = side_desc
         .set_translation(Vector3::new(r!(0.0), r!(-0.2), -conveyor_shift))
-        .set_rotation(Vector3::y() * r!(f32::consts::PI))
+        .set_rotation(Vector3::y() * r!(std::f64::consts::PI))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = side_desc
         .set_translation(Vector3::new(-conveyor_shift, r!(-0.2), r!(0.0)))
-        .set_rotation(Vector3::y() * (r!(f32::consts::PI) + r!(f32::consts::FRAC_PI_2)))
+        .set_rotation(Vector3::y() * (r!(std::f64::consts::PI) + r!(std::f64::consts::FRAC_PI_2)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -98,19 +98,19 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let co = corner_desc
         .set_translation(Vector3::new(conveyor_shift, r!(-0.2), -conveyor_shift))
-        .set_rotation(Vector3::y() * r!(f32::consts::FRAC_PI_2))
+        .set_rotation(Vector3::y() * r!(std::f64::consts::FRAC_PI_2))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = corner_desc
         .set_translation(Vector3::new(-conveyor_shift, r!(-0.2), -conveyor_shift))
-        .set_rotation(Vector3::y() * r!(f32::consts::PI))
+        .set_rotation(Vector3::y() * r!(std::f64::consts::PI))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = corner_desc
         .set_translation(Vector3::new(-conveyor_shift, r!(-0.2), conveyor_shift))
-        .set_rotation(Vector3::y() * (r!(f32::consts::PI) + r!(f32::consts::FRAC_PI_2)))
+        .set_rotation(Vector3::y() * (r!(std::f64::consts::PI) + r!(std::f64::consts::FRAC_PI_2)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -122,18 +122,18 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
-    let shift = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
-    let centerx = shift * r!(num as f32) / r!(2.0) + conveyor_shift;
+    let shift = (rad + ColliderDesc::<N>::default_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0) + conveyor_shift;
     let centery = shift / r!(2.0);
-    let centerz = shift * r!(num as f32) / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
     let height = r!(0.0);
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = r!(i as f32) * shift - centerx;
-                let y = r!(j as f32) * shift + centery + height;
-                let z = r!(k as f32) * shift - centerz;
+                let x = r!(i as f64) * shift - centerx;
+                let y = r!(j as f64) * shift + centery + height;
+                let z = r!(k as f64) * shift - centerz;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -166,7 +166,7 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Conveyor belt", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Conveyor belt", init_world)]);
 
     testbed.run()
 }

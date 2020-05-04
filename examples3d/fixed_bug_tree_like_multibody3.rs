@@ -9,7 +9,7 @@ use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::joint::{FixedJoint, FreeJoint, Joint};
 use nphysics3d::object::{BodyPartHandle, ColliderDesc, MultibodyDesc};
 use nphysics3d::world::World;
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::Testbed;
 
 fn new_link<J: Joint<f32>>(
     world: &mut World<f32>,

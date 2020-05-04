@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry2, Point2, Vector2};
+use na::{Isometry2, Point2, RealField, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -9,9 +9,9 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, MultibodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, Real, Testbed};
+use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -54,7 +54,10 @@ pub fn init_world(testbed: &mut Testbed) {
     testbed.look_at(Point2::new(0.0, 5.0), 25.0);
 }
 
-fn build_ragdolls(bodies: &mut DefaultBodySet<Real>, colliders: &mut DefaultColliderSet<Real>) {
+fn build_ragdolls<N: RealField>(
+    bodies: &mut DefaultBodySet<N>,
+    colliders: &mut DefaultColliderSet<N>,
+) {
     let body_rady = r!(1.2);
     let body_radx = r!(0.2);
     let head_rad = r!(0.4);
@@ -119,8 +122,8 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<Real>, colliders: &mut DefaultColl
 
     for i in 0usize..n {
         for j in 0usize..n {
-            let x = r!(i as f32) * shiftx - r!(n as f32) * shiftx / r!(2.0);
-            let y = r!(j as f32) * shifty + r!(6.0);
+            let x = r!(i as f64) * shiftx - r!(n as f64) * shiftx / r!(2.0);
+            let y = r!(j as f64) * shifty + r!(6.0);
 
             let free = FreeJoint::new(Isometry2::translation(x, y));
             let ragdoll = body.set_joint(free).build();
@@ -137,7 +140,6 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<Real>, colliders: &mut DefaultColl
 }
 
 fn main() {
-    let mut testbed = Testbed::new_empty();
-    init_world(&mut testbed);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Ragdolls", init_world)]);
     testbed.run();
 }

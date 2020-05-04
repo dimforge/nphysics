@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2};
+use na::{Point2, RealField, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -8,9 +8,9 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, Real, Testbed};
+use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -42,14 +42,14 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
 
-    let shift = r!(2.0) * (rad + ColliderDesc::<Real>::default_margin());
-    let centerx = shift * (width as f32) / r!(2.0);
+    let shift = r!(2.0) * (rad + ColliderDesc::<N>::default_margin());
+    let centerx = shift * (width as f64) / r!(2.0);
     let centery = rad + r!(0.04);
 
     for i in 0usize..height {
         for j in 0usize..width {
-            let fj = j as f32;
-            let fi = i as f32;
+            let fj = j as f64;
+            let fi = i as f64;
             let x = fj * shift - centerx;
             let y = fi * shift + centery;
 
@@ -81,6 +81,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Wall", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Wall", init_world)]);
     testbed.run()
 }

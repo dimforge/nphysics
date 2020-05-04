@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2};
+use na::{Point2, RealField, Vector2};
 use ncollide2d::shape::{Capsule, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -8,9 +8,9 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, Real, Testbed};
+use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -42,15 +42,15 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let capsule = ShapeHandle::new(Capsule::new(half_height, rad));
 
-    let shiftx = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
+    let shiftx = (rad + ColliderDesc::<N>::default_margin()) * r!(2.0);
     let shifty = (half_height + rad) * r!(2.0);
-    let centerx = shiftx * r!(num as f32) / r!(2.0);
+    let centerx = shiftx * r!(num as f64) / r!(2.0);
     let centery = shifty / r!(2.0);
 
     for i in 0usize..num {
         for j in 0..num {
-            let x = r!(i as f32) * shiftx - centerx;
-            let y = r!(j as f32) * shifty + centery;
+            let x = r!(i as f64) * shiftx - centerx;
+            let y = r!(j as f64) * shifty + centery;
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
@@ -80,6 +80,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Capsules", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Capsules", init_world)]);
     testbed.run()
 }

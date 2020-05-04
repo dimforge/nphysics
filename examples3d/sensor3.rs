@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::query::Proximity;
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
@@ -9,9 +9,9 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -46,14 +46,14 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
-    let shift = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
-    let centerx = shift * r!(num as f32) / r!(2.0);
-    let centerz = shift * r!(num as f32) / r!(2.0);
+    let shift = (rad + ColliderDesc::<N>::default_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
 
     for i in 0usize..num {
         for k in 0usize..num {
-            let x = r!(i as f32) * shift - centerx;
-            let z = r!(k as f32) * shift - centerz;
+            let x = r!(i as f64) * shift - centerx;
+            let z = r!(k as f64) * shift - centerz;
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new()
@@ -135,7 +135,7 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Boxes", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Boxes", init_world)]);
 
     testbed.run()
 }

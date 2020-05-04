@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{ComplexField, Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -13,10 +13,10 @@ use nphysics3d::object::{
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 
-use nphysics_testbed3d::{r, Testbed};
-use std::f32::consts::{FRAC_PI_2, PI};
+use nphysics_testbed3d::Testbed;
+use std::f64::consts::{FRAC_PI_2, PI};
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -136,7 +136,7 @@ pub fn init_world(testbed: &mut Testbed) {
     parent = BodyPartHandle(ground_handle, 0);
 
     for i in 0usize..num {
-        let angle = r!(i as f32) * r!(2.0) * r!(PI) / r!(num as f32);
+        let angle = r!(i as f64) * r!(2.0) * r!(PI) / r!(num as f64);
         let mut body_anchor = Point3::origin();
         let mut parent_anchor = Point3::origin();
         if i == 0 {
@@ -202,8 +202,8 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0..num {
         for j in 0..num {
-            let mut z = r!(i as f32) * rad * r!(4.0) - width / r!(2.0);
-            let y = r!(j as f32) * rad * r!(4.0) - width / r!(2.0);
+            let mut z = r!(i as f64) * rad * r!(4.0) - width / r!(2.0);
+            let y = r!(j as f64) * rad * r!(4.0) - width / r!(2.0);
 
             if j % 2 == 0 {
                 z += rad * r!(2.0);
@@ -237,8 +237,8 @@ pub fn init_world(testbed: &mut Testbed) {
     let width = r!(5.0) * rad * r!(4.0);
     for i in 0..5 {
         for j in 0..5 {
-            let mut z = r!(i as f32) * rad * r!(4.0) - width / r!(2.0);
-            let y = r!(j as f32) * rad * r!(4.0) - width / r!(2.0);
+            let mut z = r!(i as f64) * rad * r!(4.0) - width / r!(2.0);
+            let y = r!(j as f64) * rad * r!(4.0) - width / r!(2.0);
 
             if j % 2 == 0 {
                 z += rad * r!(2.0);
@@ -305,6 +305,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Constraints", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Constraints", init_world)]);
     testbed.run()
 }

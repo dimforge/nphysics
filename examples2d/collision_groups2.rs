@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Point3, Vector2};
+use na::{Point2, Point3, RealField, Vector2};
 use ncollide2d::pipeline::CollisionGroups;
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
@@ -9,9 +9,9 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, Real, Testbed};
+use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -81,14 +81,14 @@ pub fn init_world(testbed: &mut Testbed) {
     let rad = r!(0.1);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let shift = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
-    let centerx = shift * r!(num as f32) / r!(2.0);
+    let shift = (rad + ColliderDesc::<N>::default_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
     let centery = r!(2.5);
 
     for k in 0usize..4 {
         for i in 0usize..num {
-            let x = r!(i as f32) * shift - centerx;
-            let y = r!(k as f32) * shift + centery;
+            let x = r!(i as f64) * shift - centerx;
+            let y = r!(k as f64) * shift + centery;
 
             // Alternate between the GREEN and BLUE groups.
             let (group, color) = if k % 2 == 0 {
@@ -128,6 +128,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Collision groups", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Collision groups", init_world)]);
     testbed.run()
 }

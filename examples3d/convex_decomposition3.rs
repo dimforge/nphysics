@@ -6,14 +6,14 @@ extern crate nphysics_testbed3d;
 extern crate rand;
 
 use kiss3d::loader::obj;
-use na::{Isometry3, Point3, Translation3, Vector3};
+use na::{Isometry3, Point3, RealField, Translation3, Vector3};
 use ncollide3d::bounding_volume::{self, BoundingVolume, AABB};
 use ncollide3d::procedural::TriMesh;
 use ncollide3d::shape::{Compound, ConvexHull, Cuboid, ShapeHandle};
 use ncollide3d::transformation;
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::world::World;
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::Testbed;
 use std::path::Path;
 
 fn main() {
@@ -38,7 +38,7 @@ fn main() {
      */
     let geoms = models();
     let ngeoms = geoms.len();
-    let width = (ngeoms as f32).sqrt() as usize;
+    let width = (ngeoms as f64).sqrt() as usize;
     let num_duplications = 4;
     let shift = 5.0f32;
 
@@ -99,7 +99,7 @@ fn main() {
             for k in 1..num_duplications + 1 {
                 let i = igeom % width;
                 let j = igeom / width;
-                let pos = Vector3::new(i as f32, k as f32, j as f32) * shift;
+                let pos = Vector3::new(i as f64, k as f64, j as f64) * shift;
 
                 rb_desc.set_translation(pos).build(&mut world);
             }

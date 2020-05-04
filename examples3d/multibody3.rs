@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{ComplexField, Isometry3, Point3, Vector3};
+use na::{Isometry3, Point3, RealField, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -13,10 +13,10 @@ use nphysics3d::object::{
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 
-use nphysics_testbed3d::{r, Real, Testbed};
-use std::f32::consts::PI;
+use nphysics_testbed3d::Testbed;
+use std::f64::consts::PI;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -94,7 +94,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0usize..num {
         // The multibody links are initialized along a circle.
-        let angle = r!(i as f32) * r!(2.0) * r!(PI) / r!(num as f32);
+        let angle = r!(i as f64) * r!(2.0) * r!(PI) / r!(num as f64);
         let shift = rad * r!(5.0);
         let parent_shift = Vector3::zeros();
         let body_shift = Vector3::new(angle.cos(), r!(0.3), angle.sin()) * shift;
@@ -161,8 +161,8 @@ pub fn init_world(testbed: &mut Testbed) {
     let width = r!(5.0) * rad * r!(4.0);
     for i in 0..5 {
         for j in 0..5 {
-            let mut x = r!(i as f32) * rad * r!(4.0) - width / r!(2.0);
-            let y = r!(j as f32) * rad * r!(4.0) - width / r!(2.0);
+            let mut x = r!(i as f64) * rad * r!(4.0) - width / r!(2.0);
+            let y = r!(j as f64) * rad * r!(4.0) - width / r!(2.0);
 
             if j % 2 == 0 {
                 x += rad * r!(2.0);
@@ -189,8 +189,8 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0..5 {
         for j in 0..5 {
-            let mut x = r!(i as f32) * rad * r!(4.0) - width / r!(2.0);
-            let y = r!(j as f32) * rad * r!(4.0) - width / r!(2.0);
+            let mut x = r!(i as f64) * rad * r!(4.0) - width / r!(2.0);
+            let y = r!(j as f64) * rad * r!(4.0) - width / r!(2.0);
 
             if j % 2 == 0 {
                 x += rad * r!(2.0);
@@ -237,7 +237,7 @@ pub fn init_world(testbed: &mut Testbed) {
         if let Some(helical) = link {
             let dof = helical
                 .joint_mut()
-                .downcast_mut::<HelicalJoint<Real>>()
+                .downcast_mut::<HelicalJoint<N>>()
                 .unwrap();
 
             if dof.offset() < r!(-5.0) {
@@ -259,7 +259,7 @@ pub fn init_world(testbed: &mut Testbed) {
         if let Some(pin_slot) = link {
             let dof = pin_slot
                 .joint_mut()
-                .downcast_mut::<PinSlotJoint<Real>>()
+                .downcast_mut::<PinSlotJoint<N>>()
                 .unwrap();
 
             if dof.offset() < r!(-10.0) {
@@ -287,6 +287,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Multibody", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Multibody", init_world)]);
     testbed.run()
 }

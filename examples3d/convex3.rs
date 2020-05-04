@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -8,12 +8,12 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, IntoReal, Testbed};
+use nphysics_testbed3d::Testbed;
 
 use rand::distributions::{Distribution, Standard};
 use rand::{rngs::StdRng, SeedableRng};
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -46,24 +46,24 @@ pub fn init_world(testbed: &mut Testbed) {
     let npts = 10usize;
     let num = 6;
     let shift = r!(0.4);
-    let centerx = shift * r!(num as f32) / r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
     let centery = shift / r!(2.0);
-    let centerz = shift * r!(num as f32) / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
     let mut rng = StdRng::seed_from_u64(0);
     let distribution = Standard;
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = r!(i as f32) * shift - centerx;
-                let y = r!(j as f32) * shift + centery;
-                let z = r!(k as f32) * shift - centerz;
+                let x = r!(i as f64) * shift - centerx;
+                let y = r!(j as f64) * shift + centery;
+                let z = r!(k as f64) * shift - centerz;
 
                 let mut pts = Vec::with_capacity(npts);
 
                 for _ in 0..npts {
                     let pt: Point3<f64> = distribution.sample(&mut rng);
-                    pts.push((pt.into_real() * r!(0.4)).into());
+                    pts.push((na::convert::<_, Point3<N>>(pt) * r!(0.4)).into());
                 }
 
                 // Build the rigid body.
@@ -98,7 +98,7 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Convex", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Convex", init_world)]);
 
     testbed.run()
 }

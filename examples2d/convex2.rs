@@ -3,7 +3,7 @@ extern crate nalgebra as na;
 use rand::distributions::{Distribution, Standard};
 use rand::{rngs::StdRng, SeedableRng};
 
-use na::{Point2, Vector2};
+use na::{Point2, RealField, Vector2};
 use ncollide2d::shape::{ConvexPolygon, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -11,9 +11,9 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, IntoReal, Real, Testbed};
+use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -42,21 +42,21 @@ pub fn init_world(testbed: &mut Testbed) {
     let npts = 10usize;
     let num = 25;
     let shift = r!(0.4);
-    let centerx = shift * r!(num as f32) / r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
     let centery = shift;
     let mut rng = StdRng::seed_from_u64(0);
     let distribution = Standard;
 
     for i in 0usize..num {
         for j in 0usize..num {
-            let x = r!(i as f32) * shift - centerx;
-            let y = r!(j as f32) * shift + centery;
+            let x = r!(i as f64) * shift - centerx;
+            let y = r!(j as f64) * shift + centery;
 
             let mut pts = Vec::with_capacity(npts);
 
             for _ in 0..npts {
                 let pt: Point2<f64> = distribution.sample(&mut rng);
-                pts.push(pt.into_real() * r!(0.4));
+                pts.push(na::convert::<_, Point2<N>>(pt) * r!(0.4));
             }
 
             // Build the rigid body.
@@ -88,6 +88,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Convex", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Convex", init_world)]);
     testbed.run()
 }

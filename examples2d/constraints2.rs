@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point2, UnitComplex, Vector2};
+use na::{Point2, RealField, UnitComplex, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::{
@@ -10,9 +10,9 @@ use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, Testbed};
+use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -50,7 +50,7 @@ pub fn init_world(testbed: &mut Testbed) {
          * Create the rigid body.
          */
         let rb = RigidBodyDesc::new()
-            .translation(Vector2::x() * r!(j + 1) * rad * r!(3.0))
+            .translation(Vector2::x() * r!((j + 1) as f64) * rad * r!(3.0))
             .build();
         let rb_handle = bodies.insert(rb);
         let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
@@ -115,8 +115,8 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0..num {
         for j in 0..num {
-            let mut x = r!(i as f32) * rad * r!(3.0) - width / r!(2.0) + r!(5.0);
-            let y = r!(j as f32) * rad * r!(-3.0) + width / r!(2.0) + r!(4.0);
+            let mut x = r!(i as f64) * rad * r!(3.0) - width / r!(2.0) + r!(5.0);
+            let y = r!(j as f64) * rad * r!(-3.0) + width / r!(2.0) + r!(4.0);
 
             if j % 2 == 0 {
                 x += rad * r!(2.0);
@@ -158,6 +158,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Constraints", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Constraints", init_world)]);
     testbed.run()
 }

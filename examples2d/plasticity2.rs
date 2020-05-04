@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry2, Point2, Point3, Vector2};
+use na::{Isometry2, Point2, Point3, RealField, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -9,9 +9,9 @@ use nphysics2d::object::{
     RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed2d::{r, Testbed};
+use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -112,6 +112,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Plasticity", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Plasticity", init_world)]);
     testbed.run()
 }

@@ -30,7 +30,7 @@ use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::Testbed;
 
 fn main() {
     /*
@@ -73,16 +73,16 @@ fn main() {
     let mut rb_desc = RigidBodyDesc::new().collider(&collider_desc);
 
     let shift = (rad + collider_desc.get_margin()) * r!(2.0);
-    let centerx = shift * r!(num as f32) / r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
     let centery = shift / r!(2.0);
-    let centerz = shift * r!(num as f32) / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = r!(i as f32) * shift - centerx - excentricity;
-                let y = r!(j as f32) * shift + centery - excentricity;
-                let z = r!(k as f32) * shift - centerz - excentricity;
+                let x = r!(i as f64) * shift - centerx - excentricity;
+                let y = r!(j as f64) * shift + centery - excentricity;
+                let z = r!(k as f64) * shift - centerz - excentricity;
 
                 // Build the rigid body and its collider.
                 rb_desc

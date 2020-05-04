@@ -7,7 +7,6 @@ use ncollide::procedural::TriMesh;
 use nphysics::math::Point;
 use nphysics::math::{Isometry, Vector};
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-use simba::scalar::SubsetOf;
 
 pub struct Convex {
     color: Point3<f32>,
@@ -19,7 +18,7 @@ pub struct Convex {
 
 impl Convex {
     #[cfg(feature = "dim2")]
-    pub fn new<N: RealField + SubsetOf<f32>>(
+    pub fn new<N: RealField>(
         collider: DefaultColliderHandle,
         colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
@@ -45,7 +44,9 @@ impl Convex {
             res.gfx.set_lines_width(1.0);
         }
 
-        let pos: Isometry<f32> = na::convert(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f64> =
+            na::convert_unchecked(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f32> = na::convert(pos);
 
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx.set_local_transformation(pos * res.delta);
@@ -55,7 +56,7 @@ impl Convex {
     }
 
     #[cfg(feature = "dim3")]
-    pub fn new<N: RealField + SubsetOf<f32>>(
+    pub fn new<N: RealField>(
         collider: DefaultColliderHandle,
         colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
@@ -81,7 +82,9 @@ impl Convex {
             res.gfx.set_lines_width(1.0);
         }
 
-        let pos: Isometry<f32> = na::convert(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f64> =
+            na::convert_unchecked(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f32> = na::convert(pos);
 
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx.set_local_transformation(pos * res.delta);
@@ -104,7 +107,7 @@ impl Convex {
         self.base_color = color;
     }
 
-    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
+    pub fn update<N: RealField>(&mut self, colliders: &DefaultColliderSet<N>) {
         node::update_scene_node(
             &mut self.gfx,
             colliders,

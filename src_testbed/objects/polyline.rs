@@ -2,7 +2,6 @@ use kiss3d::window::Window;
 use na::{Isometry2, Point2, Point3, RealField};
 use ncollide2d::shape;
 use nphysics2d::object::{ColliderAnchor, DefaultColliderHandle, DefaultColliderSet};
-use simba::scalar::SubsetOf;
 
 pub struct Polyline {
     color: Point3<f32>,
@@ -14,7 +13,7 @@ pub struct Polyline {
 }
 
 impl Polyline {
-    pub fn new<N: RealField + SubsetOf<f32>>(
+    pub fn new<N: RealField>(
         collider: DefaultColliderHandle,
         colliders: &DefaultColliderSet<N>,
         _: Isometry2<f32>,
@@ -49,14 +48,19 @@ impl Polyline {
         self.base_color = color;
     }
 
-    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
+    pub fn update<N: RealField>(&mut self, colliders: &DefaultColliderSet<N>) {
         // Update if some deformation occurred.
         // FIXME: don't update if it did not move.
         if let Some(c) = colliders.get(self.collider) {
-            self.pos = na::convert(*c.position());
+            self.pos = na::convert::<Isometry2<f64>, _>(na::convert_unchecked(*c.position()));
+
             if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
                 let shape = c.shape().as_shape::<shape::Polyline<N>>().unwrap();
-                self.vertices = shape.points().iter().map(|p| na::convert(*p)).collect();
+                self.vertices = shape
+                    .points()
+                    .iter()
+                    .map(|p| na::convert::<Point2<f64>, Point2<f32>>(na::convert_unchecked(*p)))
+                    .collect();
                 self.indices.clear();
 
                 for e in shape.edges() {

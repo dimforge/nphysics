@@ -2,6 +2,12 @@
 
 extern crate nalgebra as na;
 
+macro_rules! r(
+    ($e: expr) => {
+        nalgebra::convert::<f64, N>($e)
+    }
+);
+
 use inflector::Inflector;
 
 use nphysics_testbed2d::Testbed;
@@ -59,6 +65,8 @@ fn demo_name_from_url() -> Option<String> {
 }
 
 fn main() {
+    type Real = f32;
+
     let demo = demo_name_from_command_line()
         .or_else(|| demo_name_from_url())
         .unwrap_or(String::new())
@@ -99,7 +107,7 @@ fn main() {
         .iter()
         .position(|builder| builder.0.to_camel_case().as_str() == demo.as_str())
         .unwrap_or(0);
-    let testbed = Testbed::from_builders(i, builders);
+    let testbed = Testbed::<Real>::from_builders(i, builders);
 
     testbed.run()
 }

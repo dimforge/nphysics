@@ -3,7 +3,6 @@ use kiss3d::window::Window;
 use na::{Point3, RealField};
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-use simba::scalar::SubsetOf;
 
 pub struct Ball {
     color: Point3<f32>,
@@ -14,7 +13,7 @@ pub struct Ball {
 }
 
 impl Ball {
-    pub fn new<N: RealField + SubsetOf<f32>>(
+    pub fn new<N: RealField>(
         collider: DefaultColliderHandle,
         colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
@@ -45,7 +44,9 @@ impl Ball {
             res.gfx.set_lines_width(1.0);
         }
 
-        let pos: Isometry<f32> = na::convert(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f64> =
+            na::convert_unchecked(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f32> = na::convert(pos);
 
         // res.gfx.set_texture_from_file(&Path::new("media/kitten.png"), "kitten");
         res.gfx.set_color(color.x, color.y, color.z);
@@ -69,7 +70,7 @@ impl Ball {
         self.base_color = color;
     }
 
-    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
+    pub fn update<N: RealField>(&mut self, colliders: &DefaultColliderSet<N>) {
         node::update_scene_node(
             &mut self.gfx,
             colliders,

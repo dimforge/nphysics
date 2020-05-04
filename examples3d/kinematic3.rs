@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{ComplexField, Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::{DefaultJointConstraintSet, RevoluteJoint};
@@ -9,9 +9,9 @@ use nphysics3d::object::{
     MultibodyDesc, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Testbed};
+use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -48,16 +48,16 @@ pub fn init_world(testbed: &mut Testbed) {
     let cuboid_collider_desc = ColliderDesc::new(cuboid).density(r!(1.0));
 
     let shift = (rad + cuboid_collider_desc.get_margin()) * r!(2.0);
-    let centerx = shift * r!(num as f32) / r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
     let centery = shift / r!(2.0) + r!(3.04);
-    let centerz = shift * r!(num as f32) / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = r!(i as f32) * shift - centerx;
-                let y = r!(j as f32) * shift + centery;
-                let z = r!(k as f32) * shift - centerz;
+                let x = r!(i as f64) * shift - centerx;
+                let y = r!(j as f64) * shift + centery;
+                let z = r!(k as f64) * shift - centerz;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -164,6 +164,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Kinematic body", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Kinematic body", init_world)]);
     testbed.run()
 }

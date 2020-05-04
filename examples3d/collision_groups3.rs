@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::pipeline::CollisionGroups;
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
@@ -9,9 +9,9 @@ use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
-use nphysics_testbed3d::{r, Real, Testbed};
+use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -83,19 +83,19 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let num = 8;
     let rad = r!(0.1);
-    let shift = (rad + ColliderDesc::<Real>::default_margin()) * r!(2.0);
-    let centerx = shift * r!(num as f32) / r!(2.0);
+    let shift = (rad + ColliderDesc::<N>::default_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
     let centery = r!(2.5);
-    let centerz = shift * r!(num as f32) / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
     for k in 0usize..4 {
         for i in 0usize..num {
             for j in 0usize..num {
-                let x = r!(i as f32) * shift - centerx;
-                let z = r!(j as f32) * shift - centerz;
-                let y = r!(k as f32) * shift + centery;
+                let x = r!(i as f64) * shift - centerx;
+                let z = r!(j as f64) * shift - centerz;
+                let y = r!(k as f64) * shift + centery;
 
                 // Alternate between the GREEN and BLUE groups.
                 let (group, color) = if k % 2 == 0 {
@@ -138,6 +138,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Collision groups", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Collision groups", init_world)]);
     testbed.run()
 }

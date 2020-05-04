@@ -4,8 +4,8 @@ use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 use na::{self, Isometry3, Point3, RealField, Vector3};
 use ncollide::shape::TriMesh;
+use nphysics::math::Isometry;
 use nphysics::object::{ColliderAnchor, DefaultColliderHandle, DefaultColliderSet};
-use simba::scalar::SubsetOf;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -18,7 +18,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn new<N: RealField + SubsetOf<f32>>(
+    pub fn new<N: RealField>(
         collider: DefaultColliderHandle,
         colliders: &DefaultColliderSet<N>,
         delta: Isometry3<f32>,
@@ -50,7 +50,9 @@ impl Mesh {
             res.gfx.set_lines_width(1.0);
         }
 
-        let pos: Isometry3<f32> = na::convert(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f64> =
+            na::convert_unchecked(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f32> = na::convert(pos);
 
         res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
@@ -74,7 +76,7 @@ impl Mesh {
         self.base_color = color;
     }
 
-    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
+    pub fn update<N: RealField>(&mut self, colliders: &DefaultColliderSet<N>) {
         node::update_scene_node(
             &mut self.gfx,
             colliders,
@@ -92,7 +94,7 @@ impl Mesh {
 
                 self.gfx.modify_vertices(&mut |vertices| {
                     for (v, new_v) in vertices.iter_mut().zip(vtx.iter()) {
-                        *v = na::convert(*new_v);
+                        *v = na::convert::<Point3<f64>, Point3<f32>>(na::convert_unchecked(*new_v));
                     }
                 });
                 self.gfx.recompute_normals();
