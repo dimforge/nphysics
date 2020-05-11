@@ -73,11 +73,13 @@ pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
                 let rb_handle = bodies.insert(rb);
 
                 // Build the collider.
-                let geom = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
-                let co = ColliderDesc::new(geom)
-                    .density(r!(1.0))
-                    .build(BodyPartHandle(rb_handle, 0));
-                colliders.insert(co);
+                if let Some(chull) = ConvexHull::try_from_points(&pts) {
+                    let geom = ShapeHandle::new(chull);
+                    let co = ColliderDesc::new(geom)
+                        .density(r!(1.0))
+                        .build(BodyPartHandle(rb_handle, 0));
+                    colliders.insert(co);
+                }
             }
         }
     }

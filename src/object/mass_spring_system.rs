@@ -60,7 +60,7 @@ impl<N: RealField> Spring<N> {
 
         Spring {
             nodes,
-            dir: Unit::new_normalize(p1 - p0),
+            dir: Unit::try_new(p1 - p0, N::zero()).unwrap_or(Vector::y_axis()),
             length: rest_length,
             rest_length,
             stiffness,

@@ -98,7 +98,7 @@ impl<N: RealField> Inertia3<N> {
 
         // NOTE: the fixed-point number may not have enough bits to
         // compute the determinant so a simple preconditioning helps.
-        let mut diag = self.angular.diagonal();
+        let diag = self.angular.diagonal();
         let mut preconditioned = self.angular;
 
         // NOTE: we can't precompute inv_diag = diag.map(|e| 1 / e)

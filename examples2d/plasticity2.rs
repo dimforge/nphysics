@@ -2,6 +2,7 @@ extern crate nalgebra as na;
 
 use na::{Isometry2, Point2, Point3, RealField, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
+use nphysics2d::algebra::Velocity2;
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::object::{
@@ -37,10 +38,18 @@ pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     ];
 
     let mut platforms = Vec::new();
+    let platform_vel_magnitude = r!(0.1);
 
     for (i, pos) in positions.iter().enumerate() {
+        let velocity = if i % 2 == 0 {
+            Velocity2::linear(r!(0.0), -platform_vel_magnitude)
+        } else {
+            Velocity2::linear(r!(0.0), platform_vel_magnitude)
+        };
+
         let platform = RigidBodyDesc::new()
             .position(*pos)
+            .velocity(velocity)
             .status(BodyStatus::Kinematic)
             .build();
         platforms.push(bodies.insert(platform));
@@ -87,20 +96,19 @@ pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
             let platform_y = platform.position().translation.vector.y;
 
             let mut vel = *platform.velocity();
-            let vel_magnitude = r!(0.1);
             let max_traversal = r!(0.005);
 
             if i % 2 == 0 {
                 if platform_y <= -max_traversal {
-                    vel.linear.y = vel_magnitude;
+                    vel.linear.y = platform_vel_magnitude;
                 } else if platform_y >= platform_height {
-                    vel.linear.y = -vel_magnitude;
+                    vel.linear.y = -platform_vel_magnitude;
                 }
             } else {
                 if platform_y >= max_traversal {
-                    vel.linear.y = -vel_magnitude;
+                    vel.linear.y = -platform_vel_magnitude;
                 } else if platform_y <= -platform_height {
-                    vel.linear.y = vel_magnitude;
+                    vel.linear.y = platform_vel_magnitude;
                 }
             }
 

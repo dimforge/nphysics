@@ -582,10 +582,6 @@ impl<N: RealField> Body<N> for RigidBody<N> {
                 // NOTE: if we did not have the gyroscopic forces, we would not have to invert the inertia
                 // matrix at each time-step => add a flag to disable gyroscopic forces?
                 self.inv_augmented_mass = self.augmented_mass.inverse();
-
-                println!("Local inertia: {:?}", self.local_inertia);
-                println!("Global inertia: {:?}", self.inertia);
-                println!("Inv augmented mass: {:?}", self.inv_augmented_mass);
             }
             _ => {}
         }

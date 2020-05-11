@@ -18,7 +18,7 @@ dim3    = [ ]
 
 # Improve numerical stability when working with fixed-point numbers
 # so we don't need a too large number of decimals.
-improved_fixed_point_support = [ ]
+improved_fixed_point_support = [ "ncollide3d/improved_fixed_point_support" ]
 
 [lib]
 name = "nphysics3d"
