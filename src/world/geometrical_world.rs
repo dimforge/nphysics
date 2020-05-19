@@ -32,10 +32,7 @@ pub struct GeometricalWorld<N: RealField, Handle: BodyHandle, CollHandle: Collid
     pub(crate) narrow_phase: NarrowPhase<N, CollHandle>,
     /// The graph of interactions detected so far.
     pub(crate) interactions: InteractionGraph<N, CollHandle>,
-    /// A user-defined broad-phase pair filter.
-    // FIXME: we don't actually use this currently.
-    //    pub(crate) pair_filters:
-    //        Option<Box<dyn BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
+    pair_filter: DefaultCollisionFilter<N, Handle, CollHandle>,
     pub(crate) body_colliders: HashMap<Handle, Vec<CollHandle>>,
 }
 
@@ -47,11 +44,13 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     where
         BF: BroadPhase<N, AABB<N>, CollHandle>,
     {
+        let pair_filter = DefaultCollisionFilter { user_filter: None };
+
         GeometricalWorld {
             broad_phase: Box::new(broad_phase),
             narrow_phase,
             interactions: InteractionGraph::new(),
-            //            pair_filters: None,
+            pair_filter,
             body_colliders: HashMap::new(),
         }
     }
@@ -285,23 +284,25 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     pub fn clear_events(&mut self) {
         self.narrow_phase.clear_events()
     }
-    /*
-    /// Adds a filter that tells if a potential collision pair should be ignored or not.
+
+    /// Sets the filter use to select valid broad-phase pair.
     ///
-    /// The proximity filter returns `false` for a given pair of colliders if they should
-    /// be ignored by the narrow phase. Keep in mind that modifying the proximity filter will have
-    /// a non-trivial overhead during the next update as it will force re-detection of all
-    /// collision pairs.
-    pub fn register_broad_phase_pair_filter<F>(&mut self, name: &str, filter: F)
-        where F: BroadPhasePairFilter<N, ColliderData<N>> {
-        self.gworld.register_broad_phase_pair_filter(name, filter)
+    /// This filter will be combined with the default filter of nphysics that
+    /// prevents contact between static bodies and between a body part and itself.
+    pub fn set_broad_phase_pair_filter<F>(&mut self, filter: F)
+    where
+        F: BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>,
+    {
+        self.pair_filter.user_filter = Some(Box::new(filter));
     }
 
-    /// Removes the pair filter named `name`.
-    pub fn unregister_broad_phase_pair_filter(&mut self, name: &str) {
-        self.gworld.unregister_broad_phase_pair_filter(name)
+    /// Removes the filter use to select valid broad-phase pair.
+    ///
+    /// This will not remove the default filter of nphysics that
+    /// prevents contact between static bodies and between a body part and itself.
+    pub fn remove_broad_phase_pair_filter(&mut self) {
+        self.pair_filter.user_filter = None;
     }
-    */
 
     /// Executes the broad phase of the collision detection pipeline.
     pub fn perform_broad_phase<Colliders>(&mut self, colliders: &Colliders)
@@ -313,8 +314,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             &mut *self.broad_phase,
             &mut self.narrow_phase,
             &mut self.interactions,
-            Some(&DefaultCollisionFilter),
-            //            self.pair_filters.as_ref().map(|f| &**f)
+            Some(&self.pair_filter),
         )
     }
 
@@ -870,17 +870,20 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     }
 }
 
-struct DefaultCollisionFilter;
+struct DefaultCollisionFilter<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
+    user_filter: Option<Box<dyn BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
+}
 
 impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
-    BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle> for DefaultCollisionFilter
+    BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>
+    for DefaultCollisionFilter<N, Handle, CollHandle>
 {
     fn is_pair_valid(
         &self,
         c1: &Collider<N, Handle>,
         c2: &Collider<N, Handle>,
-        _: CollHandle,
-        _: CollHandle,
+        h1: CollHandle,
+        h2: CollHandle,
     ) -> bool {
         match (c1.anchor(), c2.anchor()) {
             (
@@ -898,6 +901,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             _ => {}
         }
 
-        c1.body_status_dependent_ndofs() != 0 || c2.body_status_dependent_ndofs() != 0
+        (c1.body_status_dependent_ndofs() != 0 || c2.body_status_dependent_ndofs() != 0)
+            && self
+                .user_filter
+                .as_ref()
+                .map(|f| f.is_pair_valid(c1, c2, h1, h2))
+                .unwrap_or(true)
     }
 }

@@ -8,6 +8,7 @@ use nphysics_testbed2d::Testbed;
 
 mod balls2;
 mod boxes2;
+mod broad_phase_filter2;
 mod capsules2;
 mod ccd2;
 mod ccd_trigger2;
@@ -67,6 +68,7 @@ fn main() {
     let mut builders: Vec<(_, fn(&mut Testbed))> = vec![
         ("Balls", balls2::init_world),
         ("Boxes", boxes2::init_world),
+        ("Broad-phase filter", broad_phase_filter2::init_world),
         ("Capsules", capsules2::init_world),
         ("CCD", ccd2::init_world),
         ("CCD Trigger", ccd_trigger2::init_world),
