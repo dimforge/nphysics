@@ -11,6 +11,7 @@ use nphysics_testbed3d::Testbed;
 
 mod balls3;
 mod boxes3;
+mod broad_phase_filter3;
 mod capsules3;
 mod ccd3;
 mod collision_groups3;
@@ -70,6 +71,7 @@ fn main() {
     let mut builders: Vec<(_, fn(&mut Testbed))> = vec![
         ("Balls", balls3::init_world),
         ("Boxes", boxes3::init_world),
+        ("Broad-phase filter", broad_phase_filter3::init_world),
         ("Capsules", capsules3::init_world),
         ("CCD", ccd3::init_world),
         ("Collision Groups", collision_groups3::init_world),
