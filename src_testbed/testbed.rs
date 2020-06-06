@@ -325,6 +325,7 @@ impl<N: RealField> Testbed<N> {
         self.colliders = colliders;
         self.constraints = joint_constraints;
         self.forces = force_generators;
+        self.time = N::zero();
         self.state
             .action_flags
             .set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
