@@ -776,6 +776,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
 
 impl<N: RealField> Body<N> for Multibody<N> {
     #[inline]
+    fn num_parts(&self) -> usize {
+        self.rbs.len()
+    }
+
+    #[inline]
     fn part(&self, id: usize) -> Option<&dyn BodyPart<N>> {
         self.link(id).map(|l| l as &dyn BodyPart<N>)
     }

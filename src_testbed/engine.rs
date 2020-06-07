@@ -372,7 +372,7 @@ impl GraphicsManager {
     ) {
         let color = self.ground_color;
         let node = FluidNode::new(
-            na::convert(particle_radius),
+            na::convert_unchecked(particle_radius) as f32,
             &boundary.positions,
             color,
             window,
@@ -390,7 +390,7 @@ impl GraphicsManager {
         color: Point3<f32>,
     ) {
         let node = FluidNode::new(
-            na::convert(particle_radius),
+            na::convert_unchecked(particle_radius) as f32,
             &fluid.positions,
             color,
             window,

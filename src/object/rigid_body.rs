@@ -619,8 +619,17 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn part(&self, _: usize) -> Option<&dyn BodyPart<N>> {
-        Some(self)
+    fn num_parts(&self) -> usize {
+        1
+    }
+
+    #[inline]
+    fn part(&self, i: usize) -> Option<&dyn BodyPart<N>> {
+        if i == 0 {
+            Some(self)
+        } else {
+            None
+        }
     }
 
     #[inline]

@@ -38,7 +38,8 @@ impl Fluid {
             let mut ball_gfx = gfx.add_circle(radius);
             #[cfg(feature = "dim3")]
             let mut ball_gfx = gfx.add_sphere(radius);
-            let c: Vector<f32> = na::convert(c.coords);
+            let c: Vector<f64> = na::convert_unchecked(c.coords);
+            let c: Vector<f32> = na::convert(c);
             ball_gfx.set_local_translation(c.into());
             balls_gfx.push(ball_gfx);
         }
@@ -91,7 +92,8 @@ impl Fluid {
 
         for (i, (pt, ball)) in centers.iter().zip(self.balls_gfx.iter_mut()).enumerate() {
             ball.set_visible(true);
-            let c: Vector<f32> = na::convert(pt.coords);
+            let c: Vector<f64> = na::convert_unchecked(pt.coords);
+            let c: Vector<f32> = na::convert(c);
             ball.set_local_translation(c.into());
 
             let color = match mode {
@@ -99,7 +101,8 @@ impl Fluid {
                 FluidRenderingMode::VelocityColor { min, max } => {
                     let start = self.base_color.coords;
                     let end = Vector3::new(1.0, 0.0, 0.0);
-                    let vel: Vector<f32> = na::convert(velocities[i]);
+                    let vel: Vector<f64> = na::convert_unchecked(velocities[i]);
+                    let vel: Vector<f32> = na::convert(vel);
                     let t = (vel.norm() - min) / (max - min);
                     start.lerp(&end, na::clamp(t, 0.0, 1.0)).into()
                 }

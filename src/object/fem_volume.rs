@@ -909,6 +909,10 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         self.activation.set_deactivation_threshold(threshold)
     }
 
+    fn num_parts(&self) -> usize {
+        self.elements.len()
+    }
+
     fn part(&self, id: usize) -> Option<&dyn BodyPart<N>> {
         self.elements.get(id).map(|e| e as &dyn BodyPart<N>)
     }

@@ -504,6 +504,10 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         self.velocities.fill(N::zero());
     }
 
+    fn num_parts(&self) -> usize {
+        self.elements.len()
+    }
+
     fn part(&self, id: usize) -> Option<&dyn BodyPart<N>> {
         self.elements.get(id).map(|e| e as &dyn BodyPart<N>)
     }
