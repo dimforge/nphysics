@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -13,11 +13,15 @@ use nphysics_testbed3d::Testbed;
 use rand::thread_rng;
 use rand_distr::{Distribution, Normal};
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -32,22 +36,22 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let make_fourier = || {
         let mut rng = thread_rng();
-        let a0 = distribution.sample(&mut rng) as f32;
-        let a1 = distribution.sample(&mut rng) as f32;
-        let b1 = distribution.sample(&mut rng) as f32;
-        let a2 = distribution.sample(&mut rng) as f32;
-        let b2 = distribution.sample(&mut rng) as f32;
-        let a3 = distribution.sample(&mut rng) as f32;
-        let b3 = distribution.sample(&mut rng) as f32;
-        let tau: f32 = 6.283185307179586 / 50f32;
-        move |t: f32| {
-            0.5 * a0
+        let a0 = r!(distribution.sample(&mut rng));
+        let a1 = r!(distribution.sample(&mut rng));
+        let b1 = r!(distribution.sample(&mut rng));
+        let a2 = r!(distribution.sample(&mut rng));
+        let b2 = r!(distribution.sample(&mut rng));
+        let a3 = r!(distribution.sample(&mut rng));
+        let b3 = r!(distribution.sample(&mut rng));
+        let tau: N = r!(6.283185307179586 / 50.0);
+        move |t: N| {
+            r!(0.5) * a0
                 + a1 * (tau * t).cos()
                 + b1 * (tau * t).sin()
-                + a2 * (2.0 * tau * t).cos()
-                + b2 * (2.0 * tau * t).sin()
-                + a3 * (3.0 * tau * t).cos()
-                + b3 * (3.0 * tau * t).sin()
+                + a2 * (r!(2.0) * tau * t).cos()
+                + b2 * (r!(2.0) * tau * t).sin()
+                + a3 * (r!(3.0) * tau * t).cos()
+                + b3 * (r!(3.0) * tau * t).sin()
         }
     };
     let fourier_x = make_fourier();
@@ -56,7 +60,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Setup a random ground.
      */
-    let quad = ncollide3d::procedural::quad(20.0, 20.0, 100, 100);
+    let quad = ncollide3d::procedural::quad(r!(20.0), r!(20.0), 100, 100);
     let indices = quad
         .flat_indices()
         .chunks(3)
@@ -72,7 +76,7 @@ pub fn init_world(testbed: &mut Testbed) {
         p.y = fourier_x(p.x) + fourier_y(p.z);
     }
 
-    let trimesh: TriMesh<f32> = TriMesh::new(vertices, indices, None);
+    let trimesh: TriMesh<N> = TriMesh::new(vertices, indices, None);
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ShapeHandle::new(trimesh)).build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
@@ -81,21 +85,21 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create some boxes and spheres.
      */
     let num = 7;
-    let rad = 0.1;
-    let shift = rad * 2.0 + 0.5;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0;
-    let centerz = shift * (num as f32) / 2.0;
-    let height = 2.0;
+    let rad = r!(0.1);
+    let shift = rad * r!(2.0) + r!(0.5);
+    let centerx = shift * r!(num as f64) / r!(2.0);
+    let centery = shift / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
+    let height = r!(2.0);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery + height;
-                let z = k as f32 * shift - centerz;
+                let x = r!(i as f64) * shift - centerx;
+                let y = r!(j as f64) * shift + centery + height;
+                let z = r!(k as f64) * shift - centerz;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -105,7 +109,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
                 // Build the collider.
                 let co = ColliderDesc::new(cuboid.clone())
-                    .density(1.0)
+                    .density(r!(1.0))
                     .build(BodyPartHandle(rb_handle, 0));
                 colliders.insert(co);
             }
@@ -128,7 +132,7 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Triangle mesh", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Triangle mesh", init_world)]);
 
     testbed.run()
 }

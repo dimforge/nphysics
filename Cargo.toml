@@ -3,7 +3,8 @@ members = [ "build/nphysics2d", "build/nphysics_testbed2d", "examples2d",
             "build/nphysics3d", "build/nphysics_testbed3d", "examples3d", ]
 
 [profile.release]
-#lto = true
+debug = true
+lto = true
 codegen-units = 1
 
 [patch.crates-io]
@@ -12,3 +13,5 @@ codegen-units = 1
 #kiss3d = { path = "../kiss3d" }
 nphysics2d = { path = "build/nphysics2d" }
 nphysics3d = { path = "build/nphysics3d" }
+#simba = { path = "../simba" }
+#cordic = { path = "../cordic/cordic" }

@@ -302,7 +302,13 @@ impl<N: RealField> RigidBody<N> {
 
     /// Sets the position of this rigid body.
     #[inline]
-    pub fn set_position(&mut self, pos: Isometry<N>) {
+    pub fn set_position(&mut self, mut pos: Isometry<N>) {
+        // Systematic renormalization is necessary with
+        // fixed-points numbers to prevent errors from
+        // increasing quickly.
+        #[cfg(feature = "improved_fixed_point_support")]
+        let _ = pos.rotation.renormalize();
+
         self.update_status.set_position_changed(true);
         self.position = pos;
         self.com = pos * self.local_com;

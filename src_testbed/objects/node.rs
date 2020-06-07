@@ -12,7 +12,6 @@ use kiss3d::window::Window;
 use na::{Point3, RealField};
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-use simba::scalar::SubsetOf;
 
 #[cfg(feature = "dim2")]
 pub type GraphicsNode = kiss3d::scene::PlanarSceneNode;
@@ -63,7 +62,7 @@ impl Node {
         }
     }
 
-    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
+    pub fn update<N: RealField>(&mut self, colliders: &DefaultColliderSet<N>) {
         match *self {
             Node::Plane(ref mut n) => n.update(colliders),
             Node::Ball(ref mut n) => n.update(colliders),
@@ -155,7 +154,7 @@ impl Node {
     }
 }
 
-pub fn update_scene_node<N: RealField + SubsetOf<f32>>(
+pub fn update_scene_node<N: RealField>(
     node: &mut GraphicsNode,
     colliders: &DefaultColliderSet<N>,
     coll: DefaultColliderHandle,
@@ -163,7 +162,8 @@ pub fn update_scene_node<N: RealField + SubsetOf<f32>>(
     delta: &Isometry<f32>,
 ) {
     if let Some(co) = colliders.get(coll) {
-        let pos: Isometry<f32> = na::convert(*co.position());
+        let pos =
+            na::convert::<Isometry<f64>, Isometry<f32>>(na::convert_unchecked(*co.position()));
         node.set_local_transformation(pos * delta);
         node.set_color(color.x, color.y, color.z);
     } else {

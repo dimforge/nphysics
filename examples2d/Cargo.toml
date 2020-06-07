@@ -6,13 +6,14 @@ edition = "2018"
 
 [features]
 box2d-backend = [ "nphysics_testbed2d/box2d-backend" ]
-
+improved_fixed_point_support = [ "nphysics2d/improved_fixed_point_support" ]
 
 [dependencies]
 rand       = "0.7"
 Inflector  = "0.11"
 nalgebra   = "0.21"
 ncollide2d = "0.23"
+simba      = { version = "0.1", features = [ "partial_fixed_point_support" ]}
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = "0.4"
@@ -32,99 +33,3 @@ path = "../build/nphysics2d"
 [[bin]]
 name = "all_examples2"
 path = "./all_examples2.rs"
-
-[[bin]]
-name = "ccd2"
-path = "./ccd2.rs"
-
-[[bin]]
-name = "balls2"
-path = "./balls2.rs"
-
-[[bin]]
-name = "conveyor_belt2"
-path = "./conveyor_belt2.rs"
-
-[[bin]]
-name = "kinematic2"
-path = "./kinematic2.rs"
-
-[[bin]]
-name = "boxes2"
-path = "./boxes2.rs"
-
-[[bin]]
-name = "capsules2"
-path = "./capsules2.rs"
-
-[[bin]]
-name = "collision_groups2"
-path = "./collision_groups2.rs"
-
-[[bin]]
-name = "compound2"
-path = "./compound2.rs"
-
-[[bin]]
-name = "constraints2"
-path = "./constraints2.rs"
-
-[[bin]]
-name = "convex2"
-path = "./convex2.rs"
-
-[[bin]]
-name = "cross2"
-path = "./cross2.rs"
-
-#[[bin]]
-#name = "disable_sleeping2"
-#path = "./disable_sleeping2.rs"
-
-[[bin]]
-name = "force_generator2"
-path = "./force_generator2.rs"
-
-[[bin]]
-name = "multibody2"
-path = "./multibody2.rs"
-
-[[bin]]
-name = "polyline2"
-path = "./polyline2.rs"
-
-[[bin]]
-name = "heightfield2"
-path = "./heightfield2.rs"
-
-[[bin]]
-name = "pyramid2"
-path = "./pyramid2.rs"
-
-[[bin]]
-name = "ragdoll2"
-path = "./ragdoll2.rs"
-
-[[bin]]
-name = "sensor2"
-path = "./sensor2.rs"
-
-[[bin]]
-name = "wall2"
-path = "./wall2.rs"
-
-[[bin]]
-name = "mass_spring_system2"
-path = "./mass_spring_system2.rs"
-
-[[bin]]
-name = "mass_constraint_system2"
-path = "./mass_constraint_system2.rs"
-
-[[bin]]
-name = "fem_surface2"
-path = "./fem_surface2.rs"
-
-[[bin]]
-name = "plasticity2"
-path = "./plasticity2.rs"

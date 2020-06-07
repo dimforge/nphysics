@@ -2,7 +2,7 @@ extern crate nalgebra as na;
 
 use std::f32;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -13,7 +13,11 @@ use nphysics3d::object::{
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -28,27 +32,27 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the balls
      */
     let num = 10;
-    let rad = 0.2;
+    let rad = r!(0.2);
 
     let cube = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
-    let subdiv = 1.0 / (num as f32);
+    let subdiv = r!(1.0 / (num as f64));
 
     for i in 0usize..num {
-        let (x, y) = (i as f32 * subdiv * f32::consts::PI * 2.0).sin_cos();
-        let dir = Vector3::new(x, y, 0.0);
+        let (x, y) = (r!(i as f64) * subdiv * r!(std::f64::consts::PI) * r!(2.0)).sin_cos();
+        let dir = Vector3::new(x, y, r!(0.0));
 
         // Build the rigid body.
         let rb = RigidBodyDesc::new()
             .translation(dir)
-            .velocity(Velocity::new(dir * 10.0, Vector3::z() * 100.0))
-            .linear_damping((i + 1) as f32 * subdiv * 10.0)
-            .angular_damping((num - i) as f32 * subdiv * 10.0)
+            .velocity(Velocity::new(dir * r!(10.0), Vector3::z() * r!(100.0)))
+            .linear_damping(r!((i + 1) as f64) * subdiv * r!(10.0))
+            .angular_damping(r!((num - i) as f64) * subdiv * r!(10.0))
             .build();
         let rb_handle = bodies.insert(rb);
 
         // Build the collider.
         let co = ColliderDesc::new(cube.clone())
-            .density(1.0)
+            .density(r!(1.0))
             .build(BodyPartHandle(rb_handle, 0));
         colliders.insert(co);
     }
@@ -71,6 +75,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Damping", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Damping", init_world)]);
     testbed.run()
 }

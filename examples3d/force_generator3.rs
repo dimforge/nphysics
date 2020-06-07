@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::shape::{Ball, Plane, ShapeHandle};
 use nphysics3d::force_generator::{ConstantAcceleration, DefaultForceGeneratorSet};
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -10,7 +10,11 @@ use nphysics3d::object::{
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -22,8 +26,8 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut force_generators = DefaultForceGeneratorSet::new();
 
     // We setup two force generators that will replace the gravity.
-    let mut up_gravity = ConstantAcceleration::new(Vector3::y() * 9.81, Vector3::zeros());
-    let mut down_gravity = ConstantAcceleration::new(Vector3::y() * -9.81, Vector3::zeros());
+    let mut up_gravity = ConstantAcceleration::new(Vector3::y() * r!(9.81), Vector3::zeros());
+    let mut down_gravity = ConstantAcceleration::new(Vector3::y() * r!(-9.81), Vector3::zeros());
 
     /*
      * Planes
@@ -37,7 +41,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let plane = ShapeHandle::new(Plane::new(-Vector3::y_axis()));
     let co = ColliderDesc::new(plane)
-        .translation(Vector3::y() * 20.0)
+        .translation(Vector3::y() * r!(20.0))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -45,19 +49,19 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the balls
      */
     let num = 1000f64.sqrt() as usize;
-    let rad = 0.1;
-    let shift = 0.25 * rad;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = 0.5;
+    let rad = r!(0.1);
+    let shift = r!(0.25) * rad;
+    let centerx = shift * r!(num as f64) / r!(2.0);
+    let centery = r!(0.5);
 
     let ball = ShapeHandle::new(Ball::new(rad));
 
     for i in 0usize..num {
         for j in 0usize..2 {
             for k in 0usize..num {
-                let x = i as f32 * 2.5 * rad - centerx;
-                let y = 1.0 + j as f32 * 2.5 * rad + centery;
-                let z = k as f32 * 2.5 * rad - centerx;
+                let x = r!(i as f64) * r!(2.5) * rad - centerx;
+                let y = r!(1.0) + r!(j as f64) * r!(2.5) * rad + centery;
+                let z = r!(k as f64) * r!(2.5) * rad - centerx;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -67,7 +71,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
                 // Build the collider.
                 let co = ColliderDesc::new(ball.clone())
-                    .density(1.0)
+                    .density(r!(1.0))
                     .build(BodyPartHandle(rb_handle, 0));
                 colliders.insert(co);
 
@@ -111,6 +115,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Force generators", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Force generators", init_world)]);
     testbed.run()
 }

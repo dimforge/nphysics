@@ -27,17 +27,16 @@ extern crate nphysics_testbed3d;
 
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, Plane, ShapeHandle};
-use nphysics3d::world::World;
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
-
 
 fn main() {
     /*
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+    world.set_gravity(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
 
     /*
      * Plane
@@ -48,14 +47,13 @@ fn main() {
     /*
      * Create the box
      */
-    let rad = 0.1;
+    let rad = r!(0.1);
     let x = rad;
     let y = rad + 10.0;
     let z = rad;
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::new(rad, rad * 10.0, rad)));
-    let collider_desc = ColliderDesc::new(geom)
-        .density(1.0);
+    let collider_desc = ColliderDesc::new(geom).density(r!(1.0));
 
     RigidBodyDesc::new()
         .collider(&collider_desc)

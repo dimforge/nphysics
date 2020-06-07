@@ -1,6 +1,5 @@
 use kiss3d::conrod::{self, Borderable, Colorable, Labelable, Positionable, Sizeable, Widget};
 use kiss3d::window::Window;
-use simba::scalar::{SubsetOf, SupersetOf};
 
 use crate::testbed::{RunMode, TestbedActionFlags, TestbedState, TestbedStateFlags};
 use na::RealField;
@@ -88,7 +87,7 @@ impl TestbedUi {
         }
     }
 
-    pub fn update<N: RealField + SubsetOf<f32> + SupersetOf<f32>>(
+    pub fn update<N: RealField>(
         &mut self,
         window: &mut Window,
         world: &mut DefaultMechanicalWorld<N>,
@@ -233,7 +232,7 @@ impl TestbedUi {
         let curr_max_ccd_substeps = world.integration_parameters.max_ccd_substeps;
         let curr_warmstart_coeff = world.integration_parameters.warmstart_coeff;
         let curr_frequency =
-            na::convert::<_, f32>(world.integration_parameters.inv_dt().round()) as usize;
+            na::convert_unchecked::<_, f64>(world.integration_parameters.inv_dt().round()) as usize;
 
         conrod::widget::Text::new("Vel. Iters.:")
             .down_from(self.ids.separator1, VSPACE)
@@ -281,12 +280,13 @@ impl TestbedUi {
             .down_from(self.ids.slider_ccd_substeps, VSPACE)
             .set(self.ids.title_warmstart_coeff, &mut ui);
 
-        for val in conrod::widget::Slider::new(na::convert(curr_warmstart_coeff), 0.0, 1.0)
-            .label(&format!("{:.2}", curr_warmstart_coeff))
-            .align_middle_x_of(self.ids.canvas)
-            .down_from(self.ids.title_warmstart_coeff, TITLE_VSPACE)
-            .w_h(ELEMENT_W, ELEMENT_H)
-            .set(self.ids.slider_warmstart_coeff, &mut ui)
+        for val in
+            conrod::widget::Slider::new(na::convert_unchecked(curr_warmstart_coeff), 0.0, 1.0)
+                .label(&format!("{:.2}", curr_warmstart_coeff))
+                .align_middle_x_of(self.ids.canvas)
+                .down_from(self.ids.title_warmstart_coeff, TITLE_VSPACE)
+                .w_h(ELEMENT_W, ELEMENT_H)
+                .set(self.ids.slider_warmstart_coeff, &mut ui)
         {
             world.integration_parameters.warmstart_coeff = na::convert(val);
         }
@@ -304,7 +304,7 @@ impl TestbedUi {
         {
             world
                 .integration_parameters
-                .set_inv_dt(na::convert(val.round()));
+                .set_inv_dt(na::convert(val.round() as f64));
         }
 
         let toggle_list = [

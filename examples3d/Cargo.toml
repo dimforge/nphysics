@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 edition = "2018"
 
+[features]
+improved_fixed_point_support = [ "nphysics3d/improved_fixed_point_support" ]
+
+
 [dependencies]
 rand       = { version = "0.7", features = [ "stdweb" ] }
 rand_distr = "0.2"
@@ -12,6 +16,7 @@ Inflector  = "0.11"
 nalgebra   = "0.21"
 ncollide3d = "0.23"
 kiss3d     = "0.24"
+simba      = { version = "0.1", features = [ "partial_fixed_point_support" ]}
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = "0.4"
@@ -31,112 +36,3 @@ path = "../build/nphysics_testbed3d"
 [[bin]]
 name = "all_examples3"
 path = "./all_examples3.rs"
-
-[[bin]]
-name = "plasticity3"
-path = "./plasticity3.rs"
-
-[[bin]]
-name = "collision_groups3"
-path = "./collision_groups3.rs"
-
-[[bin]]
-name = "multibody3"
-path = "./multibody3.rs"
-
-[[bin]]
-name = "balls3"
-path = "./balls3.rs"
-
-[[bin]]
-name = "kinematic3"
-path = "./kinematic3.rs"
-
-[[bin]]
-name = "boxes3"
-path = "./boxes3.rs"
-
-[[bin]]
-name = "capsules3"
-path = "./capsules3.rs"
-
-[[bin]]
-name = "compound3"
-path = "./compound3.rs"
-
-[[bin]]
-name = "constraints3"
-path = "./constraints3.rs"
-
-#[[bin]]
-#name = "convex_decomposition3"
-#path = "./convex_decomposition3.rs"
-
-[[bin]]
-name = "conveyor_belt3"
-path = "./conveyor_belt3.rs"
-
-[[bin]]
-name = "convex3"
-path = "./convex3.rs"
-
-[[bin]]
-name = "cross3"
-path = "./cross3.rs"
-
-[[bin]]
-name = "dzhanibekov3"
-path = "./dzhanibekov3.rs"
-
-#[[bin]]
-#name = "fixed_bug_long_thin_box_one_shot_manifold3"
-#path = "./fixed_bug_long_thin_box_one_shot_manifold3.rs"
-
-#[[bin]]
-#name = "fixed_bug_tree_like_multibody3"
-#path = "./fixed_bug_tree_like_multibody3.rs"
-
-[[bin]]
-name = "force_generator3"
-path = "./force_generator3.rs"
-
-#[[bin]]
-#name = "known_bug_excentric_convex3"
-#path = "./known_bug_excentric_convex3.rs"
-
-[[bin]]
-name = "pyramid3"
-path = "./pyramid3.rs"
-
-[[bin]]
-name = "ragdoll3"
-path = "./ragdoll3.rs"
-
-[[bin]]
-name = "sensor3"
-path = "./sensor3.rs"
-
-[[bin]]
-name = "trimesh3"
-path = "./trimesh3.rs"
-
-[[bin]]
-name = "heightfield3"
-path = "./heightfield3.rs"
-
-[[bin]]
-name = "wall3"
-path = "./wall3.rs"
-
-[[bin]]
-name = "fem_volume3"
-path = "./fem_volume3.rs"
-
-
-[[bin]]
-name = "mass_spring_system3"
-path = "./mass_spring_system3.rs"
-
-[[bin]]
-name = "mass_constraint_system3"
-path = "./mass_constraint_system3.rs"

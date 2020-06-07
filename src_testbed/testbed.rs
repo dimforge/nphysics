@@ -1,6 +1,5 @@
 #[cfg(feature = "dim3")]
 use num::Bounded;
-use simba::scalar::{SubsetOf, SupersetOf};
 use std::collections::HashMap;
 use std::env;
 use std::mem;
@@ -20,6 +19,8 @@ use kiss3d::planar_camera::PlanarCamera;
 use kiss3d::post_processing::PostProcessingEffect;
 use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
+#[cfg(feature = "dim2")]
+use na::Vector2;
 use na::{self, Point2, Point3, RealField, Vector3};
 use ncollide::pipeline::CollisionGroups;
 #[cfg(feature = "dim3")]
@@ -29,6 +30,7 @@ use nphysics::force_generator::DefaultForceGeneratorSet;
 use nphysics::joint::{DefaultJointConstraintHandle, DefaultJointConstraintSet, MouseConstraint};
 #[cfg(feature = "dim3")]
 use nphysics::math::ForceType;
+use nphysics::math::Point;
 #[cfg(feature = "dim2")]
 use nphysics::object::ColliderAnchor;
 use nphysics::object::{
@@ -180,7 +182,7 @@ type CallbacksFluids<N> = Vec<
     >,
 >;
 
-impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
+impl<N: RealField> Testbed<N> {
     pub fn new_empty() -> Self {
         let graphics = GraphicsManager::new();
 
@@ -323,6 +325,7 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
         self.colliders = colliders;
         self.constraints = joint_constraints;
         self.forces = force_generators;
+        self.time = N::zero();
         self.state
             .action_flags
             .set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
@@ -624,8 +627,10 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
 
                 if let Some(start) = self.state.drawing_ray {
                     self.graphics.add_ray(Ray::new(
-                        na::convert(start),
-                        na::convert(self.cursor_pos - start),
+                        na::convert::<Point2<f64>, _>(na::convert_unchecked(start)),
+                        na::convert::<Vector2<f64>, _>(na::convert_unchecked(
+                            self.cursor_pos - start,
+                        )),
                     ));
                 }
 
@@ -634,14 +639,16 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
                 self.state.grabbed_object_constraint = None;
             }
             WindowEvent::CursorPos(x, y, modifiers) => {
-                self.cursor_pos.x = na::convert(x as f32);
-                self.cursor_pos.y = na::convert(y as f32);
+                self.cursor_pos.x = na::convert(x);
+                self.cursor_pos.y = na::convert(y);
 
-                self.cursor_pos = na::convert(
-                    self.graphics
-                        .camera()
-                        .unproject(&na::convert(self.cursor_pos), &na::convert(window.size())),
-                );
+                self.cursor_pos =
+                    na::convert::<Point2<f64>, _>(na::convert(self.graphics.camera().unproject(
+                        &na::convert::<Point2<f64>, Point2<f32>>(na::convert_unchecked(
+                            self.cursor_pos,
+                        )),
+                        &na::convert(window.size()),
+                    )));
 
                 let attach2 = self.cursor_pos;
                 if self.state.grabbed_object.is_some() {
@@ -674,10 +681,12 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
             WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
                 if modifier.contains(Modifiers::Alt) {
                     let size = window.size();
-                    let (pos, dir) = self
-                        .graphics
-                        .camera()
-                        .unproject(&na::convert(self.cursor_pos), &na::convert(size));
+                    let (pos, dir) = self.graphics.camera().unproject(
+                        &na::convert::<Point2<f64>, Point2<f32>>(na::convert_unchecked(
+                            self.cursor_pos,
+                        )),
+                        &na::convert(size),
+                    );
                     let ray = Ray::new(pos, dir);
                     self.graphics.add_ray(ray);
 
@@ -685,11 +694,16 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
                 } else if modifier.contains(Modifiers::Shift) {
                     // XXX: huge and ugly code duplication for the ray cast.
                     let size = window.size();
-                    let (pos, dir) = self
-                        .graphics
-                        .camera()
-                        .unproject(&na::convert(self.cursor_pos), &na::convert(size));
-                    let ray = Ray::new(na::convert(pos), na::convert(dir));
+                    let (pos, dir) = self.graphics.camera().unproject(
+                        &na::convert::<Point2<f64>, Point2<f32>>(na::convert_unchecked(
+                            self.cursor_pos,
+                        )),
+                        &na::convert(size),
+                    );
+                    let ray = Ray::new(
+                        na::convert::<Point3<f64>, Point3<N>>(na::convert(pos)),
+                        na::convert::<Vector3<f64>, Vector3<N>>(na::convert(dir)),
+                    );
 
                     // cast the ray
                     let mut mintoi = Bounded::max_value();
@@ -722,7 +736,7 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
                                 .unwrap()
                                 .apply_force_at_point(
                                     body_part.1,
-                                    &(ray.dir.normalize() * na::convert::<f32, N>(0.01)),
+                                    &(ray.dir.normalize() * na::convert::<_, N>(0.01)),
                                     &ray.point_at(mintoi),
                                     ForceType::Impulse,
                                     true,
@@ -743,11 +757,16 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
 
                     // XXX: huge and uggly code duplication for the ray cast.
                     let size = window.size();
-                    let (pos, dir) = self
-                        .graphics
-                        .camera()
-                        .unproject(&na::convert(self.cursor_pos), &na::convert(size));
-                    let ray = Ray::new(na::convert(pos), na::convert(dir));
+                    let (pos, dir) = self.graphics.camera().unproject(
+                        &na::convert::<Point2<f64>, Point2<f32>>(na::convert_unchecked(
+                            self.cursor_pos,
+                        )),
+                        &na::convert(size),
+                    );
+                    let ray = Ray::new(
+                        na::convert::<Point3<f64>, Point3<N>>(na::convert(pos)),
+                        na::convert::<Vector3<f64>, Vector3<N>>(na::convert(dir)),
+                    );
 
                     // cast the ray
                     let mut mintoi = Bounded::max_value();
@@ -846,20 +865,22 @@ impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> Testbed<N> {
                 self.state.grabbed_object_constraint = None;
             }
             WindowEvent::CursorPos(x, y, modifiers) => {
-                self.cursor_pos.x = na::convert(x as f32);
-                self.cursor_pos.y = na::convert(y as f32);
+                self.cursor_pos.x = na::convert(x);
+                self.cursor_pos.y = na::convert(y);
 
                 // update the joint
                 if let Some(joint) = self.state.grabbed_object_constraint {
                     let size = window.size();
-                    let (pos, dir) = self
-                        .graphics
-                        .camera()
-                        .unproject(&na::convert(self.cursor_pos), &na::convert(size));
+                    let (pos, dir) = self.graphics.camera().unproject(
+                        &na::convert::<Point2<f64>, Point2<f32>>(na::convert_unchecked(
+                            self.cursor_pos,
+                        )),
+                        &na::convert(size),
+                    );
                     let (ref ppos, ref pdir) = self.state.grabbed_object_plane;
 
-                    let pos = na::convert(pos);
-                    let dir = na::convert(dir);
+                    let pos = na::convert::<Point3<f64>, Point3<N>>(na::convert(pos));
+                    let dir = na::convert::<Vector3<f64>, Vector3<N>>(na::convert(dir));
 
                     if let Some(inter) = query::ray_toi_with_plane(ppos, pdir, &Ray::new(pos, dir))
                     {
@@ -886,7 +907,7 @@ type CameraEffects<'a> = (
     Option<&'a mut dyn PostProcessingEffect>,
 );
 
-impl<N: RealField + SupersetOf<f32> + SubsetOf<f32>> State for Testbed<N> {
+impl<N: RealField> State for Testbed<N> {
     fn cameras_and_effect(&mut self) -> CameraEffects<'_> {
         #[cfg(feature = "dim2")]
         let result = (
@@ -1234,7 +1255,7 @@ Fluids: {:.2}ms
     }
 }
 
-fn draw_collisions<N: RealField + SubsetOf<f32>>(
+fn draw_collisions<N: RealField>(
     window: &mut Window,
     geometrical_world: &DefaultGeometricalWorld<N>,
     colliders: &DefaultColliderSet<N>,
@@ -1260,8 +1281,8 @@ fn draw_collisions<N: RealField + SubsetOf<f32>>(
             };
 
             window.draw_graphics_line(
-                &na::convert(c.contact.world1),
-                &na::convert(c.contact.world2),
+                &na::convert::<Point<f64>, Point<f32>>(na::convert_unchecked(c.contact.world1)),
+                &na::convert::<Point<f64>, Point<f32>>(na::convert_unchecked(c.contact.world2)),
                 &color,
             );
         }

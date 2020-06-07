@@ -25,27 +25,29 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
 use ncollide3d::procedural;
-use nphysics3d::world::World;
+use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
-
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
 fn main() {
     /*
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+    world.set_gravity(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
 
     /*
      * Ground
      */
     let ground_size = 50.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
         .translation(Vector3::y() * -ground_size)
@@ -55,39 +57,36 @@ fn main() {
      * Create the convex geometries.
      */
     let num = 8;
-    let rad = 0.1;
+    let rad = r!(0.1);
     let excentricity = 1000.0f32;
 
     let pts = vec![
         Point3::new(-rad, -rad, -rad) + Vector3::repeat(excentricity),
-        Point3::new(-rad, -rad,  rad) + Vector3::repeat(excentricity),
-        Point3::new(-rad,  rad, -rad) + Vector3::repeat(excentricity),
-        Point3::new(-rad,  rad,  rad) + Vector3::repeat(excentricity),
-        Point3::new( rad, -rad, -rad) + Vector3::repeat(excentricity),
-        Point3::new( rad, -rad,  rad) + Vector3::repeat(excentricity),
-        Point3::new( rad,  rad, -rad) + Vector3::repeat(excentricity),
-        Point3::new( rad,  rad,  rad) + Vector3::repeat(excentricity),
+        Point3::new(-rad, -rad, rad) + Vector3::repeat(excentricity),
+        Point3::new(-rad, rad, -rad) + Vector3::repeat(excentricity),
+        Point3::new(-rad, rad, rad) + Vector3::repeat(excentricity),
+        Point3::new(rad, -rad, -rad) + Vector3::repeat(excentricity),
+        Point3::new(rad, -rad, rad) + Vector3::repeat(excentricity),
+        Point3::new(rad, rad, -rad) + Vector3::repeat(excentricity),
+        Point3::new(rad, rad, rad) + Vector3::repeat(excentricity),
     ];
 
     let shape = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
-    let collider_desc = ColliderDesc::new(shape)
-        .density(1.0);
+    let collider_desc = ColliderDesc::new(shape).density(r!(1.0));
 
-    let mut rb_desc = RigidBodyDesc::new()
-        .collider(&collider_desc);
+    let mut rb_desc = RigidBodyDesc::new().collider(&collider_desc);
 
-    let shift = (rad + collider_desc.get_margin()) * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0;
-    let centerz = shift * (num as f32) / 2.0;
-
+    let shift = (rad + collider_desc.get_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
+    let centery = shift / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = i as f32 * shift - centerx - excentricity;
-                let y = j as f32 * shift + centery - excentricity;
-                let z = k as f32 * shift - centerz - excentricity;
+                let x = r!(i as f64) * shift - centerx - excentricity;
+                let y = r!(j as f64) * shift + centery - excentricity;
+                let z = r!(k as f64) * shift - centerz - excentricity;
 
                 // Build the rigid body and its collider.
                 rb_desc

@@ -70,7 +70,23 @@ impl<N: RealField> Inertia3<N> {
         Inertia3::new(self.linear, rot * self.angular * rot.inverse())
     }
 
-    /// Inverts this inetia matrix.
+    /// Inverts this inertia matrix.
+    ///
+    /// Sets the angular part to zero if it is not invertible.
+    #[cfg(not(feature = "improved_fixed_point_support"))]
+    pub fn inverse(&self) -> Self {
+        let inv_mass = if self.linear.is_zero() {
+            N::zero()
+        } else {
+            N::one() / self.linear
+        };
+
+        let inv_angular = self.angular.try_inverse().unwrap_or_else(na::zero);
+        Inertia3::new(inv_mass, inv_angular)
+    }
+
+    #[cfg(feature = "improved_fixed_point_support")]
+    /// Inverts this inertia matrix using preconditioning.
     ///
     /// Sets the angular part to zero if it is not invertible.
     pub fn inverse(&self) -> Self {
@@ -79,7 +95,34 @@ impl<N: RealField> Inertia3<N> {
         } else {
             N::one() / self.linear
         };
-        let inv_angular = self.angular.try_inverse().unwrap_or_else(na::zero);
+
+        // NOTE: the fixed-point number may not have enough bits to
+        // compute the determinant so a simple preconditioning helps.
+        let diag = self.angular.diagonal();
+        let mut preconditioned = self.angular;
+
+        // NOTE: we can't precompute inv_diag = diag.map(|e| 1 / e)
+        // because we may not even have enough bits to compute this inverse.
+        for i in 0..3 {
+            if !diag[i].is_zero() {
+                let mut row_i = preconditioned.row_mut(i);
+                row_i /= diag[i];
+            }
+        }
+
+        // println!("Angular: {}", self.angular);
+        // println!("Diagonal: {}", self.angular.diagonal());
+        // println!("Preconditioned matrix: {}", preconditioned);
+
+        let mut inv_angular = preconditioned.try_inverse().unwrap_or_else(na::zero);
+
+        for i in 0..3 {
+            if !diag[i].is_zero() {
+                let mut col_i = inv_angular.column_mut(i);
+                col_i /= diag[i];
+            }
+        }
+
         Inertia3::new(inv_mass, inv_angular)
     }
 }

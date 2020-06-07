@@ -15,6 +15,9 @@ edition = "2018"
 default = [ "dim2", "stdweb" , "instant/stdweb"]
 use-wasm-bindgen = [ "dim2", "wasm-bindgen", "web-sys" , "instant/wasm-bindgen" ]
 dim2    = [ ]
+# Improve numerical stability when working with fixed-point numbers
+# so we don't need a too large number of decimals.
+improved_fixed_point_support = [ "ncollide2d/improved_fixed_point_support" ]
 
 [lib]
 name = "nphysics2d"

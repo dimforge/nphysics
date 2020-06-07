@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::query::Proximity;
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
@@ -11,11 +11,15 @@ use nphysics3d::object::{
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -25,8 +29,12 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let ground_thickness = 0.2;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground_thickness = r!(0.2);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(3.0),
+        ground_thickness,
+        r!(3.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -38,28 +46,28 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create some boxes.
      */
     let num = 10;
-    let rad = 0.2;
+    let rad = r!(0.2);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
-    let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
-    let centerz = shift * (num as f32) / 2.0;
+    let shift = (rad + ColliderDesc::<N>::default_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
 
     for i in 0usize..num {
         for k in 0usize..num {
-            let x = i as f32 * shift - centerx;
-            let z = k as f32 * shift - centerz;
+            let x = r!(i as f64) * shift - centerx;
+            let z = r!(k as f64) * shift - centerz;
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new()
-                .translation(Vector3::new(x, 3.0, z))
+                .translation(Vector3::new(x, r!(3.0), z))
                 .build();
             let rb_handle = bodies.insert(rb);
 
             // Build the collider.
             let co = ColliderDesc::new(cuboid.clone())
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
 
@@ -73,19 +81,19 @@ pub fn init_world(testbed: &mut Testbed) {
 
     // Rigid body so that the sensor can move.
     let sensor = RigidBodyDesc::new()
-        .translation(Vector3::new(0.0, 10.0, 0.0))
+        .translation(Vector3::new(r!(0.0), r!(10.0), r!(0.0)))
         .build();
     let sensor_handle = bodies.insert(sensor);
 
     // Solid cube attached to the sensor which
     // other colliders can touch.
     let co = ColliderDesc::new(cuboid.clone())
-        .density(1.0)
+        .density(r!(1.0))
         .build(BodyPartHandle(sensor_handle, 0));
     colliders.insert(co);
 
     // Ball-shaped sensor.
-    let sensor_geom = ShapeHandle::new(Ball::new(rad * 5.0));
+    let sensor_geom = ShapeHandle::new(Ball::new(rad * r!(5.0)));
     // We create a collider desc without density because we don't
     // want it to contribute to the rigid body mass.
     let sensor_collider = ColliderDesc::new(sensor_geom)
@@ -131,7 +139,7 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Boxes", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Boxes", init_world)]);
 
     testbed.run()
 }

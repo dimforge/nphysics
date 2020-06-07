@@ -1,7 +1,8 @@
 extern crate nalgebra as na;
 
-use na::{Isometry2, Point2, Point3, Vector2};
+use na::{Isometry2, Point2, Point3, RealField, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
+use nphysics2d::algebra::Velocity2;
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::object::{
@@ -11,7 +12,11 @@ use nphysics2d::object::{
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -25,22 +30,30 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let platform_height = 0.4;
-    let platform_shape = ShapeHandle::new(Cuboid::new(Vector2::new(0.03, 0.03)));
+    let platform_height = r!(0.4);
+    let platform_shape = ShapeHandle::new(Cuboid::new(Vector2::new(r!(0.03), r!(0.03))));
 
     let positions = [
-        Isometry2::new(Vector2::new(0.4, platform_height), na::zero()),
-        Isometry2::new(Vector2::new(0.2, -platform_height), na::zero()),
-        Isometry2::new(Vector2::new(0.0, platform_height), na::zero()),
-        Isometry2::new(Vector2::new(-0.2, -platform_height), na::zero()),
-        Isometry2::new(Vector2::new(-0.4, platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(0.4), platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(0.2), -platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(0.0), platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(-0.2), -platform_height), na::zero()),
+        Isometry2::new(Vector2::new(r!(-0.4), platform_height), na::zero()),
     ];
 
     let mut platforms = Vec::new();
+    let platform_vel_magnitude = r!(0.1);
 
     for (i, pos) in positions.iter().enumerate() {
+        let velocity = if i % 2 == 0 {
+            Velocity2::linear(r!(0.0), -platform_vel_magnitude)
+        } else {
+            Velocity2::linear(r!(0.0), platform_vel_magnitude)
+        };
+
         let platform = RigidBodyDesc::new()
             .position(*pos)
+            .velocity(velocity)
             .status(BodyStatus::Kinematic)
             .build();
         platforms.push(bodies.insert(platform));
@@ -53,11 +66,11 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the deformable body and a collider for its contour.
      */
     let mut deformable = FEMSurfaceDesc::quad(20, 1)
-        .scale(Vector2::new(1.1, 0.1))
-        .density(1.0)
-        .young_modulus(1.0e2)
-        .mass_damping(0.2)
-        .plasticity(0.1, 5.0, 10.0)
+        .scale(Vector2::new(r!(1.1), r!(0.1)))
+        .density(r!(1.0))
+        .young_modulus(r!(1.0e2))
+        .mass_damping(r!(0.2))
+        .plasticity(r!(0.1), r!(5.0), r!(10.0))
         .build();
     let collider_desc = deformable.boundary_collider_desc();
     let deformable_surface_handle = bodies.insert(deformable);
@@ -87,20 +100,19 @@ pub fn init_world(testbed: &mut Testbed) {
             let platform_y = platform.position().translation.vector.y;
 
             let mut vel = *platform.velocity();
-            let vel_magnitude = 0.1;
-            let max_traversal = 0.005;
+            let max_traversal = r!(0.005);
 
             if i % 2 == 0 {
                 if platform_y <= -max_traversal {
-                    vel.linear.y = vel_magnitude;
+                    vel.linear.y = platform_vel_magnitude;
                 } else if platform_y >= platform_height {
-                    vel.linear.y = -vel_magnitude;
+                    vel.linear.y = -platform_vel_magnitude;
                 }
             } else {
                 if platform_y >= max_traversal {
-                    vel.linear.y = -vel_magnitude;
+                    vel.linear.y = -platform_vel_magnitude;
                 } else if platform_y <= -platform_height {
-                    vel.linear.y = vel_magnitude;
+                    vel.linear.y = platform_vel_magnitude;
                 }
             }
 
@@ -112,6 +124,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Plasticity", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Plasticity", init_world)]);
     testbed.run()
 }

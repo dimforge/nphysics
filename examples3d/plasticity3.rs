@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Isometry3, Point3, RealField, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -11,7 +11,11 @@ use nphysics3d::object::{
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
@@ -25,16 +29,20 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let platform_height = 0.4;
-    let platform_size = 0.6;
-    let platform_shape = ShapeHandle::new(Cuboid::new(Vector3::new(0.03, 0.03, platform_size)));
+    let platform_height = r!(0.4);
+    let platform_size = r!(0.6);
+    let platform_shape =
+        ShapeHandle::new(Cuboid::new(Vector3::new(r!(0.03), r!(0.03), platform_size)));
 
     let positions = [
-        Isometry3::new(Vector3::new(0.4, platform_height, 0.0), na::zero()),
-        Isometry3::new(Vector3::new(0.2, -platform_height, 0.0), na::zero()),
-        Isometry3::new(Vector3::new(0.0, platform_height, 0.0), na::zero()),
-        Isometry3::new(Vector3::new(-0.2, -platform_height, 0.0), na::zero()),
-        Isometry3::new(Vector3::new(-0.4, platform_height, 0.0), na::zero()),
+        Isometry3::new(Vector3::new(r!(0.4), platform_height, r!(0.0)), na::zero()),
+        Isometry3::new(Vector3::new(r!(0.2), -platform_height, r!(0.0)), na::zero()),
+        Isometry3::new(Vector3::new(r!(0.0), platform_height, r!(0.0)), na::zero()),
+        Isometry3::new(
+            Vector3::new(r!(-0.2), -platform_height, r!(0.0)),
+            na::zero(),
+        ),
+        Isometry3::new(Vector3::new(r!(-0.4), platform_height, r!(0.0)), na::zero()),
     ];
 
     let mut platforms = Vec::new();
@@ -54,11 +62,11 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the deformable body and a collider for its contour.
      */
     let mut deformable = FEMVolumeDesc::cube(20, 1, 1)
-        .scale(Vector3::new(1.1, 0.1, 0.1))
-        .density(1.0)
-        .young_modulus(1.0e2)
-        .mass_damping(0.2)
-        .plasticity(0.1, 5.0, 10.0)
+        .scale(Vector3::new(r!(1.1), r!(0.1), r!(0.1)))
+        .density(r!(1.0))
+        .young_modulus(r!(1.0e2))
+        .mass_damping(r!(0.2))
+        .plasticity(r!(0.1), r!(5.0), r!(10.0))
         .build();
     let collider_desc = deformable.boundary_collider_desc();
     let deformable_surface_handle = bodies.insert(deformable);
@@ -80,8 +88,8 @@ pub fn init_world(testbed: &mut Testbed) {
             let platform_y = platform.position().translation.vector.y;
 
             let mut vel = *platform.velocity();
-            let vel_magnitude = 0.1;
-            let max_traversal = 0.005;
+            let vel_magnitude = r!(0.1);
+            let max_traversal = r!(0.005);
 
             if i % 2 == 0 {
                 if platform_y <= -max_traversal {
@@ -118,6 +126,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Plasticity", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Plasticity", init_world)]);
     testbed.run()
 }

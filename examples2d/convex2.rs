@@ -3,7 +3,7 @@ extern crate nalgebra as na;
 use rand::distributions::{Distribution, Standard};
 use rand::{rngs::StdRng, SeedableRng};
 
-use na::{Point2, Vector2};
+use na::{Point2, RealField, Vector2};
 use ncollide2d::shape::{ConvexPolygon, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -13,11 +13,15 @@ use nphysics2d::object::{
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -27,8 +31,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground
      */
-    let ground_size = 50.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_size = r!(50.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(1.0))));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -41,22 +45,22 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let npts = 10usize;
     let num = 25;
-    let shift = 0.4;
-    let centerx = shift * (num as f32) / 2.0;
+    let shift = r!(0.4);
+    let centerx = shift * r!(num as f64) / r!(2.0);
     let centery = shift;
     let mut rng = StdRng::seed_from_u64(0);
     let distribution = Standard;
 
     for i in 0usize..num {
         for j in 0usize..num {
-            let x = i as f32 * shift - centerx;
-            let y = j as f32 * shift + centery;
+            let x = r!(i as f64) * shift - centerx;
+            let y = r!(j as f64) * shift + centery;
 
             let mut pts = Vec::with_capacity(npts);
 
             for _ in 0..npts {
-                let pt: Point2<f32> = distribution.sample(&mut rng);
-                pts.push(pt * 0.4);
+                let pt: Point2<f64> = distribution.sample(&mut rng);
+                pts.push(na::convert::<_, Point2<N>>(pt) * r!(0.4));
             }
 
             // Build the rigid body.
@@ -66,7 +70,7 @@ pub fn init_world(testbed: &mut Testbed) {
             // Build the collider.
             let geom = ShapeHandle::new(ConvexPolygon::try_from_points(&pts).unwrap());
             let co = ColliderDesc::new(geom)
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
         }
@@ -88,6 +92,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Convex", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Convex", init_world)]);
     testbed.run()
 }

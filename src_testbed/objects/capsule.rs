@@ -3,7 +3,6 @@ use kiss3d::window;
 use na::{Point3, RealField};
 use nphysics::math::Isometry;
 use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
-use simba::scalar::SubsetOf;
 
 pub struct Capsule {
     color: Point3<f32>,
@@ -14,7 +13,7 @@ pub struct Capsule {
 }
 
 impl Capsule {
-    pub fn new<N: RealField + SubsetOf<f32>>(
+    pub fn new<N: RealField>(
         collider: DefaultColliderHandle,
         colliders: &DefaultColliderSet<N>,
         delta: Isometry<f32>,
@@ -36,7 +35,9 @@ impl Capsule {
             collider,
         };
 
-        let pos: Isometry<f32> = na::convert(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f64> =
+            na::convert_unchecked(*colliders.get(collider).unwrap().position());
+        let pos: Isometry<f32> = na::convert(pos);
 
         if colliders
             .get(collider)
@@ -62,7 +63,7 @@ impl Capsule {
         self.color = self.base_color;
     }
 
-    pub fn update<N: RealField + SubsetOf<f32>>(&mut self, colliders: &DefaultColliderSet<N>) {
+    pub fn update<N: RealField>(&mut self, colliders: &DefaultColliderSet<N>) {
         node::update_scene_node(
             &mut self.gfx,
             colliders,

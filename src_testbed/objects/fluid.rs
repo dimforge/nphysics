@@ -20,7 +20,7 @@ pub struct Fluid {
 }
 
 impl Fluid {
-    pub fn new<N: RealField + SubsetOf<f32>>(
+    pub fn new<N: RealField>(
         radius: f32,
         centers: &[Point<N>],
         color: Point3<f32>,
@@ -69,7 +69,7 @@ impl Fluid {
         self.base_color = color;
     }
 
-    fn update<N: RealField + SubsetOf<f32>>(
+    fn update<N: RealField>(
         &mut self,
         centers: &[Point<N>],
         velocities: &[Vector<N>],
@@ -109,11 +109,11 @@ impl Fluid {
         }
     }
 
-    pub fn update_with_boundary<N: RealField + SubsetOf<f32>>(&mut self, boundary: &Boundary<N>) {
+    pub fn update_with_boundary<N: RealField>(&mut self, boundary: &Boundary<N>) {
         self.update(&boundary.positions, &[], FluidRenderingMode::StaticColor)
     }
 
-    pub fn update_with_fluid<N: RealField + SubsetOf<f32>>(
+    pub fn update_with_fluid<N: RealField>(
         &mut self,
         fluid: &SalvaFluid<N>,
         rendering_mode: FluidRenderingMode,

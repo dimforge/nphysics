@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Point3, Vector2};
+use na::{Point2, Point3, RealField, Vector2};
 use ncollide2d::query::Proximity;
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
@@ -11,11 +11,15 @@ use nphysics2d::object::{
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -25,8 +29,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let ground_size = 10.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+    let ground_size = r!(10.0);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, r!(1.0))));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -38,25 +42,25 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create some boxes.
      */
     let num = 15;
-    let rad = 0.2;
+    let rad = r!(0.2);
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
 
-    let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
+    let shift = (rad + ColliderDesc::<N>::default_margin()) * r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
 
     for i in 0usize..num {
-        let x = i as f32 * shift - centerx;
+        let x = r!(i as f64) * shift - centerx;
 
         // Build the rigid body.
         let rb = RigidBodyDesc::new()
-            .translation(Vector2::new(x, 2.0))
+            .translation(Vector2::new(x, r!(2.0)))
             .build();
         let rb_handle = bodies.insert(rb);
 
         // Build the collider.
         let co = ColliderDesc::new(cuboid.clone())
-            .density(1.0)
+            .density(r!(1.0))
             .build(BodyPartHandle(rb_handle, 0));
         colliders.insert(co);
 
@@ -68,19 +72,19 @@ pub fn init_world(testbed: &mut Testbed) {
      */
 
     let sensor_body = RigidBodyDesc::new()
-        .translation(Vector2::new(0.0, 4.0))
+        .translation(Vector2::new(r!(0.0), r!(4.0)))
         .build();
     let sensor_handle = bodies.insert(sensor_body);
 
     // Collidable cuboid attached to the sensor body.
     let sensor_collider1 = ColliderDesc::new(cuboid.clone())
-        .density(1.0)
+        .density(r!(1.0))
         .build(BodyPartHandle(sensor_handle, 0));
     colliders.insert(sensor_collider1);
 
     // We create a collider desc without density because we don't
     // want it to contribute to the rigid body mass.
-    let sensor_geom = ShapeHandle::new(Ball::new(rad * 5.0));
+    let sensor_geom = ShapeHandle::new(Ball::new(rad * r!(5.0)));
     let sensor_collider2 = ColliderDesc::new(sensor_geom)
         .sensor(true)
         .build(BodyPartHandle(sensor_handle, 0));
@@ -125,6 +129,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Sensor", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Sensor", init_world)]);
     testbed.run()
 }

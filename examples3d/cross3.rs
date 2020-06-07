@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Isometry3, Point3, RealField, Vector3};
 use ncollide3d::shape::{Compound, Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -10,11 +10,15 @@ use nphysics3d::object::{
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed3d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -24,8 +28,12 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground.
      */
-    let ground_thickness = 0.2;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground_thickness = r!(0.2);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(3.0),
+        ground_thickness,
+        r!(3.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -38,8 +46,8 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let mut cross_geoms = Vec::new();
 
-    let large_rad = 0.25f32;
-    let small_rad = 0.01f32;
+    let large_rad = r!(0.25);
+    let small_rad = r!(0.01);
 
     let edge_x = Cuboid::new(Vector3::new(large_rad, small_rad, small_rad));
     let edge_y = Cuboid::new(Vector3::new(small_rad, large_rad, small_rad));
@@ -56,17 +64,17 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the crosses
      */
     let num = 5;
-    let shift = (large_rad + 0.08) * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = 3.0 + shift / 2.0;
-    let centerz = shift * (num as f32) / 2.0;
+    let shift = (large_rad + r!(0.08)) * r!(2.0);
+    let centerx = shift * r!(num as f64) / r!(2.0);
+    let centery = r!(3.0) + shift / r!(2.0);
+    let centerz = shift * r!(num as f64) / r!(2.0);
 
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery;
-                let z = k as f32 * shift - centerz;
+                let x = r!(i as f64) * shift - centerx;
+                let y = r!(j as f64) * shift + centery;
+                let z = r!(k as f64) * shift - centerz;
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
@@ -76,7 +84,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
                 // Build the collider.
                 let co = ColliderDesc::new(cross.clone())
-                    .density(1.0)
+                    .density(r!(1.0))
                     .build(BodyPartHandle(rb_handle, 0));
                 colliders.insert(co);
             }
@@ -99,7 +107,7 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Crosses", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Crosses", init_world)]);
 
     testbed.run()
 }

@@ -2,7 +2,7 @@
 
 extern crate nalgebra as na;
 
-use na::{Isometry2, Point2, Point3, Vector2};
+use na::{Isometry2, Point2, Point3, RealField, Vector2};
 use ncollide2d::query::Proximity;
 use ncollide2d::shape::{Ball, Compound, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
@@ -15,11 +15,15 @@ use nphysics2d::object::{
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use nphysics_testbed2d::Testbed;
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
-    let mut mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let mut mechanical_world = DefaultMechanicalWorld::new(Vector2::new(r!(0.0), r!(-9.81)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -45,14 +49,14 @@ pub fn init_world(testbed: &mut Testbed) {
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
-        .position(Isometry2::new(Vector2::new(-1.0, 0.0), 3.14 / 2.0))
+        .position(Isometry2::new(Vector2::new(-1.0, 0.0), 3.14 / r!(2.0)))
         .ccd_enabled(true)
         .material(material.clone())
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
-        .position(Isometry2::new(Vector2::new(0.5, 0.0), 3.14 / 2.0))
+        .position(Isometry2::new(Vector2::new(0.5, 0.0), 3.14 / r!(2.0)))
         .ccd_enabled(true)
         .material(material.clone())
         .build(BodyPartHandle(ground_handle, 0));
@@ -67,7 +71,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     // Add a sensor, to show that CCD works on sensors too.
     let co = ColliderDesc::new(ground_shape)
-        .position(Isometry2::new(Vector2::new(-0.3, 0.0), 3.14 / 2.0))
+        .position(Isometry2::new(Vector2::new(-0.3, 0.0), 3.14 / r!(2.0)))
         .ccd_enabled(true)
         .sensor(true)
         .material(material.clone())
@@ -84,15 +88,15 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let shape = ShapeHandle::new(Ball::new(rady));
 
-    let shiftx = (radx + ColliderDesc::<f32>::default_margin() + 0.003) * 2.0;
-    let shifty = (rady + ColliderDesc::<f32>::default_margin() + 0.003) * 2.0;
-    let centerx = shiftx * (num as f32) / 2.0 - 0.5;
-    let centery = shifty / 2.0 + 4.0;
+    let shiftx = (radx + ColliderDesc::<N>::default_margin() + 0.003) * r!(2.0);
+    let shifty = (rady + ColliderDesc::<N>::default_margin() + 0.003) * r!(2.0);
+    let centerx = shiftx * r!(num as f64) / r!(2.0) - 0.5;
+    let centery = shifty / r!(2.0) + 4.0;
 
     for i in 0usize..num {
         for j in 0..num {
-            let x = i as f32 * shiftx - centerx;
-            let y = j as f32 * shifty + centery;
+            let x = r!(i as f64) * shiftx - centerx;
+            let y = r!(j as f64) * shifty + centery;
 
             // Build the rigid body.
             let rb = RigidBodyDesc::new()
@@ -104,7 +108,7 @@ pub fn init_world(testbed: &mut Testbed) {
             // Build the collider.
             let co = ColliderDesc::new(shape.clone())
                 .ccd_enabled(true)
-                .density(1.0)
+                .density(r!(1.0))
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
 
@@ -170,6 +174,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("CCD substepping", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("CCD substepping", init_world)]);
     testbed.run()
 }

@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{Point3, RealField, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -14,13 +14,17 @@ use nphysics3d::object::{
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 
 use nphysics_testbed3d::Testbed;
-use std::f32::consts::{FRAC_PI_2, PI};
+use std::f64::consts::{FRAC_PI_2, PI};
 
-pub fn init_world(testbed: &mut Testbed) {
+/*
+ * NOTE: The `r` macro is only here to convert from f64 to the `N` scalar type.
+ * This simplifies experimentation with various scalar types (f32, fixed-point numbers, etc.)
+ */
+pub fn init_world<N: RealField>(testbed: &mut Testbed<N>) {
     /*
      * World
      */
-    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(r!(0.0), r!(-9.81), r!(0.0)));
     let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
@@ -30,33 +34,37 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ground
      */
-    let ground_thickness = 0.2;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 10.0)));
+    let ground_thickness = r!(0.2);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        r!(3.0),
+        ground_thickness,
+        r!(10.0),
+    )));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
-        .translation(Vector3::y() * (-ground_thickness - 5.0))
+        .translation(Vector3::y() * (-ground_thickness - r!(5.0)))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     /*
      * Geometries that will be re-used for several multibody links..
      */
-    let rad = 0.2;
+    let rad = r!(0.2);
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
-    let collider_desc = ColliderDesc::new(cuboid.clone()).density(1.0);
+    let collider_desc = ColliderDesc::new(cuboid.clone()).density(r!(1.0));
 
     /*
      * Revolute joints.
      */
     let num = 6;
     let mut parent = BodyPartHandle(ground_handle, 0);
-    let first_anchor = Point3::new(0.0, 5.0, 11.0);
+    let first_anchor = Point3::new(r!(0.0), r!(5.0), r!(11.0));
     let mut pos = first_anchor.coords;
 
     for i in 0usize..num {
-        let body_anchor = Point3::new(0.0, 0.0, 1.0) * (rad * 3.0 + 0.2);
+        let body_anchor = Point3::new(r!(0.0), r!(0.0), r!(1.0)) * (rad * r!(3.0) + r!(0.2));
         let parent_anchor = if i == 0 {
             first_anchor
         } else {
@@ -80,7 +88,7 @@ pub fn init_world(testbed: &mut Testbed) {
             Vector3::x_axis(),
         );
 
-        constraint.set_break_force(40.0);
+        constraint.set_break_force(r!(40.0));
         joint_constraints.insert(constraint);
 
         parent = BodyPartHandle(rb_handle, 0);
@@ -89,7 +97,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Prismatic constraint.
      */
-    let first_anchor = Point3::new(0.0, 5.0, 4.0);
+    let first_anchor = Point3::new(r!(0.0), r!(5.0), r!(4.0));
     let mut pos = first_anchor.coords;
     parent = BodyPartHandle(ground_handle, 0);
 
@@ -99,7 +107,7 @@ pub fn init_world(testbed: &mut Testbed) {
         if i == 0 {
             parent_anchor = first_anchor;
         } else {
-            body_anchor = Point3::new(0.0, 0.0, -1.0) * (rad * 3.0);
+            body_anchor = Point3::new(r!(0.0), r!(0.0), r!(-1.0)) * (rad * r!(3.0));
         }
 
         pos -= body_anchor.coords;
@@ -117,8 +125,8 @@ pub fn init_world(testbed: &mut Testbed) {
             Vector3::y_axis(),
             body_anchor,
         );
-        constraint.set_break_force(40.0);
-        constraint.enable_min_offset(-rad * 2.0);
+        constraint.set_break_force(r!(40.0));
+        constraint.enable_min_offset(-rad * r!(2.0));
         joint_constraints.insert(constraint);
 
         parent = BodyPartHandle(rb_handle, 0);
@@ -127,18 +135,18 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Ball constraint.
      */
-    let first_anchor = Point3::new(0.0, 5.0, 0.0);
+    let first_anchor = Point3::new(r!(0.0), r!(5.0), r!(0.0));
     let mut pos = first_anchor.coords;
     parent = BodyPartHandle(ground_handle, 0);
 
     for i in 0usize..num {
-        let angle = i as f32 * 2.0 * PI / (num as f32);
+        let angle = r!(i as f64) * r!(2.0) * r!(PI) / r!(num as f64);
         let mut body_anchor = Point3::origin();
         let mut parent_anchor = Point3::origin();
         if i == 0 {
             parent_anchor = first_anchor;
         } else {
-            body_anchor = Point3::new(angle.cos(), 0.3, angle.sin()) * (rad * 5.0);
+            body_anchor = Point3::new(angle.cos(), r!(0.3), angle.sin()) * (rad * r!(5.0));
         }
 
         pos -= body_anchor.coords;
@@ -155,7 +163,7 @@ pub fn init_world(testbed: &mut Testbed) {
             parent_anchor,
             body_anchor,
         );
-        constraint.set_break_force(40.0);
+        constraint.set_break_force(r!(40.0));
         joint_constraints.insert(constraint);
         parent = BodyPartHandle(rb_handle, 0);
     }
@@ -163,8 +171,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Universal constraint.
      */
-    let parent_pos = Vector3::new(0.0, 5.0, -5.0);
-    let child_pos = Vector3::new(0.0, 5.0, -6.0);
+    let parent_pos = Vector3::new(r!(0.0), r!(5.0), r!(-5.0));
+    let child_pos = Vector3::new(r!(0.0), r!(5.0), r!(-6.0));
 
     let co = ColliderDesc::new(cuboid)
         .translation(parent_pos)
@@ -181,32 +189,32 @@ pub fn init_world(testbed: &mut Testbed) {
         BodyPartHandle(rb_handle, 0),
         Point3::from(parent_pos),
         Vector3::x_axis(),
-        Point3::new(0.0, 0.0, 1.0),
+        Point3::new(r!(0.0), r!(0.0), r!(1.0)),
         Vector3::z_axis(),
-        FRAC_PI_2,
+        r!(FRAC_PI_2),
     );
 
-    constraint.set_break_force(40.0);
+    constraint.set_break_force(r!(40.0));
     joint_constraints.insert(constraint);
 
     /*
      * Planar constraint.
      */
     let num = 5;
-    let shift = Vector3::new(0.0, -2.0, 5.0);
-    let width = 5.0 * rad * 4.0;
+    let shift = Vector3::new(r!(0.0), r!(-2.0), r!(5.0));
+    let width = r!(5.0) * rad * r!(4.0);
 
     for i in 0..num {
         for j in 0..num {
-            let mut z = i as f32 * rad * 4.0 - width / 2.0;
-            let y = j as f32 * rad * 4.0 - width / 2.0;
+            let mut z = r!(i as f64) * rad * r!(4.0) - width / r!(2.0);
+            let y = r!(j as f64) * rad * r!(4.0) - width / r!(2.0);
 
             if j % 2 == 0 {
-                z += rad * 2.0;
+                z += rad * r!(2.0);
             }
 
             let rb = RigidBodyDesc::new()
-                .translation(shift + Vector3::new(0.0, y, z))
+                .translation(shift + Vector3::new(r!(0.0), y, z))
                 .build();
             let rb_handle = bodies.insert(rb);
             let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
@@ -221,7 +229,7 @@ pub fn init_world(testbed: &mut Testbed) {
                 Vector3::x_axis(),
             );
 
-            constraint.set_break_force(40.0);
+            constraint.set_break_force(r!(40.0));
             joint_constraints.insert(constraint);
         }
     }
@@ -229,19 +237,19 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Rectangular constraint.
      */
-    let shift = Vector3::new(0.0, -2.0, 0.0);
-    let width = 5.0 * rad * 4.0;
+    let shift = Vector3::new(r!(0.0), r!(-2.0), r!(0.0));
+    let width = r!(5.0) * rad * r!(4.0);
     for i in 0..5 {
         for j in 0..5 {
-            let mut z = i as f32 * rad * 4.0 - width / 2.0;
-            let y = j as f32 * rad * 4.0 - width / 2.0;
+            let mut z = r!(i as f64) * rad * r!(4.0) - width / r!(2.0);
+            let y = r!(j as f64) * rad * r!(4.0) - width / r!(2.0);
 
             if j % 2 == 0 {
-                z += rad * 2.0;
+                z += rad * r!(2.0);
             }
 
             let rb = RigidBodyDesc::new()
-                .translation(shift + Vector3::new(0.0, y, z))
+                .translation(shift + Vector3::new(r!(0.0), y, z))
                 .build();
             let rb_handle = bodies.insert(rb);
             let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
@@ -255,7 +263,7 @@ pub fn init_world(testbed: &mut Testbed) {
                 Point3::origin(),
             );
 
-            constraint.set_break_force(40.0);
+            constraint.set_break_force(r!(40.0));
             joint_constraints.insert(constraint);
         }
     }
@@ -266,9 +274,9 @@ pub fn init_world(testbed: &mut Testbed) {
     let pin_rb = RigidBodyDesc::new().build();
     let pin_handle = bodies.insert(pin_rb);
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * r!(5.0), rad, rad * r!(5.0))));
     let co = ColliderDesc::new(cuboid)
-        .density(1.0)
+        .density(r!(1.0))
         .build(BodyPartHandle(pin_handle, 0));
     colliders.insert(co);
 
@@ -282,7 +290,7 @@ pub fn init_world(testbed: &mut Testbed) {
         Vector3::x_axis(),
     );
 
-    constraint.set_break_force(40.0);
+    constraint.set_break_force(r!(40.0));
     joint_constraints.insert(constraint);
 
     /*
@@ -301,6 +309,6 @@ pub fn init_world(testbed: &mut Testbed) {
 }
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![("Constraints", init_world)]);
+    let testbed = Testbed::<f32>::from_builders(0, vec![("Constraints", init_world)]);
     testbed.run()
 }
