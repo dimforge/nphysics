@@ -212,6 +212,9 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     /// Put this body to sleep.
     fn deactivate(&mut self);
 
+    /// The number of parts of this body.
+    fn num_parts(&self) -> usize;
+
     /// A reference to the specified body part.
     fn part(&self, i: usize) -> Option<&dyn BodyPart<N>>;
 
