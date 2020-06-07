@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics_testbed3d"
-version = "0.9.0"
+version = "0.10.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "Testbed for the 3-dimensional physics engine in Rust."
 homepage = "http://nphysics.org"
@@ -31,8 +31,8 @@ simba      = "0.1"
 nalgebra   = "0.21"
 kiss3d     = { version = "0.24", features = [ "conrod" ] }
 ncollide3d = "0.23"
-salva3d = { version = "0.3", features = [ "nphysics" ], optional = true }
+salva3d = { version = "0.4", features = [ "nphysics" ], optional = true }
 
 [dependencies.nphysics3d]
 path = "../nphysics3d"
-version = "0.15"
+version = "0.16"
