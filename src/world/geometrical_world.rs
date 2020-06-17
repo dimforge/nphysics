@@ -347,6 +347,22 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         pipeline::interferences_with_ray(&colliders, &*self.broad_phase, ray, max_toi, groups)
     }
 
+    /// Computes the closest interference between the rigid bodies on this world and a ray.
+    #[inline]
+    pub fn first_interference_with_ray<
+        'a,
+        'b,
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+    >(
+        &'a self,
+        colliders: &'a Colliders,
+        ray: &'b Ray<N>,
+        max_toi: N,
+        groups: &'b CollisionGroups,
+    ) -> Option<pipeline::FirstInterferenceWithRay<'a, N, Colliders>> {
+        pipeline::first_interference_with_ray(&colliders, &*self.broad_phase, ray, max_toi, groups)
+    }
+
     /// Computes the interferences between every rigid bodies of a given broad phase, and a point.
     #[inline]
     pub fn interferences_with_point<
