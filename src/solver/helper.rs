@@ -1,6 +1,7 @@
 //! Utilities for computing velocity and position constraints.
 
 #[cfg(feature = "dim3")]
+use na;
 use na::{DVector, DVectorSlice, RealField, Unit};
 use std::ops::Neg;
 
