@@ -512,7 +512,7 @@ impl<N: RealField> FEMVolume<N> {
                 .add_assign(1);
         }
 
-        let boundary = faces
+        faces
             .iter()
             .filter_map(|(k, n)| {
                 if n.0 == 1 {
@@ -537,9 +537,7 @@ impl<N: RealField> FEMVolume<N> {
                     None
                 }
             })
-            .collect();
-
-        boundary
+            .collect()
     }
 
     /// Returns a triangle mesh at the boundary of this volume as well as a mapping between the mesh
