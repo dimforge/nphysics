@@ -1107,8 +1107,8 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         force_type: ForceType,
         auto_wake_up: bool,
     ) {
-        let _1_4: N = na::convert(1.0 / 4.0);
-        let barycenter = Point3::new(_1_4, _1_4, _1_4);
+        let _1div4: N = na::convert(1.0 / 4.0);
+        let barycenter = Point3::new(_1div4, _1div4, _1div4);
         self.apply_force_at_local_point(
             part_id,
             &force.linear,
