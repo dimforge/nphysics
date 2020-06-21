@@ -119,7 +119,7 @@ impl<N: RealField> SignoriniModel<N> {
                     c.id,
                 ));
 
-            return true;
+            true
         } else {
             constraints
                 .velocity
@@ -133,7 +133,7 @@ impl<N: RealField> SignoriniModel<N> {
                     c.id,
                 ));
 
-            return false;
+            false
         }
     }
 
