@@ -115,7 +115,7 @@ impl<N: RealField> FEMVolume<N> {
                     rest_ad.y, rest_ad.z,
                 );
 
-                let local_j_inv = local_j.try_inverse().unwrap_or(Matrix3::identity());
+                let local_j_inv = local_j.try_inverse().unwrap_or_else(Matrix3::identity);
                 let local_j_inv = Matrix3x4::new(
                     -local_j_inv.m11 - local_j_inv.m12 - local_j_inv.m13,
                     local_j_inv.m11,

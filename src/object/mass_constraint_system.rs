@@ -54,7 +54,7 @@ impl<N: RealField> LengthConstraint<N> {
 
         LengthConstraint {
             nodes,
-            dir: Unit::try_new(p1 - p0, N::zero()).unwrap_or(Vector::y_axis()),
+            dir: Unit::try_new(p1 - p0, N::zero()).unwrap_or_else(Vector::y_axis),
             length: rest_length,
             rest_length,
             stiffness,

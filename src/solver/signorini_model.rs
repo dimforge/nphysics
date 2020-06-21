@@ -265,7 +265,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
                     manifold,
                     ext_vels,
                     c,
-                    self.impulses.get(c.id).cloned().unwrap_or(N::zero()),
+                    self.impulses.get(c.id).cloned().unwrap_or_else(N::zero),
                     ground_j_id,
                     j_id,
                     jacobians,

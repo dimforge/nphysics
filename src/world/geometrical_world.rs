@@ -86,7 +86,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
 
         self.body_colliders
             .entry(collider.body())
-            .or_insert(Vec::new())
+            .or_insert_with(Vec::new)
             .push(handle);
         collider.set_proxy_handle(Some(proxies.0));
         collider.set_graph_index(Some(proxies.1));
