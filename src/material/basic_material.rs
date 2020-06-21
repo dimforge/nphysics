@@ -51,7 +51,7 @@ impl<N: RealField> Material<N> for BasicMaterial<N> {
             surface_velocity: self
                 .surface_velocity
                 .map(|v| context.position * v)
-                .unwrap_or(Vector::zeros()),
+                .unwrap_or_else(Vector::zeros),
         }
     }
 }
