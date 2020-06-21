@@ -101,7 +101,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
                 //     continue;
                 // }
 
-                let impulse = self.impulses.get(c.id).cloned().unwrap_or_else(Vector::zeros);
+                let impulse = self
+                    .impulses
+                    .get(c.id)
+                    .cloned()
+                    .unwrap_or_else(Vector::zeros);
 
                 let ground_constraint = SignoriniModel::build_velocity_constraint(
                     parameters,
