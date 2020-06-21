@@ -1057,21 +1057,21 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
 
         match force_type {
             ForceType::Force => {
-                for i in 0..4 {
+                for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.forces
                             .fixed_rows_mut::<U3>(element.indices[i])
-                            .add_assign(forces[i]);
+                            .add_assign(force);
                     }
                 }
             }
             ForceType::Impulse => {
                 let dvel = &mut self.workspace;
                 dvel.fill(N::zero());
-                for i in 0..4 {
+                for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         dvel.fixed_rows_mut::<U3>(element.indices[i])
-                            .copy_from(&forces[i]);
+                            .copy_from(force);
                     }
                 }
                 self.inv_augmented_mass.solve_mut(dvel);
@@ -1080,20 +1080,20 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
             ForceType::AccelerationChange => {
                 let mass = element.density * element.volume;
 
-                for i in 0..4 {
+                for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.forces
                             .fixed_rows_mut::<U3>(element.indices[i])
-                            .add_assign(forces[i] * mass);
+                            .add_assign(force * mass);
                     }
                 }
             }
             ForceType::VelocityChange => {
-                for i in 0..4 {
+                for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.velocities
                             .fixed_rows_mut::<U3>(element.indices[i])
-                            .add_assign(forces[i]);
+                            .add_assign(force);
                     }
                 }
             }
