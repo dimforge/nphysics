@@ -658,7 +658,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
 
     desc_custom_getters!(
         self.get_shape: &dyn Shape<N> | { &*self.shape }
-        self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_material: Option<&dyn Material<N>> | { self.material.as_deref() }
 
     );
 
