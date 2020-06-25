@@ -134,6 +134,16 @@ impl<N: RealField> MultibodyLink<N> {
     pub fn link_id(&self) -> usize {
         self.internal_id
     }
+
+    /// The handle of the parent link.
+    #[inline]
+    pub fn parent_id(&self) -> Option<usize> {
+        if self.internal_id != 0 {
+            Some(self.parent_internal_id)
+        } else {
+            None
+        }
+    }
 }
 
 impl<N: RealField> BodyPart<N> for MultibodyLink<N> {
