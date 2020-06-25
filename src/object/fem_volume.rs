@@ -115,7 +115,7 @@ impl<N: RealField> FEMVolume<N> {
                     rest_ad.y, rest_ad.z,
                 );
 
-                let local_j_inv = local_j.try_inverse().unwrap_or(Matrix3::identity());
+                let local_j_inv = local_j.try_inverse().unwrap_or_else(Matrix3::identity);
                 let local_j_inv = Matrix3x4::new(
                     -local_j_inv.m11 - local_j_inv.m12 - local_j_inv.m13,
                     local_j_inv.m11,
@@ -512,7 +512,7 @@ impl<N: RealField> FEMVolume<N> {
                 .add_assign(1);
         }
 
-        let boundary = faces
+        faces
             .iter()
             .filter_map(|(k, n)| {
                 if n.0 == 1 {
@@ -537,9 +537,7 @@ impl<N: RealField> FEMVolume<N> {
                     None
                 }
             })
-            .collect();
-
-        boundary
+            .collect()
     }
 
     /// Returns a triangle mesh at the boundary of this volume as well as a mapping between the mesh
@@ -1057,21 +1055,21 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
 
         match force_type {
             ForceType::Force => {
-                for i in 0..4 {
+                for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.forces
                             .fixed_rows_mut::<U3>(element.indices[i])
-                            .add_assign(forces[i]);
+                            .add_assign(force);
                     }
                 }
             }
             ForceType::Impulse => {
                 let dvel = &mut self.workspace;
                 dvel.fill(N::zero());
-                for i in 0..4 {
+                for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         dvel.fixed_rows_mut::<U3>(element.indices[i])
-                            .copy_from(&forces[i]);
+                            .copy_from(force);
                     }
                 }
                 self.inv_augmented_mass.solve_mut(dvel);
@@ -1080,20 +1078,20 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
             ForceType::AccelerationChange => {
                 let mass = element.density * element.volume;
 
-                for i in 0..4 {
+                for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.forces
                             .fixed_rows_mut::<U3>(element.indices[i])
-                            .add_assign(forces[i] * mass);
+                            .add_assign(force * mass);
                     }
                 }
             }
             ForceType::VelocityChange => {
-                for i in 0..4 {
+                for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.velocities
                             .fixed_rows_mut::<U3>(element.indices[i])
-                            .add_assign(forces[i]);
+                            .add_assign(force);
                     }
                 }
             }
@@ -1107,8 +1105,8 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         force_type: ForceType,
         auto_wake_up: bool,
     ) {
-        let _1_4: N = na::convert(1.0 / 4.0);
-        let barycenter = Point3::new(_1_4, _1_4, _1_4);
+        let _1div4: N = na::convert(1.0 / 4.0);
+        let barycenter = Point3::new(_1div4, _1div4, _1div4);
         self.apply_force_at_local_point(
             part_id,
             &force.linear,

@@ -184,13 +184,13 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     /// The user-data attached to this collider.
     #[inline]
     pub fn user_data(&self) -> Option<&(dyn Any + Send + Sync)> {
-        self.0.data().user_data.as_ref().map(|d| &**d)
+        self.0.data().user_data.as_deref()
     }
 
     /// Mutable reference to the user-data attached to this collider.
     #[inline]
     pub fn user_data_mut(&mut self) -> Option<&mut (dyn Any + Send + Sync)> {
-        self.0.data_mut().user_data.as_mut().map(|d| &mut **d)
+        self.0.data_mut().user_data.as_deref_mut()
     }
 
     /// Sets the user-data attached to this collider.
@@ -520,7 +520,7 @@ impl<N: RealField> ColliderDesc<N> {
     desc_custom_getters!(
         self.get_shape: &dyn Shape<N> | { &*self.shape }
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
-        self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_material: Option<&dyn Material<N>> | { self.material.as_deref() }
     );
 
     desc_getters!(
@@ -658,7 +658,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
 
     desc_custom_getters!(
         self.get_shape: &dyn Shape<N> | { &*self.shape }
-        self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_material: Option<&dyn Material<N>> | { self.material.as_deref() }
 
     );
 

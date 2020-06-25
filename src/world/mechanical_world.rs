@@ -671,7 +671,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
                                                 .substep
                                                 .body_times
                                                 .entry(h)
-                                                .or_insert(N::zero());
+                                                .or_insert_with(N::zero);
 
                                             let target_time =
                                                 frozen.get(&h).cloned().unwrap_or(last_toi);
@@ -930,8 +930,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         let _margins = c1.margin() + c2.margin();
         let target = params.allowed_linear_error; // self.integration_parameters.allowed_linear_error.max(margins - self.integration_parameters.allowed_linear_error * na::convert(3.0));
 
-        let body_time1 = body_times.get(&c1.body()).cloned().unwrap_or(N::zero());
-        let body_time2 = body_times.get(&c2.body()).cloned().unwrap_or(N::zero());
+        let body_time1 = body_times.get(&c1.body()).cloned().unwrap_or_else(N::zero);
+        let body_time2 = body_times.get(&c2.body()).cloned().unwrap_or_else(N::zero);
         let time1 = frozen1.unwrap_or(body_time1);
         let time2 = frozen2.unwrap_or(body_time2);
 

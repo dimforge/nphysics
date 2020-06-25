@@ -193,13 +193,13 @@ macro_rules! user_data_accessors(
         /// Retrieves a reference to the user-defined user-data attached to this object.
         #[inline]
         pub fn user_data(&self) -> Option<&(dyn Any + Send + Sync)> {
-            self.user_data.as_ref().map(|d| &**d)
+            self.user_data.as_deref()
         }
 
         /// Retrieves a mutable reference to the user-defined user-data attached to this object.
         #[inline]
         pub fn user_data_mut(&mut self) -> Option<&mut (dyn Any + Send + Sync)> {
-            self.user_data.as_mut().map(|d| &mut **d)
+            self.user_data.as_deref_mut()
         }
 
         /// Sets the user-defined data attached to this object.

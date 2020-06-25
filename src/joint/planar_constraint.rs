@@ -245,6 +245,6 @@ impl<N: RealField, Handle: BodyHandle> NonlinearConstraintGenerator<N, Handle>
             );
         }
 
-        return None;
+        None
     }
 }

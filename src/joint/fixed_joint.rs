@@ -14,7 +14,7 @@ pub struct FixedJoint<N: RealField> {
 impl<N: RealField> FixedJoint<N> {
     /// Create a joint that does not a allow any degrees of freedom between two multibody links.
     ///
-    /// The descendent attached to this joint will have a position maintained to `pos_wrt_pody`
+    /// The descendent attached to this joint will have a position maintained to `pos_wrt_body`
     /// relative to its parent.
     pub fn new(pos_wrt_body: Isometry<N>) -> Self {
         FixedJoint {
