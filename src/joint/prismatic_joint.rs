@@ -118,6 +118,16 @@ impl<N: RealField> PrismaticJoint<N> {
         self.motor.desired_velocity = vel;
     }
 
+    /// The max angular velocity that the joint motor will attempt.
+    pub fn max_angular_motor_velocity(&self) -> N {
+        self.motor.max_velocity
+    }
+
+    /// Set the maximum angular velocity that the joint motor will attempt.
+    pub fn set_max_angular_motor_velcoity(&mut self, max_vel: N) {
+        self.motor.max_velocity = max_vel;
+    }
+
     /// The maximum force that can be output by the joint motor.
     pub fn max_linear_motor_force(&self) -> N {
         self.motor.max_force
