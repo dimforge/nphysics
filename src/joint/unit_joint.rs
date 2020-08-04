@@ -71,10 +71,10 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
         multibody.inv_mass_mul_unit_joint_force(link, dof_id, N::one(), &mut jacobians[wj_id..]);
 
         let inv_r = jacobians[wj_id + link.assembly_id + dof_id]; // = J^t * M^-1 J
-        let rhs = dvel
-            - motor
-                .desired_velocity
-                .clamp(-motor.max_velocity, motor.max_velocity);
+        let velocity = motor
+            .desired_velocity
+            .clamp(-motor.max_velocity, motor.max_velocity);
+        let rhs = dvel - velocity;
         let limits = motor.impulse_limits();
         let impulse_id = link.impulse_id + dof_id * 3;
 
