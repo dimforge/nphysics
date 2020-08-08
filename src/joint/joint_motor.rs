@@ -7,6 +7,8 @@ use num::Zero;
 pub struct JointMotor<V, N: RealField> {
     /// The velocity the motor will attempt to reach.
     pub desired_velocity: V,
+    /// The maximum velocity the motor will attempt to reach.
+    pub max_velocity: N,
     /// The maximum force deliverable by the motor.
     pub max_force: N,
     /// Whether or not the motor is active.
@@ -20,6 +22,7 @@ impl<V: Zero, N: RealField> JointMotor<V, N> {
     pub fn new() -> Self {
         JointMotor {
             desired_velocity: V::zero(),
+            max_velocity: N::max_value(),
             max_force: N::max_value(),
             enabled: false,
         }

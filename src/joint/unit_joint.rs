@@ -60,7 +60,8 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
     let mut is_min_constraint_active = false;
     let joint_velocity = multibody.joint_velocity(link);
 
-    if joint.motor().enabled {
+    let motor = joint.motor();
+    if motor.enabled {
         let dvel = joint_velocity[dof_id] + ext_vels[link.assembly_id];
 
         DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
@@ -70,8 +71,11 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
         multibody.inv_mass_mul_unit_joint_force(link, dof_id, N::one(), &mut jacobians[wj_id..]);
 
         let inv_r = jacobians[wj_id + link.assembly_id + dof_id]; // = J^t * M^-1 J
-        let rhs = dvel - joint.motor().desired_velocity;
-        let limits = joint.motor().impulse_limits();
+        let velocity = motor
+            .desired_velocity
+            .clamp(-motor.max_velocity, motor.max_velocity);
+        let rhs = dvel - velocity;
+        let limits = motor.impulse_limits();
         let impulse_id = link.impulse_id + dof_id * 3;
 
         let constraint = BilateralGroundConstraint {
