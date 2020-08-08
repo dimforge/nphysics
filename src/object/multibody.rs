@@ -1334,6 +1334,20 @@ impl<N: RealField> MultibodyDesc<N> {
         }
     }
 
+    /// Initializes a multibody builder from a joint trait object.
+    pub fn from_boxed_joint(joint: Box<dyn Joint<N>>) -> Self {
+        MultibodyDesc {
+            name: String::new(),
+            joint,
+            children: Vec::new(),
+            velocity: Velocity::zero(),
+            local_inertia: Inertia::zero(),
+            local_center_of_mass: Point::origin(),
+            body_shift: Vector::zeros(),
+            parent_shift: Vector::zeros(),
+        }
+    }
+
     /// Add a children link to the multibody link represented by `self`.
     pub fn add_child<J: Joint<N>>(&mut self, joint: J) -> &mut MultibodyDesc<N> {
         let child = MultibodyDesc::new(joint);
