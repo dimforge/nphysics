@@ -1348,12 +1348,28 @@ impl<N: RealField> MultibodyDesc<N> {
         }
     }
 
-    /// Add a children link to the multibody link represented by `self`.
+    /// Returns the children of this multibody.
+    pub fn children(&self) -> &[MultibodyDesc<N>] {
+        &self.children
+    }
+
+    /// Returns a mutable list of children of this multibody.
+    pub fn children_mut(&mut self) -> &mut [MultibodyDesc<N>] {
+        &mut self.children
+    }
+
+    /// Add a child link to the multibody link represented by `self`.
     pub fn add_child<J: Joint<N>>(&mut self, joint: J) -> &mut MultibodyDesc<N> {
         let child = MultibodyDesc::new(joint);
 
         self.children.push(child);
         self.children.last_mut().unwrap()
+    }
+
+    /// Adds the description as a child link to the multibody link represented by `self`.
+    pub fn add_child_desc(&mut self, child: MultibodyDesc<N>) -> &mut Self {
+        self.children.push(child);
+        self
     }
 
     /// Sets the joint of this multibody builder.
