@@ -11,8 +11,8 @@
     <a href="https://crates.io/crates/nphysics3d">
          <img src="https://img.shields.io/crates/v/nphysics3d.svg?style=flat-square&label=crates.io%20(nphysics3d)" alt="crates.io (nphysics3d)">
     </a>
-    <a href="https://travis-ci.org/rustsim/nphysics">
-        <img src="https://travis-ci.org/rustsim/nphysics.svg?branch=master" alt="Build status">
+    <a href="https://travis-ci.org/dimforge/nphysics">
+        <img src="https://travis-ci.org/dimforge/nphysics.svg?branch=master" alt="Build status">
     </a>
 </p>
 <p align = "center">
@@ -22,16 +22,6 @@
 </p>
 
 -----
-
-<p align = "center">
-  <i>Click one of those buttons if you wish to donate to support the development of</i> <b>nphysics</b>:
-</p>
-
-<p align = "center">
-<a href="https://www.patreon.com/bePatron?u=7111380" ><img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patron!" /></a>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://liberapay.com/sebcrozet/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a>
-</p>
 
 nphysics
 ========
