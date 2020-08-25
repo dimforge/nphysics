@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics2d"
-version = "0.16.1"
+version = "0.17.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "2-dimensional physics engine in Rust."
 documentation = "http://nphysics.org/rustdoc/nphysics2d/index.html"
@@ -31,12 +31,12 @@ slotmap    = "0.4" # For impulse cache.
 generational-arena = "0.2" # For default body/collide/constraint/force sets.
 smallvec   = "1"
 lazy_static = "1"
-simba      = "0.1"
-nalgebra   = { version = "0.21", features = [ "sparse" ] }
+simba      = "0.2"
+nalgebra   = { version = "0.22", features = [ "sparse" ] }
 approx     = "0.3"
 downcast-rs = "1"
 bitflags   = "1"
-ncollide2d = "0.23"
+ncollide2d = "0.24"
 instant    = { version = "0.1", features = [ "now" ]}
 
 [target.wasm32-unknown-unknown.dependencies]

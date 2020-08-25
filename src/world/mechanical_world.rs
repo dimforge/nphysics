@@ -959,7 +959,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         if motion1.is_static_or_linear() && motion2.is_static_or_linear() {
             let pos1 = motion1.position_at_time(N::zero()) * c1.position_wrt_body();
             let pos2 = motion2.position_at_time(N::zero()) * c2.position_wrt_body();
+            let dispatcher = query::DefaultTOIDispatcher;
             toi = query::time_of_impact(
+                &dispatcher,
                 &pos1,
                 &motion1.linvel(),
                 c1.shape(),
@@ -968,18 +970,22 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
                 c2.shape(),
                 remaining_time,
                 target,
-            )?
+            )
+            .ok()??
         } else {
             let motion1 = motion1.prepend_transformation(c1.position_wrt_body());
             let motion2 = motion2.prepend_transformation(c2.position_wrt_body());
+            let dispatcher = query::DefaultTOIDispatcher;
             toi = query::nonlinear_time_of_impact(
+                &dispatcher,
                 &motion1,
                 c1.shape(),
                 &motion2,
                 c2.shape(),
                 remaining_time,
                 target,
-            )?
+            )
+            .ok()??
         }
 
         if params.ccd_on_penetration_enabled || toi.status != TOIStatus::Penetrating {
