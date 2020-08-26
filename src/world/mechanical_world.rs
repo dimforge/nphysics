@@ -4,6 +4,7 @@ use na::{self, RealField};
 use ncollide;
 use ncollide::interpolation::{RigidMotion, RigidMotionComposition};
 use ncollide::narrow_phase::Interaction;
+use ncollide::pipeline::BroadPhasePairFilter;
 use ncollide::query::{self, Proximity, TOIStatus};
 
 use crate::counters::Counters;
@@ -190,6 +191,24 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         Constraints: JointConstraintSet<N, Handle>,
         Forces: ForceGeneratorSet<N, Handle>,
     {
+        self.step_with_filter(gworld, bodies, colliders, constraints, forces, ())
+    }
+
+    /// Execute one time step of the physics simulation.
+    pub fn step_with_filter<Colliders, Constraints, Forces, Filter>(
+        &mut self,
+        gworld: &mut GeometricalWorld<N, Handle, CollHandle>,
+        bodies: &mut dyn BodySet<N, Handle = Handle>,
+        colliders: &mut Colliders,
+        constraints: &mut Constraints,
+        forces: &mut Forces,
+        filter: Filter,
+    ) where
+        Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
+        Constraints: JointConstraintSet<N, Handle>,
+        Forces: ForceGeneratorSet<N, Handle>,
+        Filter: BroadPhasePairFilter<N, Colliders> + Copy,
+    {
         if !self.substep.active {
             self.counters.step_started();
 
@@ -227,7 +246,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
              */
             gworld.clear_events();
             gworld.sync_colliders(bodies, colliders);
-            gworld.perform_broad_phase(colliders);
+            gworld.perform_broad_phase(colliders, filter);
             gworld.perform_narrow_phase(colliders);
 
             colliders.foreach_mut(|_, c| c.clear_update_flags());
@@ -330,7 +349,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
          *
          */
         self.counters.ccd_started();
-        self.solve_ccd(gworld, bodies, colliders, constraints, forces);
+        self.solve_ccd(gworld, bodies, colliders, constraints, forces, filter);
         self.counters.ccd_completed();
 
         if !self.substep.active {
@@ -354,7 +373,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             gworld.sync_colliders(bodies, colliders);
 
             self.counters.broad_phase_started();
-            gworld.perform_broad_phase(colliders);
+            gworld.perform_broad_phase(colliders, filter);
             self.counters.broad_phase_completed();
 
             self.counters.narrow_phase_started();
@@ -536,17 +555,19 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         PredictedImpacts::Impacts(impacts, frozen)
     }
 
-    fn solve_ccd<Colliders, Constraints, Forces>(
+    fn solve_ccd<Colliders, Constraints, Forces, Filter>(
         &mut self,
         gworld: &mut GeometricalWorld<N, Handle, CollHandle>,
         bodies: &mut dyn BodySet<N, Handle = Handle>,
         colliders: &mut Colliders,
         constraints: &mut Constraints,
         _forces: &mut Forces,
+        filter: Filter,
     ) where
         Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
         Constraints: JointConstraintSet<N, Handle>,
         Forces: ForceGeneratorSet<N, Handle>,
+        Filter: BroadPhasePairFilter<N, Colliders> + Copy,
     {
         let dt0 = self.integration_parameters.dt();
         let _inv_dt0 = self.integration_parameters.inv_dt();
@@ -577,7 +598,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
             // Update the broad phase.
             self.counters.ccd.broad_phase_time.resume();
             gworld.sync_colliders(bodies, colliders);
-            gworld.perform_broad_phase(colliders);
+            gworld.perform_broad_phase(colliders, filter);
             self.counters.ccd.broad_phase_time.pause();
 
             // Compute the next TOI.
