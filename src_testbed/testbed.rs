@@ -22,7 +22,7 @@ use kiss3d::window::{State, Window};
 #[cfg(feature = "dim2")]
 use na::Vector2;
 use na::{self, Point2, Point3, RealField, Vector3};
-use ncollide::pipeline::CollisionGroups;
+use ncollide::pipeline::{BroadPhasePairFilter, CollisionGroups};
 #[cfg(feature = "dim3")]
 use ncollide::query;
 use ncollide::query::{ContactId, Ray};
@@ -134,6 +134,7 @@ pub struct Testbed<N: RealField = f32> {
     colliders: DefaultColliderSet<N>,
     forces: DefaultForceGeneratorSet<N>,
     constraints: DefaultJointConstraintSet<N>,
+    broad_phase_filter: Box<dyn BroadPhasePairFilter<N, DefaultColliderSet<N>> + Copy>,
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
@@ -236,6 +237,7 @@ impl<N: RealField> Testbed<N> {
             colliders,
             forces,
             constraints,
+            broad_phase_filter: (),
             callbacks: Vec::new(),
             #[cfg(feature = "fluids")]
             callbacks_fluids: Vec::new(),

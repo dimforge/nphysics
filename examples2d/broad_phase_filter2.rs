@@ -15,24 +15,20 @@ use nphysics_testbed2d::Testbed;
 
 struct NoMultibodySelfContactFilter;
 
-impl BroadPhasePairFilter<f32, Collider<f32, DefaultBodyHandle>, DefaultColliderHandle>
+impl BroadPhasePairFilter<f32, DefaultColliderSet<f32>>
     for NoMultibodySelfContactFilter
 {
     fn is_pair_valid(
         &self,
-        c1: &Collider<f32, DefaultBodyHandle>,
-        c2: &Collider<f32, DefaultBodyHandle>,
-        _: DefaultColliderHandle,
-        _: DefaultColliderHandle,
+        h1: DefaultColliderHandle,
+        h2: DefaultColliderHandle,
+        s: &DefaultColliderSet<f32>,
     ) -> bool {
-        match (c1.anchor(), c2.anchor()) {
+        let (c1, c2) = (s.get(h1), s.get(h2));
+        match (c1.map(|c| c.anchor()), c2.map(|c| c.anchor())) {
             (
-                ColliderAnchor::OnBodyPart {
-                    body_part: part1, ..
-                },
-                ColliderAnchor::OnBodyPart {
-                    body_part: part2, ..
-                },
+                Some(ColliderAnchor::OnBodyPart { body_part: part1, ..  }),
+                Some(ColliderAnchor::OnBodyPart { body_part: part2, ..  }),
             ) => part1.0 != part2.0, // Don't collide if the two parts belong to the same body.
             _ => true,
         }

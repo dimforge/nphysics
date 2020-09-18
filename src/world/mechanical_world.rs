@@ -191,7 +191,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         Constraints: JointConstraintSet<N, Handle>,
         Forces: ForceGeneratorSet<N, Handle>,
     {
-        self.step_with_filter(gworld, bodies, colliders, constraints, forces, ())
+        self.step_with_filter(gworld, bodies, colliders, constraints, forces, &())
     }
 
     /// Execute one time step of the physics simulation.
@@ -202,12 +202,12 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         colliders: &mut Colliders,
         constraints: &mut Constraints,
         forces: &mut Forces,
-        filter: Filter,
+        filter: &Filter,
     ) where
         Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
         Constraints: JointConstraintSet<N, Handle>,
         Forces: ForceGeneratorSet<N, Handle>,
-        Filter: BroadPhasePairFilter<N, Colliders> + Copy,
+        Filter: BroadPhasePairFilter<N, Colliders>,
     {
         if !self.substep.active {
             self.counters.step_started();

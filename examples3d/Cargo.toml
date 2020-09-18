@@ -13,9 +13,9 @@ rand       = { version = "0.7", features = [ "stdweb" ] }
 rand_distr = "0.2"
 num-traits = "0.2"
 Inflector  = "0.11"
-nalgebra   = "0.21"
-ncollide3d = "0.23"
-kiss3d     = "0.24"
+nalgebra   = "0.22"
+ncollide3d = "0.24"
+kiss3d     = "0.25"
 simba      = { version = "0.1", features = [ "partial_fixed_point_support" ]}
 
 [target.wasm32-unknown-unknown.dependencies]

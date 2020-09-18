@@ -285,7 +285,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     pub fn perform_broad_phase<Colliders, Filter>(
         &mut self,
         colliders: &Colliders,
-        user_filter: Filter,
+        user_filter: &Filter,
     ) where
         Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
         Filter: BroadPhasePairFilter<N, Colliders>,
@@ -856,14 +856,14 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     }
 }
 
-pub struct BroadPhaseCollisionSet<'a, N, Bodies, CollSet>
+pub struct BroadPhaseCollisionSet<'a, N, Bodies, Colliders>
 where
     N: RealField,
     Bodies: BodySet<N>,
-    CollSet: ColliderSet<N, Bodies::Handle>,
+    Colliders: ColliderSet<N, Bodies::Handle>,
 {
     /// The set of colliders within the simulation.
-    colliders: &'a CollSet,
+    colliders: &'a Colliders,
 
     /// The set of bodies within the simulation.
     bodies: &'a Bodies,
@@ -872,11 +872,11 @@ where
     _pd: PhantomData<N>,
 }
 
-impl<'a, N, Bodies, CollSet> BroadPhaseCollisionSet<'a, N, Bodies, CollSet>
+impl<'a, N, Bodies, Colliders> BroadPhaseCollisionSet<'a, N, Bodies, Colliders>
 where
     N: RealField,
     Bodies: BodySet<N>,
-    CollSet: ColliderSet<N, Bodies::Handle>,
+    Colliders: ColliderSet<N, Bodies::Handle>,
 {
     /// Returns the body set used in the physics step.
     pub fn body_set(&self) -> &Bodies {
@@ -884,20 +884,20 @@ where
     }
 
     /// Returns the collider set used in the physics step.
-    pub fn colliders(&self) -> &CollSet {
+    pub fn colliders(&self) -> &Colliders {
         self.colliders
     }
 }
 
-impl<'a, N, Bodies, CollSet> CollisionObjectSet<N>
-    for BroadPhaseCollisionSet<'a, N, Bodies, CollSet>
+impl<'a, N, Bodies, Colliders> CollisionObjectSet<N>
+    for BroadPhaseCollisionSet<'a, N, Bodies, Colliders>
 where
     N: RealField,
     Bodies: BodySet<N>,
-    CollSet: ColliderSet<N, Bodies::Handle>,
+    Colliders: ColliderSet<N, Bodies::Handle>,
 {
     type CollisionObject = Collider<N, Bodies::Handle>;
-    type CollisionObjectHandle = CollSet::Handle;
+    type CollisionObjectHandle = Colliders::Handle;
 
     fn collision_object(
         &self,
@@ -911,8 +911,8 @@ where
     }
 }
 
-struct DefaultCollisionFilter<Filter, Handle> {
-    user_filter: Filter,
+struct DefaultCollisionFilter<'a, Filter, Handle> {
+    user_filter: &'a Filter,
 
     /// Makes the compiler happy.
     _pd: PhantomData<Handle>,
