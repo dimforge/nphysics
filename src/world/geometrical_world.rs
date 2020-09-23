@@ -282,13 +282,16 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         self.narrow_phase.clear_events()
     }
     /// Executes the broad phase of the collision detection pipeline.
-    pub fn perform_broad_phase<Colliders, Filter>(
+    pub fn perform_broad_phase<Bodies, Colliders, Filter>(
         &mut self,
+        bodies: &Bodies,
         colliders: &Colliders,
         user_filter: &Filter,
     ) where
+        Bodies: BodySet<N, Handle = Handle>,
         Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
-        Filter: BroadPhasePairFilter<N, Colliders>,
+        Filter: for<'a> BroadPhasePairFilter<N, BroadPhaseCollisionSet<'a, N, Bodies, Colliders>>
+            + ?Sized,
     {
         let pair_filter = DefaultCollisionFilter {
             user_filter,
@@ -296,7 +299,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         };
 
         pipeline::perform_broad_phase(
-            colliders,
+            &BroadPhaseCollisionSet {
+                bodies,
+                colliders,
+                _pd: PhantomData,
+            },
             &mut *self.broad_phase,
             &mut self.narrow_phase,
             &mut self.interactions,
@@ -856,6 +863,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     }
 }
 
+/// The set of bodies and colliders used within broad phase collision filtering.
 pub struct BroadPhaseCollisionSet<'a, N, Bodies, Colliders>
 where
     N: RealField,
@@ -879,7 +887,7 @@ where
     Colliders: ColliderSet<N, Bodies::Handle>,
 {
     /// Returns the body set used in the physics step.
-    pub fn body_set(&self) -> &Bodies {
+    pub fn bodies(&self) -> &Bodies {
         self.bodies
     }
 
@@ -911,7 +919,7 @@ where
     }
 }
 
-struct DefaultCollisionFilter<'a, Filter, Handle> {
+struct DefaultCollisionFilter<'a, Filter: ?Sized, Handle> {
     user_filter: &'a Filter,
 
     /// Makes the compiler happy.
@@ -919,15 +927,20 @@ struct DefaultCollisionFilter<'a, Filter, Handle> {
 }
 
 impl<'a, N, Handle, Set, Filter> BroadPhasePairFilter<N, Set>
-    for DefaultCollisionFilter<Filter, Handle>
+    for DefaultCollisionFilter<'a, Filter, Handle>
 where
     N: RealField,
     Handle: BodyHandle,
-    Set: ColliderSet<N, Handle>,
-    Filter: BroadPhasePairFilter<N, Set>,
+    Set: CollisionObjectSet<N, CollisionObject = Collider<N, Handle>>,
+    Filter: BroadPhasePairFilter<N, Set> + ?Sized,
 {
-    fn is_pair_valid(&self, h1: Set::Handle, h2: Set::Handle, set: &Set) -> bool {
-        let (c1, c2) = match (set.get(h1), set.get(h2)) {
+    fn is_pair_valid(
+        &self,
+        h1: Set::CollisionObjectHandle,
+        h2: Set::CollisionObjectHandle,
+        set: &Set,
+    ) -> bool {
+        let (c1, c2) = match (set.collision_object(h1), set.collision_object(h2)) {
             (Some(c1), Some(c2)) => (c1, c2),
             _ => return false,
         };
