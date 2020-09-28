@@ -31,8 +31,8 @@ rand       = "0.7"
 instant    = { version = "0.1", features = [ "stdweb", "now" ]}
 simba      = "0.1"
 nalgebra   = "0.22"
-kiss3d     = { version = "0.25", features = [ "conrod" ] }
-ncollide2d = "0.24"
+kiss3d     = { version = "0.26", features = [ "conrod" ] }
+ncollide2d = "0.25"
 wrapped2d  = { version = "0.4", optional = true }
 salva2d = { version = "0.4", features = [ "nphysics" ], optional = true }
 

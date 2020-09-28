@@ -12,7 +12,7 @@ improved_fixed_point_support = [ "nphysics2d/improved_fixed_point_support" ]
 rand       = "0.7"
 Inflector  = "0.11"
 nalgebra   = "0.22"
-ncollide2d = "0.24"
+ncollide2d = "0.25"
 simba      = { version = "0.1", features = [ "partial_fixed_point_support" ]}
 
 [target.wasm32-unknown-unknown.dependencies]

@@ -37,7 +37,7 @@ nalgebra   = { version = "0.22", features = [ "sparse" ] }
 approx     = "0.3"
 downcast-rs = "1"
 bitflags   = "1"
-ncollide3d = "0.24"
+ncollide3d = "0.25"
 instant    = { version = "0.1", features = [ "now" ]}
 
 
