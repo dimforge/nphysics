@@ -18,7 +18,7 @@ use crate::object::{
     DefaultBodyHandle, DefaultColliderHandle,
 };
 use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
-use crate::world::{BroadPhaseCollisionSet, GeometricalWorld};
+use crate::world::{BroadPhasePairFilterSets, GeometricalWorld};
 
 /// The default mechanical world, that can be used with a `DefaultBodyHandle` and `DefaultColliderHandle`.
 pub type DefaultMechanicalWorld<N> = MechanicalWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
@@ -209,7 +209,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
         Constraints: JointConstraintSet<N, Handle>,
         Forces: ForceGeneratorSet<N, Handle>,
-        Filter: for<'a> BroadPhasePairFilter<N, BroadPhaseCollisionSet<'a, N, Bodies, Colliders>>
+        Filter: for<'a> BroadPhasePairFilter<N, BroadPhasePairFilterSets<'a, N, Bodies, Colliders>>
             + ?Sized,
     {
         if !self.substep.active {
@@ -571,7 +571,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
         Constraints: JointConstraintSet<N, Handle>,
         Forces: ForceGeneratorSet<N, Handle>,
-        Filter: for<'a> BroadPhasePairFilter<N, BroadPhaseCollisionSet<'a, N, Bodies, Colliders>>
+        Filter: for<'a> BroadPhasePairFilter<N, BroadPhasePairFilterSets<'a, N, Bodies, Colliders>>
             + ?Sized,
     {
         let dt0 = self.integration_parameters.dt();

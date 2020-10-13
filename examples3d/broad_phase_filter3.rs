@@ -10,13 +10,13 @@ use nphysics3d::object::{
     DefaultBodyHandle, DefaultBodySet, DefaultColliderHandle, DefaultColliderSet, Ground,
     MultibodyDesc,
 };
-use nphysics3d::world::{BroadPhaseCollisionSet, DefaultGeometricalWorld, DefaultMechanicalWorld};
+use nphysics3d::world::{BroadPhasePairFilterSets, DefaultGeometricalWorld, DefaultMechanicalWorld};
 
 use nphysics_testbed3d::Testbed;
 
 struct NoMultibodySelfContactFilter;
 
-impl<N, Bodies, Colliders> BroadPhasePairFilter<N, BroadPhaseCollisionSet<'_, N, Bodies, Colliders>>
+impl<N, Bodies, Colliders> BroadPhasePairFilter<N, BroadPhasePairFilterSets<'_, N, Bodies, Colliders>>
     for NoMultibodySelfContactFilter
 where
     N: RealField,
@@ -27,7 +27,7 @@ where
         &self,
         h1: Colliders::Handle,
         h2: Colliders::Handle,
-        set: &BroadPhaseCollisionSet<'_, N, Bodies, Colliders>,
+        set: &BroadPhasePairFilterSets<'_, N, Bodies, Colliders>,
     ) -> bool {
         let a1 = set.colliders().get(h1).map(|c| c.anchor());
         let a2 = set.colliders().get(h2).map(|c| c.anchor());

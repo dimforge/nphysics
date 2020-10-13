@@ -13,7 +13,7 @@ use ncollide::query::{ContactManifold, Proximity, Ray};
 
 use crate::object::{
     BodyHandle, BodySet, Collider, ColliderAnchor, ColliderHandle, ColliderSet, DefaultBodyHandle,
-    DefaultColliderHandle,
+    DefaultBodySet, DefaultColliderHandle, DefaultColliderSet,
 };
 use crate::volumetric::Volumetric;
 
@@ -290,7 +290,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     ) where
         Bodies: BodySet<N, Handle = Handle>,
         Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
-        Filter: for<'a> BroadPhasePairFilter<N, BroadPhaseCollisionSet<'a, N, Bodies, Colliders>>
+        Filter: for<'a> BroadPhasePairFilter<N, BroadPhasePairFilterSets<'a, N, Bodies, Colliders>>
             + ?Sized,
     {
         let pair_filter = DefaultCollisionFilter {
@@ -299,7 +299,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
         };
 
         pipeline::perform_broad_phase(
-            &BroadPhaseCollisionSet {
+            &BroadPhasePairFilterSets {
                 bodies,
                 colliders,
                 _pd: PhantomData,
@@ -863,8 +863,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
     }
 }
 
+/// The default set of bodies and colliders used within broad phase collision filtering.
+pub type DefaultBroadPhasePairFilterSets<'a, N> = BroadPhasePairFilterSets<'a, N, DefaultBodySet<N>, DefaultColliderSet<N>>;
+
 /// The set of bodies and colliders used within broad phase collision filtering.
-pub struct BroadPhaseCollisionSet<'a, N, Bodies, Colliders>
+pub struct BroadPhasePairFilterSets<'a, N, Bodies, Colliders>
 where
     N: RealField,
     Bodies: BodySet<N>,
@@ -880,7 +883,7 @@ where
     _pd: PhantomData<N>,
 }
 
-impl<'a, N, Bodies, Colliders> BroadPhaseCollisionSet<'a, N, Bodies, Colliders>
+impl<'a, N, Bodies, Colliders> BroadPhasePairFilterSets<'a, N, Bodies, Colliders>
 where
     N: RealField,
     Bodies: BodySet<N>,
@@ -898,7 +901,7 @@ where
 }
 
 impl<'a, N, Bodies, Colliders> CollisionObjectSet<N>
-    for BroadPhaseCollisionSet<'a, N, Bodies, Colliders>
+    for BroadPhasePairFilterSets<'a, N, Bodies, Colliders>
 where
     N: RealField,
     Bodies: BodySet<N>,

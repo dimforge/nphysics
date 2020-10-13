@@ -37,7 +37,7 @@ use nphysics::object::{
     ActivationStatus, BodyPartHandle, DefaultBodyHandle, DefaultBodyPartHandle, DefaultBodySet,
     DefaultColliderHandle, DefaultColliderSet,
 };
-use nphysics::world::{BroadPhaseCollisionSet, DefaultGeometricalWorld, DefaultMechanicalWorld};
+use nphysics::world::{DefaultBroadPhasePairFilterSets, DefaultGeometricalWorld, DefaultMechanicalWorld};
 #[cfg(feature = "fluids")]
 use salva::{coupling::ColliderCouplingSet, object::FluidHandle, LiquidWorld};
 
@@ -134,7 +134,7 @@ pub struct Testbed<N: RealField = f32> {
     colliders: DefaultColliderSet<N>,
     forces: DefaultForceGeneratorSet<N>,
     constraints: DefaultJointConstraintSet<N>,
-    broad_phase_filter: Box<dyn for<'a> BroadPhasePairFilter<N, CollisionSet<'a, N>>>,
+    broad_phase_filter: Box<dyn for<'a> BroadPhasePairFilter<N, DefaultBroadPhasePairFilterSets<'a, N>>>,
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
@@ -153,8 +153,6 @@ pub struct Testbed<N: RealField = f32> {
     #[cfg(feature = "box2d-backend")]
     box2d: Option<Box2dWorld>,
 }
-
-type CollisionSet<'a, N> = BroadPhaseCollisionSet<'a, N, DefaultBodySet<N>, DefaultColliderSet<N>>;
 
 type Callbacks<N> = Vec<
     Box<
@@ -361,7 +359,7 @@ impl<N: RealField> Testbed<N> {
 
     pub fn set_broad_phase_pair_filter<F>(&mut self, filter: F)
     where
-        for<'a> F: BroadPhasePairFilter<N, CollisionSet<'a, N>>,
+        for<'a> F: BroadPhasePairFilter<N, DefaultBroadPhasePairFilterSets<'a, N>>,
         F: 'static,
     {
         self.broad_phase_filter = Box::new(filter);
