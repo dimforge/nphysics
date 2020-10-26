@@ -1,7 +1,8 @@
 //! The physics world.
 
 pub use self::geometrical_world::{
-    BroadPhasePairFilterSets, DefaultBroadPhasePairFilterSets, DefaultGeometricalWorld, GeometricalWorld,
+    BroadPhasePairFilterSets, DefaultBroadPhasePairFilterSets, DefaultGeometricalWorld,
+    GeometricalWorld,
 };
 pub use self::mechanical_world::{DefaultMechanicalWorld, MechanicalWorld};
 

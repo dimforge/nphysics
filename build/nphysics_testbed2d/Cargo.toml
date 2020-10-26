@@ -29,10 +29,10 @@ bitflags   = "1"
 num-traits = "0.2"
 rand       = "0.7"
 instant    = { version = "0.1", features = [ "stdweb", "now" ]}
-simba      = "0.1"
-nalgebra   = "0.22"
-kiss3d     = { version = "0.26", features = [ "conrod" ] }
-ncollide2d = "0.25"
+simba      = "0.3"
+nalgebra   = "0.23"
+kiss3d     = { version = "0.27", features = [ "conrod" ] }
+ncollide2d = "0.26"
 wrapped2d  = { version = "0.4", optional = true }
 salva2d = { version = "0.4", features = [ "nphysics" ], optional = true }
 

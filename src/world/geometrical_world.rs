@@ -864,7 +864,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
 }
 
 /// The default set of bodies and colliders used within broad phase collision filtering.
-pub type DefaultBroadPhasePairFilterSets<'a, N> = BroadPhasePairFilterSets<'a, N, DefaultBodySet<N>, DefaultColliderSet<N>>;
+pub type DefaultBroadPhasePairFilterSets<'a, N> =
+    BroadPhasePairFilterSets<'a, N, DefaultBodySet<N>, DefaultColliderSet<N>>;
 
 /// The set of bodies and colliders used within broad phase collision filtering.
 pub struct BroadPhasePairFilterSets<'a, N, Bodies, Colliders>
