@@ -32,12 +32,12 @@ slotmap    = "0.4" # For impulse cache.
 generational-arena = "0.2" # For default body/collide/constraint/force sets.
 smallvec   = "1"
 lazy_static = "1"
-simba      = "0.2"
-nalgebra   = { version = "0.22", features = [ "sparse" ] }
-approx     = "0.3"
+simba      = "0.3"
+nalgebra   = { version = "0.23", features = [ "sparse" ] }
+approx     = "0.4"
 downcast-rs = "1"
 bitflags   = "1"
-ncollide3d = "0.25"
+ncollide3d = "0.26"
 instant    = { version = "0.1", features = [ "now" ]}
 
 
