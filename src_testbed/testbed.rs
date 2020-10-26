@@ -22,7 +22,7 @@ use kiss3d::window::{State, Window};
 #[cfg(feature = "dim2")]
 use na::Vector2;
 use na::{self, Point2, Point3, RealField, Vector3};
-use ncollide::pipeline::CollisionGroups;
+use ncollide::pipeline::{BroadPhasePairFilter, CollisionGroups};
 #[cfg(feature = "dim3")]
 use ncollide::query;
 use ncollide::query::{ContactId, Ray};
@@ -37,7 +37,7 @@ use nphysics::object::{
     ActivationStatus, BodyPartHandle, DefaultBodyHandle, DefaultBodyPartHandle, DefaultBodySet,
     DefaultColliderHandle, DefaultColliderSet,
 };
-use nphysics::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
+use nphysics::world::{DefaultBroadPhasePairFilterSets, DefaultGeometricalWorld, DefaultMechanicalWorld};
 #[cfg(feature = "fluids")]
 use salva::{coupling::ColliderCouplingSet, object::FluidHandle, LiquidWorld};
 
@@ -134,6 +134,7 @@ pub struct Testbed<N: RealField = f32> {
     colliders: DefaultColliderSet<N>,
     forces: DefaultForceGeneratorSet<N>,
     constraints: DefaultJointConstraintSet<N>,
+    broad_phase_filter: Box<dyn for<'a> BroadPhasePairFilter<N, DefaultBroadPhasePairFilterSets<'a, N>>>,
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
@@ -236,6 +237,7 @@ impl<N: RealField> Testbed<N> {
             colliders,
             forces,
             constraints,
+            broad_phase_filter: Box::new(()),
             callbacks: Vec::new(),
             #[cfg(feature = "fluids")]
             callbacks_fluids: Vec::new(),
@@ -353,6 +355,14 @@ impl<N: RealField> Testbed<N> {
 
     pub fn mechanical_world_mut(&mut self) -> &mut DefaultMechanicalWorld<N> {
         &mut self.mechanical_world
+    }
+
+    pub fn set_broad_phase_pair_filter<F>(&mut self, filter: F)
+    where
+        for<'a> F: BroadPhasePairFilter<N, DefaultBroadPhasePairFilterSets<'a, N>>,
+        F: 'static,
+    {
+        self.broad_phase_filter = Box::new(filter);
     }
 
     #[cfg(feature = "fluids")]
@@ -1088,12 +1098,13 @@ impl<N: RealField> State for Testbed<N> {
         if self.state.running != RunMode::Stop {
             for _ in 0..self.nsteps {
                 if self.state.selected_backend == NPHYSICS_BACKEND {
-                    self.mechanical_world.step(
+                    self.mechanical_world.step_with_filter(
                         &mut self.geometrical_world,
                         &mut self.bodies,
                         &mut self.colliders,
                         &mut self.constraints,
                         &mut self.forces,
+                        &*self.broad_phase_filter,
                     );
 
                     #[cfg(feature = "fluids")]

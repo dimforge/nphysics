@@ -36,7 +36,7 @@ nalgebra   = { version = "0.22", features = [ "sparse" ] }
 approx     = "0.3"
 downcast-rs = "1"
 bitflags   = "1"
-ncollide2d = "0.24"
+ncollide2d = "0.25"
 instant    = { version = "0.1", features = [ "now" ]}
 
 [target.wasm32-unknown-unknown.dependencies]
