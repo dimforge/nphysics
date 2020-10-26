@@ -37,7 +37,9 @@ use nphysics::object::{
     ActivationStatus, BodyPartHandle, DefaultBodyHandle, DefaultBodyPartHandle, DefaultBodySet,
     DefaultColliderHandle, DefaultColliderSet,
 };
-use nphysics::world::{DefaultBroadPhasePairFilterSets, DefaultGeometricalWorld, DefaultMechanicalWorld};
+use nphysics::world::{
+    DefaultBroadPhasePairFilterSets, DefaultGeometricalWorld, DefaultMechanicalWorld,
+};
 #[cfg(feature = "fluids")]
 use salva::{coupling::ColliderCouplingSet, object::FluidHandle, LiquidWorld};
 
@@ -134,7 +136,8 @@ pub struct Testbed<N: RealField = f32> {
     colliders: DefaultColliderSet<N>,
     forces: DefaultForceGeneratorSet<N>,
     constraints: DefaultJointConstraintSet<N>,
-    broad_phase_filter: Box<dyn for<'a> BroadPhasePairFilter<N, DefaultBroadPhasePairFilterSets<'a, N>>>,
+    broad_phase_filter:
+        Box<dyn for<'a> BroadPhasePairFilter<N, DefaultBroadPhasePairFilterSets<'a, N>>>,
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,

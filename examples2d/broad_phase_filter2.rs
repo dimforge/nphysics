@@ -11,12 +11,15 @@ use nphysics2d::object::{
     DefaultBodyHandle, DefaultBodySet, DefaultColliderHandle, DefaultColliderSet, Ground,
     MultibodyDesc,
 };
-use nphysics2d::world::{BroadPhasePairFilterSets, DefaultGeometricalWorld, DefaultMechanicalWorld};
+use nphysics2d::world::{
+    BroadPhasePairFilterSets, DefaultGeometricalWorld, DefaultMechanicalWorld,
+};
 use nphysics_testbed2d::Testbed;
 
 struct NoMultibodySelfContactFilter;
 
-impl<N, Bodies, Colliders> BroadPhasePairFilter<N, BroadPhasePairFilterSets<'_, N, Bodies, Colliders>>
+impl<N, Bodies, Colliders>
+    BroadPhasePairFilter<N, BroadPhasePairFilterSets<'_, N, Bodies, Colliders>>
     for NoMultibodySelfContactFilter
 where
     N: RealField,
