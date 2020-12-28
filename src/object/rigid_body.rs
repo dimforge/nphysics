@@ -750,6 +750,9 @@ impl<N: RealField> Body<N> for RigidBody<N> {
 
         let mass_sum = self.inertia.linear + inertia.linear;
 
+        let previous_local_com = self.local_com;
+        let previous_mass = self.inertia.linear;
+
         // Update center of mass.
         if !mass_sum.is_zero() {
             self.local_com =
@@ -760,8 +763,40 @@ impl<N: RealField> Body<N> for RigidBody<N> {
             self.com = self.position.translation.vector.into();
         }
 
-        // Update local inertia.
-        self.local_inertia += inertia;
+        // https://en.wikipedia.org/wiki/Moment_of_inertia#Inertia_tensor_of_translation
+        #[inline]
+        fn shift_inertia_tensor<N: RealField>(
+            mass: N,
+            com_distance: &na::Vector3<N>,
+            com_inertia: &na::Matrix3<N>,
+        ) -> na::Matrix3<N> {
+            let distance_transposed = com_distance.transpose();
+            com_inertia
+                + ((na::Matrix3::<N>::identity() * com_distance.dot(&com_distance))
+                    - distance_transposed.tr_mul(&distance_transposed))
+                    * mass
+        }
+
+        let old_inertia_com_distance = previous_local_com - self.local_com;
+        let new_inertia_com_distance = com - self.local_com;
+
+        // Update local inertia. Calculates shifted inertia tensors.
+        // The angular inertia tensor must represent inertia around the center of mass.
+        // By treating the old and newly added inertia as those of two bodies which are
+        // each offset from the new center of mass (self.local_com), one can apply the
+        // parallel axis theorem to translate the inertias and sum them to represent inertia
+        // around the new center of mass.
+        self.local_inertia.angular = shift_inertia_tensor::<N>(
+            previous_mass,
+            &old_inertia_com_distance,
+            &self.local_inertia.angular,
+        ) + shift_inertia_tensor::<N>(
+            inertia.linear,
+            &new_inertia_com_distance,
+            &inertia.angular,
+        );
+        self.local_inertia.linear = mass_sum;
+
         self.update_inertia_from_local_inertia();
     }
 
