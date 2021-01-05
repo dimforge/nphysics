@@ -32,7 +32,7 @@ generational-arena = "0.2" # For default body/collide/constraint/force sets.
 smallvec   = "1"
 lazy_static = "1"
 simba      = "0.3"
-nalgebra   = { version = "0.23", features = [ "sparse" ] }
+nalgebra   = { version = "0.24", features = [ "sparse" ] }
 approx     = "0.4"
 downcast-rs = "1"
 bitflags   = "1"

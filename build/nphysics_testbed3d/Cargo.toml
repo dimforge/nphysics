@@ -28,7 +28,7 @@ num-traits = "0.2"
 rand       = "0.7"
 instant    = { version = "0.1", features = [ "stdweb", "now" ]}
 simba      = "0.3"
-nalgebra   = "0.23"
+nalgebra   = "0.24"
 kiss3d     = { version = "0.27", features = [ "conrod" ] }
 ncollide3d = "0.26"
 salva3d = { version = "0.4", features = [ "nphysics" ], optional = true }
