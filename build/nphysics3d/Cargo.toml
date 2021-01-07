@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics3d"
-version = "0.18.0"
+version = "0.19.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "3-dimensional physics engine in Rust."
 documentation = "http://nphysics.org/rustdoc/nphysics3d/index.html"
@@ -37,7 +37,7 @@ nalgebra   = { version = "0.24", features = [ "sparse" ] }
 approx     = "0.4"
 downcast-rs = "1"
 bitflags   = "1"
-ncollide3d = "0.26"
+ncollide3d = "0.27"
 instant    = { version = "0.1", features = [ "now" ]}
 
 
