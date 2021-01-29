@@ -9,6 +9,8 @@ keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
 license = "BSD-3-Clause"
 edition = "2018"
 
+[badges]
+maintenance = { status = "passively-maintained" }
 
 [lib]
 name = "nphysics_testbed2d"
@@ -31,7 +33,7 @@ rand       = "0.7"
 instant    = { version = "0.1", features = [ "stdweb", "now" ]}
 simba      = "0.3"
 nalgebra   = "0.24"
-kiss3d     = { version = "0.28", features = [ "conrod" ] }
+kiss3d     = { version = "0.29", features = [ "conrod" ] }
 ncollide2d = "0.27"
 wrapped2d  = { version = "0.4", optional = true }
 salva2d = { version = "0.4", features = [ "nphysics" ], optional = true }

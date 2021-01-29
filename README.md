@@ -21,6 +21,8 @@
     </strong>
 </p>
 
+⚠️**This crate is now passively-maintained. It is being superseded by the [Rapier](https://rapier.rs) project.**⚠️
+
 -----
 
 nphysics
