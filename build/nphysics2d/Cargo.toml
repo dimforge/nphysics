@@ -30,16 +30,16 @@ required-features = [ "dim2" ]
 [dependencies]
 either     = "1"
 num-traits = "0.2"
-slotmap    = "0.4" # For impulse cache.
+slotmap    = "1" # For impulse cache.
 generational-arena = "0.2" # For default body/collide/constraint/force sets.
 smallvec   = "1"
 lazy_static = "1"
-simba      = "0.3"
-nalgebra   = { version = "0.24", features = [ "sparse" ] }
+simba      = "0.4"
+nalgebra   = { version = "0.25", features = [ "sparse" ] }
 approx     = "0.4"
 downcast-rs = "1"
 bitflags   = "1"
-ncollide2d = "0.27"
+ncollide2d = "0.28"
 instant    = { version = "0.1", features = [ "now" ]}
 
 [target.wasm32-unknown-unknown.dependencies]

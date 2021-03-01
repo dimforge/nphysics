@@ -27,13 +27,13 @@ parallel = [ "salva3d/parallel" ]
 log        = { version = "0.4", optional = true }
 bitflags   = "1"
 num-traits = "0.2"
-rand       = "0.7"
+rand       = "0.8"
 instant    = { version = "0.1", features = [ "stdweb", "now" ]}
-simba      = "0.3"
-nalgebra   = "0.24"
-kiss3d     = { version = "0.29", features = [ "conrod" ] }
-ncollide3d = "0.27"
-salva3d = { version = "0.4", features = [ "nphysics" ], optional = true }
+simba      = "0.4"
+nalgebra   = "0.25"
+kiss3d     = { version = "0.30", features = [ "conrod" ] }
+ncollide3d = "0.28"
+salva3d = { version = "0.6", features = [ "nphysics" ], optional = true }
 
 [dependencies.nphysics3d]
 path = "../nphysics3d"
