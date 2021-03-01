@@ -9,13 +9,13 @@ improved_fixed_point_support = [ "nphysics3d/improved_fixed_point_support" ]
 
 
 [dependencies]
-rand       = { version = "0.8", features = [ "stdweb" ] }
+rand       = "0.8"
 rand_distr = "0.4"
 num-traits = "0.2"
 Inflector  = "0.11"
 nalgebra   = "0.25"
 ncollide3d = "0.28"
-kiss3d     = "0.29"
+kiss3d     = "0.30"
 simba      = { version = "0.4", features = [ "partial_fixed_point_support" ]}
 
 [target.wasm32-unknown-unknown.dependencies]
