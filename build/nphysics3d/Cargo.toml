@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics3d"
-version = "0.19.0"
+version = "0.20.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "3-dimensional physics engine in Rust. This crate is being superseded by the rapier3d crate."
 documentation = "http://nphysics.org/rustdoc/nphysics3d/index.html"

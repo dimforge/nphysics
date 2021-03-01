@@ -37,4 +37,4 @@ wrapped2d  = { version = "0.4", optional = true }
 
 [dependencies.nphysics2d]
 path = "../nphysics2d"
-version = "0.19"
+version = "0.20"
