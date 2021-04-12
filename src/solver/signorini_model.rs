@@ -251,7 +251,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle>
                     false,
                 );
                 let props =
-                    Material::combine(coefficients, material1, context1, material2, context2);
+                    <dyn Material<N>>::combine(coefficients, material1, context1, material2, context2);
 
                 let _ = Self::build_velocity_constraint(
                     parameters,

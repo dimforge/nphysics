@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics2d"
-version = "0.20.0"
+version = "0.21.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "2-dimensional physics engine in Rust. This crate is being superseded by the rapier3d crate."
 documentation = "http://nphysics.org/rustdoc/nphysics2d/index.html"
@@ -35,11 +35,11 @@ generational-arena = "0.2" # For default body/collide/constraint/force sets.
 smallvec   = "1"
 lazy_static = "1"
 simba      = "0.4"
-nalgebra   = { version = "0.25", features = [ "sparse" ] }
+nalgebra   = { version = "0.26", features = [ "sparse" ] }
 approx     = "0.4"
 downcast-rs = "1"
 bitflags   = "1"
-ncollide2d = "0.28"
+ncollide2d = "0.29"
 instant    = { version = "0.1", features = [ "now" ]}
 
 [target.wasm32-unknown-unknown.dependencies]

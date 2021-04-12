@@ -16,7 +16,7 @@ use ncollide::shape::{DeformationsType, Polyline};
 use ncollide::utils::DeterministicState;
 
 use crate::math::{
-    Dim, Force, ForceType, Inertia, Isometry, Point, Translation, Vector, Velocity, DIM,
+    Force, ForceType, Inertia, Isometry, Point, Translation, Vector, Velocity, DIM,
 };
 use crate::object::fem_helper;
 use crate::object::{
@@ -356,8 +356,8 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
     fn update_kinematics(&mut self) {
         if self.update_status.position_changed() {
             for constraint in &mut self.constraints {
-                let p0 = self.positions.fixed_rows::<Dim>(constraint.nodes.0);
-                let p1 = self.positions.fixed_rows::<Dim>(constraint.nodes.1);
+                let p0 = self.positions.fixed_rows::<DIM>(constraint.nodes.0);
+                let p1 = self.positions.fixed_rows::<DIM>(constraint.nodes.1);
                 let l = p1 - p0;
 
                 if let Some((dir, length)) = Unit::try_new_and_get(l, N::zero()) {
@@ -388,7 +388,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
 
             for i in 0..self.positions.len() / DIM {
                 if !self.kinematic_nodes[i] {
-                    let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
+                    let mut acc = self.accelerations.fixed_rows_mut::<DIM>(i * DIM);
                     acc += gravity_acc
                 }
             }
@@ -608,12 +608,12 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
 
                 if !self.kinematic_nodes[constraint.nodes.0 / DIM] {
                     dvels
-                        .fixed_rows_mut::<Dim>(constraint.nodes.0)
+                        .fixed_rows_mut::<DIM>(constraint.nodes.0)
                         .add_assign(&vel_correction);
                 }
                 if !self.kinematic_nodes[constraint.nodes.1 / DIM] {
                     dvels
-                        .fixed_rows_mut::<Dim>(constraint.nodes.1)
+                        .fixed_rows_mut::<DIM>(constraint.nodes.1)
                         .sub_assign(&vel_correction);
                 }
             }
@@ -634,10 +634,10 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 continue;
             }
 
-            let v0 = self.velocities.fixed_rows::<Dim>(constraint.nodes.0)
-                + dvels.fixed_rows::<Dim>(constraint.nodes.0);
-            let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1)
-                + dvels.fixed_rows::<Dim>(constraint.nodes.1);
+            let v0 = self.velocities.fixed_rows::<DIM>(constraint.nodes.0)
+                + dvels.fixed_rows::<DIM>(constraint.nodes.0);
+            let v1 = self.velocities.fixed_rows::<DIM>(constraint.nodes.1)
+                + dvels.fixed_rows::<DIM>(constraint.nodes.1);
 
             let dvel = (v1 - v0).dot(&constraint.dir);
             let dlambda;
@@ -666,12 +666,12 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
 
             if !kinematic1 {
                 dvels
-                    .fixed_rows_mut::<Dim>(constraint.nodes.0)
+                    .fixed_rows_mut::<DIM>(constraint.nodes.0)
                     .add_assign(&vel_correction);
             }
             if !kinematic2 {
                 dvels
-                    .fixed_rows_mut::<Dim>(constraint.nodes.1)
+                    .fixed_rows_mut::<DIM>(constraint.nodes.1)
                     .sub_assign(&vel_correction);
             }
         }
@@ -688,8 +688,8 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                     continue;
                 }
 
-                let dpos = self.positions.fixed_rows::<Dim>(constraint.nodes.1)
-                    - self.positions.fixed_rows::<Dim>(constraint.nodes.0);
+                let dpos = self.positions.fixed_rows::<DIM>(constraint.nodes.1)
+                    - self.positions.fixed_rows::<DIM>(constraint.nodes.0);
 
                 if let Some((dir, length)) = Unit::try_new_and_get(dpos, N::zero()) {
                     constraint.dir = dir;
@@ -721,12 +721,12 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
 
                     if !kinematic1 {
                         self.positions
-                            .fixed_rows_mut::<Dim>(constraint.nodes.0)
+                            .fixed_rows_mut::<DIM>(constraint.nodes.0)
                             .add_assign(&shift);
                     }
                     if !kinematic2 {
                         self.positions
-                            .fixed_rows_mut::<Dim>(constraint.nodes.1)
+                            .fixed_rows_mut::<DIM>(constraint.nodes.1)
                             .sub_assign(&shift);
                     }
                 }
@@ -778,7 +778,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
                         self.forces
-                            .fixed_rows_mut::<Dim>(indices[i])
+                            .fixed_rows_mut::<DIM>(indices[i])
                             .add_assign(&forces[i]);
                     }
                 }
@@ -787,7 +787,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
                         self.velocities
-                            .fixed_rows_mut::<Dim>(indices[i])
+                            .fixed_rows_mut::<DIM>(indices[i])
                             .add_assign(forces[i] * self.inv_node_mass);
                     }
                 }
@@ -796,7 +796,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
                         self.forces
-                            .fixed_rows_mut::<Dim>(indices[i])
+                            .fixed_rows_mut::<DIM>(indices[i])
                             .add_assign(forces[i] * self.node_mass);
                     }
                 }
@@ -805,7 +805,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
                         self.velocities
-                            .fixed_rows_mut::<Dim>(indices[i])
+                            .fixed_rows_mut::<DIM>(indices[i])
                             .add_assign(forces[i]);
                     }
                 }

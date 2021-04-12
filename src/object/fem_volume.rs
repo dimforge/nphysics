@@ -94,17 +94,17 @@ impl<N: RealField> FEMVolume<N> {
         for (i, pt) in vertices.iter().enumerate() {
             let pt = pos * Point3::from(pt.coords.component_mul(&scale));
             rest_positions
-                .fixed_rows_mut::<U3>(i * 3)
+                .fixed_rows_mut::<3>(i * 3)
                 .copy_from(&pt.coords);
         }
 
         let elements = tetrahedrons
             .iter()
             .map(|idx| {
-                let rest_a = rest_positions.fixed_rows::<U3>(idx.x * 3);
-                let rest_b = rest_positions.fixed_rows::<U3>(idx.y * 3);
-                let rest_c = rest_positions.fixed_rows::<U3>(idx.z * 3);
-                let rest_d = rest_positions.fixed_rows::<U3>(idx.w * 3);
+                let rest_a = rest_positions.fixed_rows::<3>(idx.x * 3);
+                let rest_b = rest_positions.fixed_rows::<3>(idx.y * 3);
+                let rest_c = rest_positions.fixed_rows::<3>(idx.z * 3);
+                let rest_d = rest_positions.fixed_rows::<3>(idx.w * 3);
 
                 let rest_ab = rest_b - rest_a;
                 let rest_ac = rest_c - rest_a;
@@ -259,7 +259,7 @@ impl<N: RealField> FEMVolume<N> {
                             };
 
                             let mut node_mass =
-                                self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
+                                self.augmented_mass.fixed_slice_mut::<3, 3>(ia, ib);
                             node_mass[(0, 0)] += mass_contribution;
                             node_mass[(1, 1)] += mass_contribution;
                             node_mass[(2, 2)] += mass_contribution;
@@ -273,7 +273,7 @@ impl<N: RealField> FEMVolume<N> {
         for i in 0..self.kinematic_nodes.len() {
             if self.kinematic_nodes[i] {
                 self.augmented_mass
-                    .fixed_slice_mut::<U3, U3>(i * DIM, i * DIM)
+                    .fixed_slice_mut::<3, 3>(i * DIM, i * DIM)
                     .fill_diagonal(N::one());
             }
         }
@@ -342,7 +342,7 @@ impl<N: RealField> FEMVolume<N> {
 
                             let rot_stiffness = elt.rot * node_stiffness;
                             let mut mass_part =
-                                self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
+                                self.augmented_mass.fixed_slice_mut::<3, 3>(ia, ib);
                             mass_part.gemm(
                                 stiffness_coeff,
                                 &rot_stiffness,
@@ -378,7 +378,7 @@ impl<N: RealField> FEMVolume<N> {
                     let ie = elt.indices[k];
 
                     if !self.kinematic_nodes[ie / DIM] {
-                        let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(ie);
+                        let mut forces_part = self.accelerations.fixed_rows_mut::<3>(ie);
                         forces_part += contribution;
                     }
                 }
@@ -404,9 +404,9 @@ impl<N: RealField> FEMVolume<N> {
                 let dn = elt.local_j_inv[(2, a)];
 
                 let ia = elt.indices[a];
-                let vel_part = self.velocities.fixed_rows::<U3>(ia);
-                let pos_part = self.positions.fixed_rows::<U3>(ia);
-                let ref_pos_part = self.rest_positions.fixed_rows::<U3>(ia);
+                let vel_part = self.velocities.fixed_rows::<3>(ia);
+                let pos_part = self.positions.fixed_rows::<3>(ia);
+                let ref_pos_part = self.rest_positions.fixed_rows::<3>(ia);
                 let dpos = elt.inv_rot * (vel_part * dt + pos_part) - ref_pos_part;
                 // total_strain += B_n * dpos
                 elt.total_strain += Vector6::new(
@@ -465,7 +465,7 @@ impl<N: RealField> FEMVolume<N> {
                         dn1 * strain.x + dn1 * strain.y + dn0 * strain.z +              bn2 * strain.a + cn2 * strain.b,
                     );
 
-                    let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
+                    let mut force_part = self.accelerations.fixed_rows_mut::<3>(ia);
                     force_part -= elt.rot * projected_strain;
                 }
             }
@@ -519,10 +519,10 @@ impl<N: RealField> FEMVolume<N> {
                     // Ensure the triangle has an outward normal.
                     // FIXME: there is a much more efficient way of doing this, given the
                     // tetrahedrons orientations and the face.
-                    let a = self.positions.fixed_rows::<U3>(k.0);
-                    let b = self.positions.fixed_rows::<U3>(k.1);
-                    let c = self.positions.fixed_rows::<U3>(k.2);
-                    let d = self.positions.fixed_rows::<U3>(n.1);
+                    let a = self.positions.fixed_rows::<3>(k.0);
+                    let b = self.positions.fixed_rows::<3>(k.1);
+                    let c = self.positions.fixed_rows::<3>(k.2);
+                    let d = self.positions.fixed_rows::<3>(n.1);
 
                     let ab = b - a;
                     let ac = c - a;
@@ -607,11 +607,11 @@ impl<N: RealField> FEMVolume<N> {
             assert!(!remapped[orig_i], "Duplicate DOF remapping found.");
             let target_i = target_i * 3;
             new_positions
-                .fixed_rows_mut::<U3>(target_i)
-                .copy_from(&self.positions.fixed_rows::<U3>(orig_i));
+                .fixed_rows_mut::<3>(target_i)
+                .copy_from(&self.positions.fixed_rows::<3>(orig_i));
             new_rest_positions
-                .fixed_rows_mut::<U3>(target_i)
-                .copy_from(&self.rest_positions.fixed_rows::<U3>(orig_i));
+                .fixed_rows_mut::<3>(target_i)
+                .copy_from(&self.rest_positions.fixed_rows::<3>(orig_i));
             dof_map[orig_i] = target_i;
             remapped[orig_i] = true;
         }
@@ -621,11 +621,11 @@ impl<N: RealField> FEMVolume<N> {
         for orig_i in (0..self.positions.len()).step_by(3) {
             if !remapped[orig_i] {
                 new_positions
-                    .fixed_rows_mut::<U3>(curr_target)
-                    .copy_from(&self.positions.fixed_rows::<U3>(orig_i));
+                    .fixed_rows_mut::<3>(curr_target)
+                    .copy_from(&self.positions.fixed_rows::<3>(orig_i));
                 new_rest_positions
-                    .fixed_rows_mut::<U3>(curr_target)
-                    .copy_from(&self.rest_positions.fixed_rows::<U3>(orig_i));
+                    .fixed_rows_mut::<3>(curr_target)
+                    .copy_from(&self.rest_positions.fixed_rows::<3>(orig_i));
                 dof_map[orig_i] = curr_target;
                 curr_target += 3;
             }
@@ -787,10 +787,10 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         }
 
         for elt in &mut self.elements {
-            let a = self.positions.fixed_rows::<U3>(elt.indices.x);
-            let b = self.positions.fixed_rows::<U3>(elt.indices.y);
-            let c = self.positions.fixed_rows::<U3>(elt.indices.z);
-            let d = self.positions.fixed_rows::<U3>(elt.indices.w);
+            let a = self.positions.fixed_rows::<3>(elt.indices.x);
+            let b = self.positions.fixed_rows::<3>(elt.indices.y);
+            let c = self.positions.fixed_rows::<3>(elt.indices.z);
+            let d = self.positions.fixed_rows::<3>(elt.indices.w);
 
             let ab = b - a;
             let ac = c - a;
@@ -798,7 +798,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
 
             elt.j = Matrix3::new(ab.x, ab.y, ab.z, ac.x, ac.y, ac.z, ad.x, ad.y, ad.z);
 
-            let g = (elt.local_j_inv.fixed_slice::<U3, U3>(0, 1) * elt.j).transpose();
+            let g = (elt.local_j_inv.fixed_slice::<3, 3>(0, 1) * elt.j).transpose();
             elt.rot = Rotation3::from_matrix_eps(&g, N::default_epsilon(), 20, elt.rot);
             elt.inv_rot = elt.rot.inverse();
             elt.com = Point3::from(a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
@@ -1058,7 +1058,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
                 for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.forces
-                            .fixed_rows_mut::<U3>(element.indices[i])
+                            .fixed_rows_mut::<3>(element.indices[i])
                             .add_assign(force);
                     }
                 }
@@ -1068,7 +1068,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
                 dvel.fill(N::zero());
                 for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        dvel.fixed_rows_mut::<U3>(element.indices[i])
+                        dvel.fixed_rows_mut::<3>(element.indices[i])
                             .copy_from(force);
                     }
                 }
@@ -1081,7 +1081,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
                 for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.forces
-                            .fixed_rows_mut::<U3>(element.indices[i])
+                            .fixed_rows_mut::<3>(element.indices[i])
                             .add_assign(force * mass);
                     }
                 }
@@ -1090,7 +1090,7 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
                 for (i, force) in forces.iter().enumerate() {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.velocities
-                            .fixed_rows_mut::<U3>(element.indices[i])
+                            .fixed_rows_mut::<3>(element.indices[i])
                             .add_assign(force);
                     }
                 }

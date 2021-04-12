@@ -265,7 +265,7 @@ pub use simba;
 pub mod math {
     use crate::algebra::{Force3, Inertia3, Velocity3};
     use na::{
-        Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX, Point3,
+        Dynamic, Isometry3, Matrix3, Matrix6, OMatrix, MatrixSlice6xX, MatrixSliceMut6xX, Point3,
         Rotation3, Translation3, UnitQuaternion, Vector3, Vector6, U3, U6,
     };
 
@@ -336,7 +336,7 @@ pub mod math {
     pub type SpatialMatrix<N> = Matrix6<N>;
 
     /// The type of a constraint jacobian in twist coordinates.
-    pub type Jacobian<N> = MatrixMN<N, U6, Dynamic>;
+    pub type Jacobian<N> = OMatrix<N, U6, Dynamic>;
 
     /// The type of a slice of the constraint jacobian in twist coordinates.
     pub type JacobianSlice<'a, N> = MatrixSlice6xX<'a, N>;
@@ -350,7 +350,7 @@ pub mod math {
 pub mod math {
     use crate::algebra::{Force2, Inertia2, Velocity2};
     use na::{
-        Dynamic, Isometry2, Matrix1, Matrix2, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX,
+        Dynamic, Isometry2, Matrix1, Matrix2, Matrix3, OMatrix, MatrixSlice3xX, MatrixSliceMut3xX,
         Point2, Rotation2, Translation2, UnitComplex, Vector1, Vector2, Vector3, U1, U2, U3,
     };
 
@@ -421,7 +421,7 @@ pub mod math {
     pub type SpatialMatrix<N> = Matrix3<N>;
 
     /// The type of a constraint jacobian in twist coordinates.
-    pub type Jacobian<N> = MatrixMN<N, U3, Dynamic>;
+    pub type Jacobian<N> = OMatrix<N, U3, Dynamic>;
 
     /// The type of a slice of the constraint jacobian in twist coordinates.
     pub type JacobianSlice<'a, N> = MatrixSlice3xX<'a, N>;

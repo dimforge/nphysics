@@ -55,7 +55,7 @@ impl<N: RealField> Inertia3<N> {
     /// matrix on the lower-rigth corner.
     pub fn to_matrix(&self) -> Matrix6<N> {
         let mut res = Matrix6::zeros();
-        res.fixed_slice_mut::<U3, U3>(3, 3).copy_from(&self.angular);
+        res.fixed_slice_mut::<3, 3>(3, 3).copy_from(&self.angular);
 
         res.m11 = self.linear;
         res.m22 = self.linear;

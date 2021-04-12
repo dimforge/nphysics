@@ -4,7 +4,7 @@ use either::Either;
 use na::Point4;
 use na::{
     Cholesky, DVector, DVectorSlice, DVectorSliceMut, Dynamic, Point2, Point3, RealField,
-    VectorSliceMutN,
+    VectorSliceMut,
 };
 use ncollide::query::PointQueryWithLocation;
 #[cfg(feature = "dim3")]
@@ -89,7 +89,7 @@ pub(crate) fn velocity_at_point<N: RealField>(
 
     let mut vel = Velocity::zero();
     for (index, bcoord) in indices.as_slice().iter().zip(bcoords.iter()) {
-        vel.linear += velocities.fixed_rows::<Dim>(*index) * *bcoord;
+        vel.linear += velocities.fixed_rows::<DIM>(*index) * *bcoord;
     }
 
     vel
@@ -103,22 +103,22 @@ pub(crate) fn world_point_at_material_point<N: RealField>(
 ) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
-            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+            let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+            let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
             Point::from(a * (N::one() - point.x) + b * point.x)
         }
         FiniteElementIndices::Triangle(indices) => {
-            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
-            let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
+            let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+            let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
+            let c = positions.fixed_rows::<DIM>(indices.z).into_owned();
             Point::from(a * (N::one() - point.x - point.y) + b * point.x + c * point.y)
         }
         #[cfg(feature = "dim3")]
         FiniteElementIndices::Tetrahedron(indices) => {
-            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
-            let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
-            let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
+            let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+            let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
+            let c = positions.fixed_rows::<DIM>(indices.z).into_owned();
+            let d = positions.fixed_rows::<DIM>(indices.w).into_owned();
             Point::from(
                 a * (N::one() - point.x - point.y - point.z)
                     + b * point.x
@@ -140,8 +140,8 @@ pub(crate) fn material_point_at_world_point<N: RealField>(
 ) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
-            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+            let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+            let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
 
             let seg = Segment::new(Point::from(a), Point::from(b));
 
@@ -156,9 +156,9 @@ pub(crate) fn material_point_at_world_point<N: RealField>(
             res
         }
         FiniteElementIndices::Triangle(indices) => {
-            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
-            let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
+            let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+            let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
+            let c = positions.fixed_rows::<DIM>(indices.z).into_owned();
 
             let tri = Triangle::new(Point::from(a), Point::from(b), Point::from(c));
 
@@ -175,10 +175,10 @@ pub(crate) fn material_point_at_world_point<N: RealField>(
         }
         #[cfg(feature = "dim3")]
         FiniteElementIndices::Tetrahedron(indices) => {
-            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
-            let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
-            let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
+            let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+            let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
+            let c = positions.fixed_rows::<DIM>(indices.z).into_owned();
+            let d = positions.fixed_rows::<DIM>(indices.w).into_owned();
 
             let tetra = Tetrahedron::new(
                 Point3::from(a),
@@ -231,8 +231,8 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
                 let kinematic1 = kinematic_nodes[indices.x / DIM];
                 let kinematic2 = kinematic_nodes[indices.y / DIM];
 
-                let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-                let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+                let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+                let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
 
                 let seg = Segment::new(Point::from(a), Point::from(b));
 
@@ -247,28 +247,28 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
 
                 if status == BodyStatus::Dynamic {
                     if !kinematic1 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
                             .copy_from(&dir1);
                     }
                     if !kinematic2 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
                             .copy_from(&dir2);
                     }
                 }
 
                 if let Some(out_vel) = out_vel {
-                    let va = velocities.fixed_rows::<Dim>(indices.x);
-                    let vb = velocities.fixed_rows::<Dim>(indices.y);
+                    let va = velocities.fixed_rows::<DIM>(indices.x);
+                    let vb = velocities.fixed_rows::<DIM>(indices.y);
 
                     *out_vel += va.dot(&dir1) + vb.dot(&dir2);
 
                     if status == BodyStatus::Dynamic {
                         if let Some(ext_vels) = ext_vels {
                             if !kinematic1 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.x).dot(&dir1);
                             }
                             if !kinematic2 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.y).dot(&dir2);
                             }
                         }
                     }
@@ -279,9 +279,9 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
                 let kinematic2 = kinematic_nodes[indices.y / DIM];
                 let kinematic3 = kinematic_nodes[indices.z / DIM];
 
-                let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-                let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
-                let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
+                let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+                let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
+                let c = positions.fixed_rows::<DIM>(indices.z).into_owned();
 
                 let tri = Triangle::new(Point::from(a), Point::from(b), Point::from(c));
 
@@ -297,36 +297,36 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
 
                 if status == BodyStatus::Dynamic {
                     if !kinematic1 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
                             .copy_from(&dir1);
                     }
                     if !kinematic2 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
                             .copy_from(&dir2);
                     }
                     if !kinematic3 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.z..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.z..])
                             .copy_from(&dir3);
                     }
                 }
 
                 if let Some(out_vel) = out_vel {
-                    let va = velocities.fixed_rows::<Dim>(indices.x);
-                    let vb = velocities.fixed_rows::<Dim>(indices.y);
-                    let vc = velocities.fixed_rows::<Dim>(indices.z);
+                    let va = velocities.fixed_rows::<DIM>(indices.x);
+                    let vb = velocities.fixed_rows::<DIM>(indices.y);
+                    let vc = velocities.fixed_rows::<DIM>(indices.z);
 
                     *out_vel += va.dot(&dir1) + vb.dot(&dir2) + vc.dot(&dir3);
 
                     if status == BodyStatus::Dynamic {
                         if let Some(ext_vels) = ext_vels {
                             if !kinematic1 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.x).dot(&dir1);
                             }
                             if !kinematic2 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.y).dot(&dir2);
                             }
                             if !kinematic3 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.z).dot(&dir3);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.z).dot(&dir3);
                             }
                         }
                     }
@@ -339,10 +339,10 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
                 let kinematic3 = kinematic_nodes[indices.z / DIM];
                 let kinematic4 = kinematic_nodes[indices.w / DIM];
 
-                let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
-                let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
-                let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
-                let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
+                let a = positions.fixed_rows::<DIM>(indices.x).into_owned();
+                let b = positions.fixed_rows::<DIM>(indices.y).into_owned();
+                let c = positions.fixed_rows::<DIM>(indices.z).into_owned();
+                let d = positions.fixed_rows::<DIM>(indices.w).into_owned();
 
                 let tetra = Tetrahedron::new(
                     Point3::from(a),
@@ -363,44 +363,44 @@ pub(crate) fn fill_contact_geometry_fem<N: RealField>(
 
                 if status == BodyStatus::Dynamic {
                     if !kinematic1 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.x..])
                             .copy_from(&dir1);
                     }
                     if !kinematic2 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.y..])
                             .copy_from(&dir2);
                     }
                     if !kinematic3 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.z..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.z..])
                             .copy_from(&dir3);
                     }
                     if !kinematic4 {
-                        VectorSliceMutN::<N, Dim>::from_slice(&mut jacobians[j_id + indices.w..])
+                        VectorSliceMut::<N, Dim>::from_slice(&mut jacobians[j_id + indices.w..])
                             .copy_from(&dir4);
                     }
                 }
 
                 if let Some(out_vel) = out_vel {
-                    let va = velocities.fixed_rows::<Dim>(indices.x);
-                    let vb = velocities.fixed_rows::<Dim>(indices.y);
-                    let vc = velocities.fixed_rows::<Dim>(indices.z);
-                    let vd = velocities.fixed_rows::<Dim>(indices.w);
+                    let va = velocities.fixed_rows::<DIM>(indices.x);
+                    let vb = velocities.fixed_rows::<DIM>(indices.y);
+                    let vc = velocities.fixed_rows::<DIM>(indices.z);
+                    let vd = velocities.fixed_rows::<DIM>(indices.w);
 
                     *out_vel += va.dot(&dir1) + vb.dot(&dir2) + vc.dot(&dir3) + vd.dot(&dir4);
 
                     if status == BodyStatus::Dynamic {
                         if let Some(ext_vels) = ext_vels {
                             if !kinematic1 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.x).dot(&dir1);
                             }
                             if !kinematic2 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.y).dot(&dir2);
                             }
                             if !kinematic3 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.z).dot(&dir3);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.z).dot(&dir3);
                             }
                             if !kinematic4 {
-                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.w).dot(&dir4);
+                                *out_vel += ext_vels.fixed_rows::<DIM>(indices.w).dot(&dir4);
                             }
                         }
                     }

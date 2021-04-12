@@ -1,4 +1,4 @@
-use na::{self, Dim, Dynamic, RealField, VectorSliceMutN, U1};
+use na::{self, Dim, Dynamic, RealField, VectorSliceMut, U1, Const};
 use std::ops::MulAssign;
 
 use crate::joint::JointConstraintSet;
@@ -89,10 +89,10 @@ impl NonlinearSORProx {
         if rhs < N::zero() {
             let impulse = -rhs * constraint.r;
 
-            VectorSliceMutN::from_slice_generic(&mut jacobians[constraint.wj_id1..], dim1, U1)
+            VectorSliceMut::from_slice_generic(&mut jacobians[constraint.wj_id1..], dim1, Const::<1>)
                 .mul_assign(impulse);
 
-            VectorSliceMutN::from_slice_generic(&mut jacobians[constraint.wj_id2..], dim2, U1)
+            VectorSliceMut::from_slice_generic(&mut jacobians[constraint.wj_id2..], dim2, Const::<1>)
                 .mul_assign(impulse);
 
             // FIXME: the body update should be performed lazily, especially because
@@ -136,8 +136,8 @@ impl NonlinearSORProx {
         if Self::update_contact_constraint(parameters, bodies, colliders, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
-            VectorSliceMutN::from_slice_generic(jacobians, dim1, U1).mul_assign(impulse);
-            VectorSliceMutN::from_slice_generic(&mut jacobians[dim1.value()..], dim2, U1)
+            VectorSliceMut::from_slice_generic(jacobians, dim1, Const::<1>).mul_assign(impulse);
+            VectorSliceMut::from_slice_generic(&mut jacobians[dim1.value()..], dim2, Const::<1>)
                 .mul_assign(impulse);
 
             if dim1.value() != 0 {

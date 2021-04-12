@@ -126,7 +126,7 @@ impl<N: RealField> RigidBody<N> {
 
     /// Flags indicating which translational degrees of freedoms are kinematic.
     pub fn kinematic_translations(&self) -> Vector<bool> {
-        self.jacobian_mask.fixed_rows::<Dim>(0).map(|m| m.is_zero())
+        self.jacobian_mask.fixed_rows::<DIM>(0).map(|m| m.is_zero())
     }
 
     /// Flags indicating which rotational degrees of freedoms are kinematic.

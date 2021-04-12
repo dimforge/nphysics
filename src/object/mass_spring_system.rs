@@ -18,7 +18,7 @@ use ncollide::shape::{DeformationsType, Polyline};
 use ncollide::utils::DeterministicState;
 
 use crate::math::{
-    Dim, Force, ForceType, Inertia, Isometry, Point, Translation, Vector, Velocity, DIM,
+    Force, ForceType, Inertia, Isometry, Point, Translation, Vector, Velocity, DIM,
 };
 use crate::object::fem_helper;
 use crate::object::{
@@ -388,9 +388,9 @@ impl<N: RealField> MassSpringSystem<N> {
                 // To treat other terms in a linearly-implicit way, the following terms would
                 // be added to the stiffness matrix:
                 //
-                // let one_minus_ll = MatrixN::<N, Dim>::identity() - ll;
-                // let v0 = self.velocities.fixed_rows::<Dim>(spring.nodes.0);
-                // let v1 = self.velocities.fixed_rows::<Dim>(spring.nodes.1);
+                // let one_minus_ll = MatrixN::<N, DIM>::identity() - ll;
+                // let v0 = self.velocities.fixed_rows::<DIM>(spring.nodes.0);
+                // let v1 = self.velocities.fixed_rows::<DIM>(spring.nodes.1);
                 // let ldot = v1 - v0;
                 // let lldot = l.dot(&ldot);
                 // let coeff = spring.stiffness * (spring.length - spring.rest_length) + damping * lldot;
@@ -406,21 +406,21 @@ impl<N: RealField> MassSpringSystem<N> {
 
                 if !kinematic1 {
                     self.augmented_mass
-                        .fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0)
+                        .fixed_slice_mut::<DIM, DIM>(spring.nodes.0, spring.nodes.0)
                         .add_assign(&damping_stiffness);
                 }
                 if !kinematic2 {
                     self.augmented_mass
-                        .fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.1)
+                        .fixed_slice_mut::<DIM, DIM>(spring.nodes.1, spring.nodes.1)
                         .add_assign(&damping_stiffness);
                 }
                 if !kinematic1 && !kinematic2 {
                     // FIXME: we don't need to fill both because Cholesky won't read tho upper triangle.
                     self.augmented_mass
-                        .fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.1)
+                        .fixed_slice_mut::<DIM, DIM>(spring.nodes.0, spring.nodes.1)
                         .sub_assign(&damping_stiffness);
                     self.augmented_mass
-                        .fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.0)
+                        .fixed_slice_mut::<DIM, DIM>(spring.nodes.1, spring.nodes.0)
                         .sub_assign(&damping_stiffness);
                 }
             }
@@ -433,7 +433,7 @@ impl<N: RealField> MassSpringSystem<N> {
             if self.kinematic_nodes[i] {
                 let idof = i * DIM;
                 self.augmented_mass
-                    .fixed_slice_mut::<Dim, Dim>(idof, idof)
+                    .fixed_slice_mut::<DIM, DIM>(idof, idof)
                     .fill_diagonal(N::one());
             }
         }
@@ -477,8 +477,8 @@ impl<N: RealField> MassSpringSystem<N> {
             let damping = spring.damping_ratio
                 * (spring.stiffness * self.node_mass).sqrt()
                 * na::convert(2.0);
-            let v0 = self.velocities.fixed_rows::<Dim>(spring.nodes.0);
-            let v1 = self.velocities.fixed_rows::<Dim>(spring.nodes.1);
+            let v0 = self.velocities.fixed_rows::<DIM>(spring.nodes.0);
+            let v1 = self.velocities.fixed_rows::<DIM>(spring.nodes.1);
 
             let ldot = v1 - v0;
             let l = *spring.dir;
@@ -493,12 +493,12 @@ impl<N: RealField> MassSpringSystem<N> {
 
             if !kinematic1 {
                 self.accelerations
-                    .fixed_rows_mut::<Dim>(spring.nodes.0)
+                    .fixed_rows_mut::<DIM>(spring.nodes.0)
                     .add_assign(&f0);
             }
             if !kinematic2 {
                 self.accelerations
-                    .fixed_rows_mut::<Dim>(spring.nodes.1)
+                    .fixed_rows_mut::<DIM>(spring.nodes.1)
                     .sub_assign(&f0);
             }
         }
@@ -513,7 +513,7 @@ impl<N: RealField> MassSpringSystem<N> {
                 let idof = i * DIM;
 
                 if !self.kinematic_nodes[i] {
-                    let mut acc = self.accelerations.fixed_rows_mut::<Dim>(idof);
+                    let mut acc = self.accelerations.fixed_rows_mut::<DIM>(idof);
                     acc += gravity_force
                 }
             }
@@ -537,8 +537,8 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
     fn update_kinematics(&mut self) {
         if self.update_status.position_changed() {
             for spring in &mut self.springs {
-                let p0 = self.positions.fixed_rows::<Dim>(spring.nodes.0);
-                let p1 = self.positions.fixed_rows::<Dim>(spring.nodes.1);
+                let p0 = self.positions.fixed_rows::<DIM>(spring.nodes.0);
+                let p1 = self.positions.fixed_rows::<DIM>(spring.nodes.1);
                 let l = p1 - p0;
 
                 if let Some((dir, length)) = Unit::try_new_and_get(l, N::zero()) {
@@ -783,7 +783,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
                         self.forces
-                            .fixed_rows_mut::<Dim>(indices[i])
+                            .fixed_rows_mut::<DIM>(indices[i])
                             .add_assign(&forces[i]);
                     }
                 }
@@ -793,7 +793,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
                 dvel.fill(N::zero());
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        dvel.fixed_rows_mut::<Dim>(indices[i]).copy_from(&forces[i]);
+                        dvel.fixed_rows_mut::<DIM>(indices[i]).copy_from(&forces[i]);
                     }
                 }
                 self.inv_augmented_mass.solve_mut(dvel);
@@ -803,7 +803,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
                         self.forces
-                            .fixed_rows_mut::<Dim>(indices[i])
+                            .fixed_rows_mut::<DIM>(indices[i])
                             .add_assign(forces[i] * self.node_mass);
                     }
                 }
@@ -812,7 +812,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
                         self.velocities
-                            .fixed_rows_mut::<Dim>(indices[i])
+                            .fixed_rows_mut::<DIM>(indices[i])
                             .add_assign(forces[i]);
                     }
                 }

@@ -30,11 +30,11 @@ num-traits = "0.2"
 rand       = "0.8"
 instant    = { version = "0.1", features = [ "stdweb", "now" ]}
 simba      = "0.4"
-nalgebra   = "0.25"
-kiss3d     = { version = "0.30", features = [ "conrod" ] }
-ncollide2d = "0.28"
+nalgebra   = "0.26"
+kiss3d     = { version = "0.31", features = [ "conrod" ] }
+ncollide2d = "0.29"
 wrapped2d  = { version = "0.4", optional = true }
 
 [dependencies.nphysics2d]
 path = "../nphysics2d"
-version = "0.20"
+version = "0.21"

@@ -97,7 +97,7 @@ impl<N: RealField> FEMSurface<N> {
         for (i, pt) in vertices.iter().enumerate() {
             let pt = pos * Point::from(pt.coords.component_mul(&scale));
             rest_positions
-                .fixed_rows_mut::<Dim>(i * DIM)
+                .fixed_rows_mut::<DIM>(i * DIM)
                 .copy_from(&pt.coords);
         }
 
@@ -105,9 +105,9 @@ impl<N: RealField> FEMSurface<N> {
             .iter()
             .enumerate()
             .map(|(_i, idx)| {
-                let rest_a = rest_positions.fixed_rows::<Dim>(idx.x * 2);
-                let rest_b = rest_positions.fixed_rows::<Dim>(idx.y * 2);
-                let rest_c = rest_positions.fixed_rows::<Dim>(idx.z * 2);
+                let rest_a = rest_positions.fixed_rows::<DIM>(idx.x * 2);
+                let rest_b = rest_positions.fixed_rows::<DIM>(idx.y * 2);
+                let rest_c = rest_positions.fixed_rows::<DIM>(idx.z * 2);
 
                 let rest_ab = rest_b - rest_a;
                 let rest_ac = rest_c - rest_a;
@@ -252,7 +252,7 @@ impl<N: RealField> FEMSurface<N> {
                             };
 
                             let mut node_mass =
-                                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
+                                self.augmented_mass.fixed_slice_mut::<DIM, DIM>(ia, ib);
                             for i in 0..DIM {
                                 node_mass[(i, i)] += mass_contribution;
                             }
@@ -266,7 +266,7 @@ impl<N: RealField> FEMSurface<N> {
         for i in 0..self.kinematic_nodes.len() {
             if self.kinematic_nodes[i] {
                 self.augmented_mass
-                    .fixed_slice_mut::<Dim, Dim>(i * DIM, i * DIM)
+                    .fixed_slice_mut::<DIM, DIM>(i * DIM, i * DIM)
                     .fill_diagonal(N::one());
             }
         }
@@ -324,7 +324,7 @@ impl<N: RealField> FEMSurface<N> {
 
                         if !self.kinematic_nodes[ib / DIM] {
                             let mut mass_part =
-                                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
+                                self.augmented_mass.fixed_slice_mut::<DIM, DIM>(ia, ib);
                             mass_part.gemm(
                                 stiffness_coeff,
                                 &rot_stiffness,
@@ -355,7 +355,7 @@ impl<N: RealField> FEMSurface<N> {
                     let ie = elt.indices[k];
 
                     if !self.kinematic_nodes[ie / DIM] {
-                        let mut forces_part = self.accelerations.fixed_rows_mut::<Dim>(ie);
+                        let mut forces_part = self.accelerations.fixed_rows_mut::<DIM>(ie);
                         forces_part += contribution;
                     }
                 }
@@ -380,9 +380,9 @@ impl<N: RealField> FEMSurface<N> {
                 let cn = elt.local_j_inv[(1, a)];
 
                 let ia = elt.indices[a];
-                let vel_part = self.velocities.fixed_rows::<Dim>(ia);
-                let pos_part = self.positions.fixed_rows::<Dim>(ia);
-                let ref_pos_part = self.rest_positions.fixed_rows::<Dim>(ia);
+                let vel_part = self.velocities.fixed_rows::<DIM>(ia);
+                let pos_part = self.positions.fixed_rows::<DIM>(ia);
+                let ref_pos_part = self.rest_positions.fixed_rows::<DIM>(ia);
                 let dpos = elt.inv_rot * (vel_part * dt + pos_part) - ref_pos_part;
                 // total_strain += B_n * dpos
                 elt.total_strain +=
@@ -432,7 +432,7 @@ impl<N: RealField> FEMSurface<N> {
                         cn1 * strain.x + cn0 * strain.y + bn2 * strain.z,
                     );
 
-                    let mut force_part = self.accelerations.fixed_rows_mut::<Dim>(ia);
+                    let mut force_part = self.accelerations.fixed_rows_mut::<DIM>(ia);
                     force_part -= elt.rot * projected_strain;
                 }
             }
@@ -481,9 +481,9 @@ impl<N: RealField> FEMSurface<N> {
                     // Ensure the triangle has an outward normal.
                     // FIXME: there is a much more efficient way of doing this, given the
                     // triangles orientations and the face.
-                    let a = self.positions.fixed_rows::<Dim>(k.0);
-                    let b = self.positions.fixed_rows::<Dim>(k.1);
-                    let c = self.positions.fixed_rows::<Dim>(n.1);
+                    let a = self.positions.fixed_rows::<DIM>(k.0);
+                    let b = self.positions.fixed_rows::<DIM>(k.1);
+                    let c = self.positions.fixed_rows::<DIM>(n.1);
 
                     let ab = b - a;
                     let ac = c - a;
@@ -569,11 +569,11 @@ impl<N: RealField> FEMSurface<N> {
             assert!(!remapped[orig_i], "Duplicate DOF remapping found.");
             let target_i = target_i * 2;
             new_positions
-                .fixed_rows_mut::<Dim>(target_i)
-                .copy_from(&self.positions.fixed_rows::<Dim>(orig_i));
+                .fixed_rows_mut::<DIM>(target_i)
+                .copy_from(&self.positions.fixed_rows::<DIM>(orig_i));
             new_rest_positions
-                .fixed_rows_mut::<Dim>(target_i)
-                .copy_from(&self.rest_positions.fixed_rows::<Dim>(orig_i));
+                .fixed_rows_mut::<DIM>(target_i)
+                .copy_from(&self.rest_positions.fixed_rows::<DIM>(orig_i));
             dof_map[orig_i] = target_i;
             remapped[orig_i] = true;
         }
@@ -583,11 +583,11 @@ impl<N: RealField> FEMSurface<N> {
         for orig_i in (0..self.positions.len()).step_by(2) {
             if !remapped[orig_i] {
                 new_positions
-                    .fixed_rows_mut::<Dim>(curr_target)
-                    .copy_from(&self.positions.fixed_rows::<Dim>(orig_i));
+                    .fixed_rows_mut::<DIM>(curr_target)
+                    .copy_from(&self.positions.fixed_rows::<DIM>(orig_i));
                 new_rest_positions
-                    .fixed_rows_mut::<Dim>(curr_target)
-                    .copy_from(&self.rest_positions.fixed_rows::<Dim>(orig_i));
+                    .fixed_rows_mut::<DIM>(curr_target)
+                    .copy_from(&self.rest_positions.fixed_rows::<DIM>(orig_i));
                 dof_map[orig_i] = curr_target;
                 curr_target += 2;
             }
@@ -720,16 +720,16 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         }
 
         for elt in &mut self.elements {
-            let a = self.positions.fixed_rows::<Dim>(elt.indices.x);
-            let b = self.positions.fixed_rows::<Dim>(elt.indices.y);
-            let c = self.positions.fixed_rows::<Dim>(elt.indices.z);
+            let a = self.positions.fixed_rows::<DIM>(elt.indices.x);
+            let b = self.positions.fixed_rows::<DIM>(elt.indices.y);
+            let c = self.positions.fixed_rows::<DIM>(elt.indices.z);
 
             let ab = b - a;
             let ac = c - a;
 
             elt.j = Matrix::new(ab.x, ab.y, ac.x, ac.y);
 
-            let g = (elt.local_j_inv.fixed_slice::<Dim, Dim>(0, 1) * elt.j).transpose();
+            let g = (elt.local_j_inv.fixed_slice::<DIM, DIM>(0, 1) * elt.j).transpose();
             elt.rot = RotationMatrix::from_matrix_eps(&g, N::default_epsilon(), 20, elt.rot);
             elt.inv_rot = elt.rot.inverse();
             elt.com = Point::from(a + b + c) * na::convert::<_, N>(1.0 / 3.0);
@@ -977,7 +977,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.forces
-                            .fixed_rows_mut::<Dim>(element.indices[i])
+                            .fixed_rows_mut::<DIM>(element.indices[i])
                             .add_assign(forces[i]);
                     }
                 }
@@ -987,7 +987,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
                 dvel.fill(N::zero());
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        dvel.fixed_rows_mut::<Dim>(element.indices[i])
+                        dvel.fixed_rows_mut::<DIM>(element.indices[i])
                             .copy_from(&forces[i]);
                     }
                 }
@@ -1000,7 +1000,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.forces
-                            .fixed_rows_mut::<Dim>(element.indices[i])
+                            .fixed_rows_mut::<DIM>(element.indices[i])
                             .add_assign(forces[i] * mass);
                     }
                 }
@@ -1009,7 +1009,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
                         self.velocities
-                            .fixed_rows_mut::<Dim>(element.indices[i])
+                            .fixed_rows_mut::<DIM>(element.indices[i])
                             .add_assign(forces[i]);
                     }
                 }

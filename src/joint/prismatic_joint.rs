@@ -3,7 +3,7 @@
 use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
-use crate::math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
+use crate::math::{DIM, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
 use crate::object::{BodyPartHandle, Multibody, MultibodyLink};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
@@ -169,7 +169,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
 
     fn jacobian(&self, transform: &Isometry<N>, out: &mut JacobianSliceMut<N>) {
         let transformed_axis = transform * self.axis;
-        out.fixed_rows_mut::<Dim>(0)
+        out.fixed_rows_mut::<DIM>(0)
             .copy_from(transformed_axis.as_ref())
     }
 

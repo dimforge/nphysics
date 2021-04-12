@@ -3,7 +3,7 @@ use std::ops::MulAssign;
 
 use crate::joint::Joint;
 use crate::math::{
-    AngularDim, Dim, Force, ForceType, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
+    ANGULAR_DIM, AngularDim, Dim, Force, ForceType, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
     Translation, Vector, Velocity, DIM,
 };
 use crate::object::{
@@ -13,7 +13,7 @@ use crate::object::{
 use crate::solver::{
     ConstraintSet, ForceDirection, IntegrationParameters, NonlinearSORProx, SORProx,
 };
-use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, RealField, LU};
+use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, OMatrix, RealField, LU};
 use ncollide::shape::DeformationsType;
 
 use crate::utils::{GeneralizedCross, IndexMut2};
@@ -42,8 +42,8 @@ pub struct Multibody<N: RealField> {
      * Workspaces.
      */
     workspace: MultibodyWorkspace<N>,
-    coriolis_v: Vec<MatrixMN<N, Dim, Dynamic>>,
-    coriolis_w: Vec<MatrixMN<N, AngularDim, Dynamic>>,
+    coriolis_v: Vec<OMatrix<N, Dim, Dynamic>>,
+    coriolis_w: Vec<OMatrix<N, AngularDim, Dynamic>>,
     i_coriolis_dt: Jacobian<N>,
 
     /*
@@ -417,8 +417,8 @@ impl<N: RealField> Multibody<N> {
                 rb_j.copy_from(&parent_j);
 
                 {
-                    let mut rb_j_v = rb_j.fixed_rows_mut::<Dim>(0);
-                    let parent_j_w = parent_j.fixed_rows::<AngularDim>(DIM);
+                    let mut rb_j_v = rb_j.fixed_rows_mut::<DIM>(0);
+                    let parent_j_w = parent_j.fixed_rows::<ANGULAR_DIM>(DIM);
 
                     let shift_tr =
                         (rb.center_of_mass() - parent_rb.center_of_mass()).gcross_matrix_tr();
@@ -454,11 +454,11 @@ impl<N: RealField> Multibody<N> {
         if self.coriolis_v.len() != self.rbs.len() {
             self.coriolis_v.resize(
                 self.rbs.len(),
-                MatrixMN::<N, Dim, Dynamic>::zeros(self.ndofs),
+                OMatrix::<N, Dim, Dynamic>::zeros(self.ndofs),
             );
             self.coriolis_w.resize(
                 self.rbs.len(),
-                MatrixMN::<N, AngularDim, Dynamic>::zeros(self.ndofs),
+                OMatrix::<N, AngularDim, Dynamic>::zeros(self.ndofs),
             );
             self.i_coriolis_dt = Jacobian::zeros(self.ndofs);
         }
@@ -495,7 +495,7 @@ impl<N: RealField> Multibody<N> {
              *
              */
             let rb_j = &self.body_jacobians[i];
-            let rb_j_v = rb_j.fixed_rows::<Dim>(0);
+            let rb_j_v = rb_j.fixed_rows::<DIM>(0);
 
             let ndofs = rb.dof.ndofs();
 
@@ -503,8 +503,8 @@ impl<N: RealField> Multibody<N> {
                 let parent_id = rb.parent_internal_id;
                 let parent_rb = &self.rbs[parent_id];
                 let parent_j = &self.body_jacobians[parent_id];
-                let parent_j_v = parent_j.fixed_rows::<Dim>(0);
-                let parent_j_w = parent_j.fixed_rows::<AngularDim>(DIM);
+                let parent_j_v = parent_j.fixed_rows::<DIM>(0);
+                let parent_j_w = parent_j.fixed_rows::<ANGULAR_DIM>(DIM);
                 let parent_w = parent_rb.velocity.angular_vector().gcross_matrix();
 
                 let (coriolis_v, parent_coriolis_v) = self.coriolis_v.index_mut_const(i, parent_id);
@@ -545,14 +545,14 @@ impl<N: RealField> Multibody<N> {
                     let mut rb_joint_j = tmp1.columns_mut(0, ndofs);
                     rb.dof.jacobian(&parent_rb.local_to_world, &mut rb_joint_j);
 
-                    let rb_joint_j_v = rb_joint_j.fixed_rows::<Dim>(0);
+                    let rb_joint_j_v = rb_joint_j.fixed_rows::<DIM>(0);
 
                     // JDot
                     coriolis_v_part.gemm(N::one(), &parent_w, &rb_joint_j_v, N::one());
 
                     #[cfg(feature = "dim3")]
                     {
-                        let rb_joint_j_w = rb_joint_j.fixed_rows::<AngularDim>(DIM);
+                        let rb_joint_j_w = rb_joint_j.fixed_rows::<ANGULAR_DIM>(DIM);
                         let mut coriolis_w_part = coriolis_w.columns_mut(rb.assembly_id, ndofs);
                         coriolis_w_part.gemm(N::one(), &parent_w, &rb_joint_j_w, N::one());
                     }
@@ -579,10 +579,10 @@ impl<N: RealField> Multibody<N> {
                     &mut rb_joint_j_dot_veldiff,
                 );
 
-                let rb_joint_j_v_dot = rb_joint_j_dot.fixed_rows::<Dim>(0);
-                let rb_joint_j_w_dot = rb_joint_j_dot.fixed_rows::<AngularDim>(DIM);
-                let rb_joint_j_v_dot_veldiff = rb_joint_j_dot_veldiff.fixed_rows::<Dim>(0);
-                let rb_joint_j_w_dot_veldiff = rb_joint_j_dot_veldiff.fixed_rows::<AngularDim>(DIM);
+                let rb_joint_j_v_dot = rb_joint_j_dot.fixed_rows::<DIM>(0);
+                let rb_joint_j_w_dot = rb_joint_j_dot.fixed_rows::<ANGULAR_DIM>(DIM);
+                let rb_joint_j_v_dot_veldiff = rb_joint_j_dot_veldiff.fixed_rows::<DIM>(0);
+                let rb_joint_j_w_dot_veldiff = rb_joint_j_dot_veldiff.fixed_rows::<ANGULAR_DIM>(DIM);
 
                 let mut coriolis_v_part = coriolis_v.columns_mut(rb.assembly_id, ndofs);
                 let mut coriolis_w_part = coriolis_w.columns_mut(rb.assembly_id, ndofs);
@@ -600,14 +600,14 @@ impl<N: RealField> Multibody<N> {
              * Meld with the mass matrix.
              */
             {
-                let mut i_coriolis_dt_v = self.i_coriolis_dt.fixed_rows_mut::<Dim>(0);
+                let mut i_coriolis_dt_v = self.i_coriolis_dt.fixed_rows_mut::<DIM>(0);
                 i_coriolis_dt_v.copy_from(coriolis_v);
                 i_coriolis_dt_v *= rb.inertia.linear * dt;
             }
 
             {
                 // FIXME: in 2D this is just an axpy.
-                let mut i_coriolis_dt_w = self.i_coriolis_dt.fixed_rows_mut::<AngularDim>(DIM);
+                let mut i_coriolis_dt_w = self.i_coriolis_dt.fixed_rows_mut::<ANGULAR_DIM>(DIM);
                 i_coriolis_dt_w.gemm(dt, rb.inertia.angular_matrix(), &coriolis_w, N::zero());
             }
 

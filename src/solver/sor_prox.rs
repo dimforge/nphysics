@@ -1,5 +1,5 @@
 use na::storage::StorageMut;
-use na::{self, DVector, Dim, Dynamic, RealField, Vector, VectorSliceN, U1};
+use na::{self, DVector, Dim, Dynamic, RealField, Vector, VectorSlice, Const};
 
 use ncollide::query::ContactId;
 
@@ -188,10 +188,10 @@ impl SORProx {
         let id1 = c.assembly_id1;
         let id2 = c.assembly_id2;
 
-        let jacobian1 = VectorSliceN::from_slice_generic(&jacobians[c.j_id1..], dim1, U1);
-        let jacobian2 = VectorSliceN::from_slice_generic(&jacobians[c.j_id2..], dim2, U1);
-        let weighted_jacobian1 = VectorSliceN::from_slice_generic(&jacobians[c.wj_id1..], dim1, U1);
-        let weighted_jacobian2 = VectorSliceN::from_slice_generic(&jacobians[c.wj_id2..], dim2, U1);
+        let jacobian1 = VectorSlice::from_slice_generic(&jacobians[c.j_id1..], dim1, Const::<1>);
+        let jacobian2 = VectorSlice::from_slice_generic(&jacobians[c.j_id2..], dim2, Const::<1>);
+        let weighted_jacobian1 = VectorSlice::from_slice_generic(&jacobians[c.wj_id1..], dim1, Const::<1>);
+        let weighted_jacobian2 = VectorSlice::from_slice_generic(&jacobians[c.wj_id2..], dim2, Const::<1>);
 
         let dimpulse = jacobian1.dot(&mj_lambda.rows_generic(id1, dim1))
             + jacobian2.dot(&mj_lambda.rows_generic(id2, dim2))
@@ -215,8 +215,8 @@ impl SORProx {
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,
     ) {
-        let jacobian = VectorSliceN::from_slice_generic(&jacobians[c.j_id..], dim, U1);
-        let weighted_jacobian = VectorSliceN::from_slice_generic(&jacobians[c.wj_id..], dim, U1);
+        let jacobian = VectorSlice::from_slice_generic(&jacobians[c.j_id..], dim, Const::<1>);
+        let weighted_jacobian = VectorSlice::from_slice_generic(&jacobians[c.wj_id..], dim, Const::<1>);
 
         let dimpulse = jacobian.dot(&mj_lambda.rows_generic_mut(c.assembly_id, dim)) + c.rhs;
 
@@ -253,9 +253,9 @@ impl SORProx {
                 if impulse.is_zero() {
                     if !c.impulse.is_zero() {
                         let wj1 =
-                            VectorSliceN::from_slice_generic(&jacobians[c.wj_id1..], dim1, U1);
+                            VectorSlice::from_slice_generic(&jacobians[c.wj_id1..], dim1, Const::<1>);
                         let wj2 =
-                            VectorSliceN::from_slice_generic(&jacobians[c.wj_id2..], dim2, U1);
+                            VectorSlice::from_slice_generic(&jacobians[c.wj_id2..], dim2, Const::<1>);
 
                         mj_lambda
                             .rows_generic_mut(id1, dim1)
@@ -272,10 +272,10 @@ impl SORProx {
             }
         }
 
-        let jacobian1 = VectorSliceN::from_slice_generic(&jacobians[c.j_id1..], dim1, U1);
-        let jacobian2 = VectorSliceN::from_slice_generic(&jacobians[c.j_id2..], dim2, U1);
-        let weighted_jacobian1 = VectorSliceN::from_slice_generic(&jacobians[c.wj_id1..], dim1, U1);
-        let weighted_jacobian2 = VectorSliceN::from_slice_generic(&jacobians[c.wj_id2..], dim2, U1);
+        let jacobian1 = VectorSlice::from_slice_generic(&jacobians[c.j_id1..], dim1, Const::<1>);
+        let jacobian2 = VectorSlice::from_slice_generic(&jacobians[c.j_id2..], dim2, Const::<1>);
+        let weighted_jacobian1 = VectorSlice::from_slice_generic(&jacobians[c.wj_id1..], dim1, Const::<1>);
+        let weighted_jacobian2 = VectorSlice::from_slice_generic(&jacobians[c.wj_id2..], dim2, Const::<1>);
 
         let dimpulse = jacobian1.dot(&mj_lambda.rows_generic(id1, dim1))
             + jacobian2.dot(&mj_lambda.rows_generic(id2, dim2))
@@ -312,7 +312,7 @@ impl SORProx {
                 let impulse = unilateral[dependency].impulse;
                 if impulse.is_zero() {
                     if !c.impulse.is_zero() {
-                        let wj = VectorSliceN::from_slice_generic(&jacobians[c.wj_id..], dim, U1);
+                        let wj = VectorSlice::from_slice_generic(&jacobians[c.wj_id..], dim, Const::<1>);
 
                         mj_lambda.rows_generic_mut(c.assembly_id, dim).axpy(
                             -c.impulse,
@@ -328,8 +328,8 @@ impl SORProx {
             }
         }
 
-        let jacobian = VectorSliceN::from_slice_generic(&jacobians[c.j_id..], dim, U1);
-        let weighted_jacobian = VectorSliceN::from_slice_generic(&jacobians[c.wj_id..], dim, U1);
+        let jacobian = VectorSlice::from_slice_generic(&jacobians[c.j_id..], dim, Const::<1>);
+        let weighted_jacobian = VectorSlice::from_slice_generic(&jacobians[c.wj_id..], dim, Const::<1>);
 
         let dimpulse = jacobian.dot(&mj_lambda.rows_generic(c.assembly_id, dim)) + c.rhs;
 
@@ -354,9 +354,9 @@ impl SORProx {
             let id2 = c.assembly_id2;
 
             let weighted_jacobian1 =
-                VectorSliceN::from_slice_generic(&jacobians[c.wj_id1..], dim1, U1);
+                VectorSlice::from_slice_generic(&jacobians[c.wj_id1..], dim1, Const::<1>);
             let weighted_jacobian2 =
-                VectorSliceN::from_slice_generic(&jacobians[c.wj_id2..], dim2, U1);
+                VectorSlice::from_slice_generic(&jacobians[c.wj_id2..], dim2, Const::<1>);
 
             mj_lambda
                 .rows_generic_mut(id1, dim1)
@@ -381,7 +381,7 @@ impl SORProx {
     ) {
         if !c.impulse.is_zero() {
             let weighted_jacobian =
-                VectorSliceN::from_slice_generic(&jacobians[c.wj_id..], dim, U1);
+                VectorSlice::from_slice_generic(&jacobians[c.wj_id..], dim, Const::<1>);
 
             mj_lambda.rows_generic_mut(c.assembly_id, dim).axpy(
                 c.impulse,
@@ -403,9 +403,9 @@ impl SORProx {
             let id2 = c.assembly_id2;
 
             let weighted_jacobian1 =
-                VectorSliceN::from_slice_generic(&jacobians[c.wj_id1..], dim1, U1);
+                VectorSlice::from_slice_generic(&jacobians[c.wj_id1..], dim1, Const::<1>);
             let weighted_jacobian2 =
-                VectorSliceN::from_slice_generic(&jacobians[c.wj_id2..], dim2, U1);
+                VectorSlice::from_slice_generic(&jacobians[c.wj_id2..], dim2, Const::<1>);
 
             mj_lambda
                 .rows_generic_mut(id1, dim1)
@@ -424,7 +424,7 @@ impl SORProx {
     ) {
         if !c.impulse.is_zero() {
             let weighted_jacobian =
-                VectorSliceN::from_slice_generic(&jacobians[c.wj_id..], dim, U1);
+                VectorSlice::from_slice_generic(&jacobians[c.wj_id..], dim, Const::<1>);
 
             mj_lambda.rows_generic_mut(c.assembly_id, dim).axpy(
                 c.impulse,

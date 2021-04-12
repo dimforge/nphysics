@@ -1,6 +1,6 @@
 use na::{
     self, DVectorSliceMut, Isometry3, Matrix3, RealField, Translation3, UnitQuaternion, Vector3,
-    VectorSlice3, U3,
+    VectorSlice3,
 };
 
 use crate::joint::Joint;
@@ -50,14 +50,14 @@ impl<N: RealField> Joint<N> for BallJoint<N> {
     fn jacobian(&self, transform: &Isometry3<N>, out: &mut JacobianSliceMut<N>) {
         // FIXME: could we avoid the computation of rotation matrix on each `jacobian_*`  ?
         let rotmat = transform.rotation.to_rotation_matrix();
-        out.fixed_rows_mut::<U3>(0)
+        out.fixed_rows_mut::<3>(0)
             .copy_from(&(rotmat * self.jacobian_v));
-        out.fixed_rows_mut::<U3>(3).copy_from(rotmat.matrix());
+        out.fixed_rows_mut::<3>(3).copy_from(rotmat.matrix());
     }
 
     fn jacobian_dot(&self, transform: &Isometry3<N>, out: &mut JacobianSliceMut<N>) {
         let rotmat = transform.rotation.to_rotation_matrix();
-        out.fixed_rows_mut::<U3>(0)
+        out.fixed_rows_mut::<3>(0)
             .copy_from(&(rotmat * self.jacobian_dot_v));
     }
 
@@ -70,7 +70,7 @@ impl<N: RealField> Joint<N> for BallJoint<N> {
         let angvel = Vector3::from_row_slice(&acc[..3]);
         let rotmat = transform.rotation.to_rotation_matrix();
         let res = rotmat * angvel.gcross_matrix() * self.jacobian_v;
-        out.fixed_rows_mut::<U3>(0).copy_from(&res);
+        out.fixed_rows_mut::<3>(0).copy_from(&res);
     }
 
     fn jacobian_mul_coordinates(&self, acc: &[N]) -> Velocity<N> {
