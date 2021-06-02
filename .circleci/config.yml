@@ -32,24 +32,24 @@ jobs:
       - run:
           name: test nphysics3d
           command: cargo test --verbose -p nphysics3d;
-      - run:
-          name: check nphysics_testbed2d
-          command: cargo check --verbose -p nphysics_testbed2d;
-      - run:
-          name: check nphysics_testbed3d
-          command: cargo check --verbose -p nphysics_testbed3d;
-      - run:
-          name: check nphysics-examples-2d
-          command: cargo check -j 1 --verbose -p nphysics-examples-2d;
-      - run:
-          name: check nphysics-examples-3d
-          command: cargo check -j 1 --verbose -p nphysics-examples-3d;
-      - run:
-          name: check nphysics_testbed2d with fluids
-          command: cd build/nphysics_testbed2d && cargo check --verbose --features=fluids;
-      - run:
-          name: check nphysics_testbed3d with fluids
-          command: cd build/nphysics_testbed3d && cargo check --verbose --features=fluids;
+#      - run:
+#          name: check nphysics_testbed2d
+#          command: cargo check --verbose -p nphysics_testbed2d;
+#      - run:
+#          name: check nphysics_testbed3d
+#          command: cargo check --verbose -p nphysics_testbed3d;
+#      - run:
+#          name: check nphysics-examples-2d
+#          command: cargo check -j 1 --verbose -p nphysics-examples-2d;
+#      - run:
+#          name: check nphysics-examples-3d
+#          command: cargo check -j 1 --verbose -p nphysics-examples-3d;
+#      - run:
+#          name: check nphysics_testbed2d with fluids
+#          command: cd build/nphysics_testbed2d && cargo check --verbose --features=fluids;
+#      - run:
+#          name: check nphysics_testbed3d with fluids
+#          command: cd build/nphysics_testbed3d && cargo check --verbose --features=fluids;
   build-wasm:
     executor: rust-executor
     steps:
@@ -63,18 +63,18 @@ jobs:
       - run:
           name: build nphysics3d
           command: cd build/nphysics3d && cargo web build --verbose --target wasm32-unknown-unknown;
-      - run:
-          name: build nphysics-examples-2d
-          command: cd examples2d && cargo web build --verbose --target wasm32-unknown-unknown;
-      - run:
-          name: build nphysics-examples-3d
-          command: cd examples3d && cargo web build --verbose --target wasm32-unknown-unknown;
-      - run:
-          name: build nphysics_testbed2d
-          command: cd build/nphysics_testbed2d && cargo web build --verbose --target wasm32-unknown-unknown;
-      - run:
-          name: build nphysics_testbed3d
-          command: cd build/nphysics_testbed3d && cargo web build --verbose --target wasm32-unknown-unknown;
+#      - run:
+#          name: build nphysics-examples-2d
+#          command: cd examples2d && cargo web build --verbose --target wasm32-unknown-unknown;
+#      - run:
+#          name: build nphysics-examples-3d
+#          command: cd examples3d && cargo web build --verbose --target wasm32-unknown-unknown;
+#      - run:
+#          name: build nphysics_testbed2d
+#          command: cd build/nphysics_testbed2d && cargo web build --verbose --target wasm32-unknown-unknown;
+#      - run:
+#          name: build nphysics_testbed3d
+#          command: cd build/nphysics_testbed3d && cargo web build --verbose --target wasm32-unknown-unknown;
 
 
 workflows:

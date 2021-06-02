@@ -34,4 +34,4 @@ ncollide3d = "0.29"
 
 [dependencies.nphysics3d]
 path = "../nphysics3d"
-version = "0.21"
+version = "0.22"

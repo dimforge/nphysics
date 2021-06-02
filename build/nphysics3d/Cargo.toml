@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics3d"
-version = "0.21.0"
+version = "0.22.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "3-dimensional physics engine in Rust. This crate is being superseded by the rapier3d crate."
 documentation = "http://nphysics.org/rustdoc/nphysics3d/index.html"
@@ -35,12 +35,12 @@ slotmap    = "1" # For impulse cache.
 generational-arena = "0.2" # For default body/collide/constraint/force sets.
 smallvec   = "1"
 lazy_static = "1"
-simba      = "0.4"
-nalgebra   = { version = "0.26", features = [ "sparse" ] }
-approx     = "0.4"
+simba      = "0.5"
+nalgebra   = { version = "0.27", features = [ "sparse" ] }
+approx     = "0.5"
 downcast-rs = "1"
 bitflags   = "1"
-ncollide3d = "0.29"
+ncollide3d = "0.30"
 instant    = { version = "0.1", features = [ "now" ]}
 
 
