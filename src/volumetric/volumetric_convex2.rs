@@ -177,10 +177,9 @@ mod test {
         let actual = cube.unit_angular_inertia();
         assert!(
             relative_eq!(actual, expected),
-            format!(
-                "Inertia values do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
+            "Inertia values do not match: actual {:?}, expected: {:?}.",
+            actual,
+            expected
         );
 
         // convex shape
@@ -196,10 +195,9 @@ mod test {
         let actual = geom.unit_angular_inertia();
         assert!(
             relative_eq!(actual, expected),
-            format!(
-                "Inertia values do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
+            "Inertia values do not match: actual {:?}, expected: {:?}.",
+            actual,
+            expected
         );
 
         // rectangle
@@ -218,10 +216,9 @@ mod test {
         let actual = cube.unit_angular_inertia();
         assert!(
             relative_eq!(actual, expected),
-            format!(
-                "Inertia values do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
+            "Inertia values do not match: actual {:?}, expected: {:?}.",
+            actual,
+            expected
         );
 
         // convex shape
@@ -237,10 +234,9 @@ mod test {
         let actual = geom.unit_angular_inertia();
         assert!(
             relative_eq!(actual, expected),
-            format!(
-                "Inertia values do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
+            "Inertia values do not match: actual {:?}, expected: {:?}.",
+            actual,
+            expected
         );
 
         // triangle
@@ -273,10 +269,9 @@ mod test {
         let actual = geom.unit_angular_inertia();
         assert!(
             relative_eq!(actual, expected),
-            format!(
-                "Inertia values do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
+            "Inertia values do not match: actual {:?}, expected: {:?}.",
+            actual,
+            expected
         );
     }
 }
