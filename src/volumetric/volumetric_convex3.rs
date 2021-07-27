@@ -315,10 +315,9 @@ mod test {
 
         assert!(
             relative_eq!(actual, expected, epsilon = 1.0e-8),
-            format!(
-                "Inertia tensors do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
+            "Inertia tensors do not match: actual {:?}, expected: {:?}.",
+            actual,
+            expected
         );
 
         let (actual_m, _, actual_i) = convex.mass_properties(2.37689);
@@ -326,26 +325,23 @@ mod test {
 
         assert!(
             relative_eq!(&actual, &expected, epsilon = 1.0e-8),
-            format!(
-                "Unit inertia tensors do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
+            "Unit inertia tensors do not match: actual {:?}, expected: {:?}.",
+            actual,
+            expected
         );
 
         assert!(
             relative_eq!(actual_i, expected_i, epsilon = 1.0e-8),
-            format!(
-                "Inertia tensors do not match: actual {:?}, expected: {:?}.",
-                actual_i, expected_i
-            )
+            "Inertia tensors do not match: actual {:?}, expected: {:?}.",
+            actual_i,
+            expected_i
         );
 
         assert!(
             relative_eq!(actual_m, expected_m, epsilon = 1.0e-8),
-            format!(
-                "Masses do not match: actual {}, expected: {}.",
-                actual_m, expected_m
-            )
+            "Masses do not match: actual {}, expected: {}.",
+            actual_m,
+            expected_m
         );
     }
 }
